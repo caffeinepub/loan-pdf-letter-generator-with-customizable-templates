@@ -1,0 +1,62 @@
+{
+  "kind": "build_request",
+  "title": "Remove QR option and add Share PDF on mobile view",
+  "projectName": "Loan Document Generator",
+  "priority": "normal",
+  "requirements": [
+    {
+      "id": "REQ-1",
+      "text": "Remove all QR code-related UI options from the application. This includes: removing the QR code tab/section from TemplateDesigner.tsx, removing any QR code toggle or configuration fields from FormSection.tsx, removing the QR code overlay rendering from TemplateOverlay.tsx and renderDocumentToCanvas.ts, and removing the QR code script tag from index.html. The QR code should no longer appear in previews, rendered PDFs, or any settings panel.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-6"
+        ],
+        "quotes": [
+          "remove Qr option"
+        ]
+      },
+      "acceptanceCriteria": [
+        "No QR code tab, toggle, or configuration section exists in the TemplateDesigner UI",
+        "No QR code is rendered in document previews or generated PDFs",
+        "The QRCode.js CDN script tag is removed from index.html",
+        "The qrPayload.ts and renderQr.ts utilities are no longer called in the render pipeline",
+        "No QR-related fields appear in FormSection or any settings dialog"
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "text": "Add a 'Share PDF' button visible only on mobile viewports (screens narrower than 768px) in the document download/action area within FormSection.tsx. When tapped, this button should generate the PDF blob and use the Web Share API (navigator.share) to share the file if available, with a fallback to triggering a standard file download if the Share API is not supported.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-6"
+        ],
+        "quotes": [
+          "ad share pdf on mobile view"
+        ]
+      },
+      "acceptanceCriteria": [
+        "A 'Share PDF' button is visible on mobile viewports (< 768px) and hidden on desktop",
+        "Tapping the button invokes navigator.share with the generated PDF file on supported mobile browsers",
+        "On browsers where navigator.share is not available, the button falls back to a standard file download",
+        "The button is placed alongside the existing download buttons in FormSection",
+        "The button is disabled or shows a loading state while the PDF is being generated"
+      ]
+    }
+  ],
+  "constraints": [
+    "Do not modify files under frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, or frontend/src/components/ui",
+    "Do not remove or break existing PDF generation and download functionality"
+  ],
+  "nonGoals": [
+    "Adding QR code back in any form or making it optional/toggleable",
+    "Share PDF button on desktop viewports",
+    "Backend changes",
+    "Changes to template structure or saved template data"
+  ],
+  "imageRequirements": {
+    "required": [],
+    "edits": []
+  }
+}

@@ -1,0 +1,78 @@
+{
+  "kind": "implementation_plan",
+  "version": "1.0",
+  "title": "Remove QR option and add Share PDF on mobile view",
+  "requirements": [
+    {
+      "id": "REQ-1",
+      "summary": "Remove all QR code-related UI options from the application including tabs, toggles, configuration fields, overlay rendering, and CDN script tag",
+      "acceptanceCriteria": [
+        "No QR code tab, toggle, or configuration section exists in the TemplateDesigner UI",
+        "No QR code is rendered in document previews or generated PDFs",
+        "The QRCode.js CDN script tag is removed from index.html",
+        "The qrPayload.ts and renderQr.ts utilities are no longer called in the render pipeline",
+        "No QR-related fields appear in FormSection or any settings dialog"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/index.html",
+          "operation": "modify",
+          "description": "Remove the QRCode.js CDN script tag that loads the external QR code library from the HTML head section"
+        },
+        {
+          "path": "frontend/src/components/TemplateDesigner.tsx",
+          "operation": "modify",
+          "description": "Remove the QR code tab/section from the multi-tab template designer interface. Remove all QR-related state, handlers, and UI elements including the qrEnabled toggle, qrPayload input field, and any QR configuration controls. Ensure the tab navigation is updated to exclude the QR tab while maintaining the other tabs (branding, watermarks, signatures, seals)"
+        },
+        {
+          "path": "frontend/src/components/FormSection.tsx",
+          "operation": "modify",
+          "description": "Remove any QR code toggle, configuration fields, or settings from the form section. Ensure no QR-related form state or handlers remain"
+        },
+        {
+          "path": "frontend/src/components/preview/TemplateOverlay.tsx",
+          "operation": "modify",
+          "description": "Remove the QR code overlay rendering logic from the template overlay component. This includes removing the QR code positioning, rendering calls, and any QR-related props or state"
+        },
+        {
+          "path": "frontend/src/lib/pdf/renderDocumentToCanvas.ts",
+          "operation": "modify",
+          "description": "Remove the QR code rendering step from the canvas rendering pipeline. This includes removing calls to qrPayload.ts and renderQr.ts utilities, and eliminating the QR code layer from the final document canvas"
+        },
+        {
+          "path": "frontend/src/components/PreviewDialog.tsx",
+          "operation": "modify",
+          "description": "Remove any QR code rendering logic from the preview dialog component, ensuring QR codes do not appear in document previews"
+        },
+        {
+          "path": "frontend/src/types/templates.ts",
+          "operation": "modify",
+          "description": "Remove QR-related type definitions and interfaces from the template types file, including showQrCode, qrPayload, and any QR configuration properties from LayoutSettings or related interfaces"
+        }
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "summary": "Add a 'Share PDF' button visible only on mobile viewports that uses Web Share API with fallback to standard download",
+      "acceptanceCriteria": [
+        "A 'Share PDF' button is visible on mobile viewports (< 768px) and hidden on desktop",
+        "Tapping the button invokes navigator.share with the generated PDF file on supported mobile browsers",
+        "On browsers where navigator.share is not available, the button falls back to a standard file download",
+        "The button is placed alongside the existing download buttons in FormSection",
+        "The button is disabled or shows a loading state while the PDF is being generated"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/FormSection.tsx",
+          "operation": "modify",
+          "description": "Add a 'Share PDF' button that is visible only on mobile viewports using Tailwind's responsive classes (hidden md:hidden or block md:hidden). Position the button alongside the existing download buttons in the document download/action area. Implement click handler that: 1) generates the PDF blob using the existing PDF generation logic from generatePdf.ts, 2) checks for navigator.share support and file sharing capability, 3) if supported, invokes navigator.share with the PDF file and appropriate metadata (title, file name), 4) if not supported, falls back to the existing download mechanism from lib/download.ts. Add loading state management to disable the button and show loading text while PDF generation is in progress. Use appropriate error handling for share failures and display user-friendly error messages"
+        },
+        {
+          "path": "frontend/src/lib/shareUtils.ts",
+          "operation": "create",
+          "description": "Create a utility module that exports a sharePdf function. This function accepts a Blob and filename, checks for Web Share API support (navigator.share and navigator.canShare), and either invokes the share dialog or returns false to indicate fallback is needed. Include proper TypeScript types and handle common share errors gracefully"
+        }
+      ]
+    }
+  ]
+}
