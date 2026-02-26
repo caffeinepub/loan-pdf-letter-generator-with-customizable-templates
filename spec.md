@@ -1,16 +1,11 @@
 # Specification
 
 ## Summary
-**Goal:** Remove all QR code functionality from the Loan Document Generator and add a mobile-only "Share PDF" button.
+**Goal:** Enhance the Loan Document Generator's template editor with an explicit Save button, an "Apply Header to All Templates" action, and an automatic share flow triggered after document download.
 
 **Planned changes:**
-- Remove the QR code tab/section from TemplateDesigner.tsx
-- Remove QR code toggle and configuration fields from FormSection.tsx
-- Remove QR code overlay rendering from TemplateOverlay.tsx and renderDocumentToCanvas.ts
-- Remove the QRCode.js CDN script tag from index.html
-- Remove calls to qrPayload.ts and renderQr.ts utilities from the render pipeline
-- Add a "Share PDF" button in FormSection.tsx visible only on mobile viewports (< 768px)
-- The Share PDF button uses the Web Share API (navigator.share) to share the generated PDF file, with a fallback to standard file download if the API is not supported
-- The button shows a loading/disabled state while the PDF is being generated
+- Add a "Save" button inside the TemplateDesigner component that saves the current template to localStorage and briefly shows a "Saved!" confirmation state before reverting.
+- Add an "Apply Header to All Templates" button in the template editor that, after a confirmation prompt, copies the current template's header settings (business name, address, logo) to all other templates in localStorage and shows a success message.
+- After a document (PNG/PDF) is successfully downloaded in FormSection, automatically present a "Share" option using the Web Share API (via the existing `sharePdf` utility), falling back to re-triggering the download if the API is unsupported.
 
-**User-visible outcome:** QR code options no longer appear anywhere in the UI, previews, or generated PDFs. On mobile devices, users see a "Share PDF" button alongside existing download buttons that allows them to share the PDF via the native share sheet.
+**User-visible outcome:** Users can explicitly save templates, propagate header branding across all templates at once, and share downloaded documents immediately after download completes.

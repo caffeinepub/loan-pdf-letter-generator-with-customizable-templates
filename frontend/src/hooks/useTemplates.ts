@@ -1,126 +1,54 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { DocumentType, Template, CustomTemplate } from '../types/templates';
-import { getCustomTemplates, saveCustomTemplates } from '../lib/templates/getTemplate';
+import { getTemplate, getCustomTemplates, saveCustomTemplates } from '../lib/templates/getTemplate';
 
-const DEFAULT_TEMPLATES: Record<DocumentType, Template> = {
-  'Loan Approval Letter': {
-    headline: 'Loan Approval Letter',
-    body: `Dear {{name}},
+const BUILT_IN_DOC_TYPES: DocumentType[] = [
+  'Loan Approval Letter',
+  'Loan GST Letter',
+  'Loan Section Letter',
+];
 
-We are pleased to inform you that your loan application has been approved.
-
-Applicant Details:
-Name: {{name}}
-Mobile: {{mobile}}
-Address: {{address}}
-PAN Number: {{panNumber}}
-
-Loan Details:
-Loan Amount: ₹{{loanAmount}}
-Interest Rate: {{interestRate}}% per annum
-Tenure: {{year}} years
-Monthly EMI: ₹{{monthlyEmi}}
-
-Please contact us to complete the documentation process.
-
-Best regards,
-Loan Department`,
-    logoDataUrl: null,
-    headerColor: '',
-    businessName: '',
-    businessAddress: '',
-    watermarkText: 'APPROVED',
-    footerText: 'This is a computer-generated document and does not require a signature.',
-    background: { dataUrl: null, opacity: 0.1, fit: 'cover' },
-    watermark: { text: 'APPROVED', opacity: 0.05, size: 72, rotation: -45, position: 'center' },
-    seal: { dataUrl: null, size: 100, position: 'bottom-left' },
-    signature: { dataUrl: null, size: 120, position: 'bottom-right' },
-  },
-  'Loan GST Letter': {
-    headline: 'Loan GST Letter',
-    body: `Dear {{name}},
-
-This letter confirms the GST details for your approved loan.
-
-Applicant Details:
-Name: {{name}}
-Mobile: {{mobile}}
-Address: {{address}}
-PAN Number: {{panNumber}}
-
-Loan Details:
-Loan Amount: ₹{{loanAmount}}
-Interest Rate: {{interestRate}}% per annum
-Tenure: {{year}} years
-Monthly EMI: ₹{{monthlyEmi}}
-
-GST will be applicable as per current regulations.
-
-Sincerely,
-Finance Department`,
-    logoDataUrl: null,
-    headerColor: '',
-    businessName: '',
-    businessAddress: '',
-    watermarkText: 'GST APPLICABLE',
-    footerText: 'For GST queries, please contact our tax department.',
-    background: { dataUrl: null, opacity: 0.1, fit: 'cover' },
-    watermark: { text: 'GST APPLICABLE', opacity: 0.05, size: 72, rotation: -45, position: 'center' },
-    seal: { dataUrl: null, size: 100, position: 'bottom-left' },
-    signature: { dataUrl: null, size: 120, position: 'bottom-right' },
-  },
-  'Loan Section Letter': {
-    headline: 'Loan Section Letter',
-    body: `Dear {{name}},
-
-This letter provides the section details for your loan account.
-
-Applicant Details:
-Name: {{name}}
-Mobile: {{mobile}}
-Address: {{address}}
-PAN Number: {{panNumber}}
-
-Loan Details:
-Loan Amount: ₹{{loanAmount}}
-Interest Rate: {{interestRate}}% per annum
-Tenure: {{year}} years
-Monthly EMI: ₹{{monthlyEmi}}
-
-Your loan has been processed under the applicable section.
-
-Best regards,
-Loan Administration`,
-    logoDataUrl: null,
-    headerColor: '',
-    businessName: '',
-    businessAddress: '',
-    watermarkText: 'CONFIDENTIAL',
-    footerText: 'This document is confidential and intended only for the addressee.',
-    background: { dataUrl: null, opacity: 0.1, fit: 'cover' },
-    watermark: { text: 'CONFIDENTIAL', opacity: 0.05, size: 72, rotation: -45, position: 'center' },
-    seal: { dataUrl: null, size: 100, position: 'bottom-left' },
-    signature: { dataUrl: null, size: 120, position: 'bottom-right' },
-  },
-};
+function saveBuiltInTemplate(docType: DocumentType, template: Template): void {
+  try {
+    const stored = localStorage.getItem('document-templates');
+    const templates = stored ? JSON.parse(stored) : {};
+    templates[docType] = template;
+    localStorage.setItem('document-templates', JSON.stringify(templates));
+  } catch (error) {
+    console.error('Error saving template:', error);
+  }
+}
 
 export function useTemplates() {
-  const [builtInTemplates, setBuiltInTemplates] = useState<Record<DocumentType, Template>>(
-    () => ({ ...DEFAULT_TEMPLATES })
-  );
+  const [builtInTemplates, setBuiltInTemplates] = useState<Record<DocumentType, Template>>(() => {
+    const result = {} as Record<DocumentType, Template>;
+    for (const dt of BUILT_IN_DOC_TYPES) {
+      result[dt] = getTemplate(dt);
+    }
+    return result;
+  });
+
   const [customTemplates, setCustomTemplates] = useState<CustomTemplate[]>(
     () => getCustomTemplates()
   );
 
-  const updateBuiltInTemplate = (docType: DocumentType, updates: Partial<Template>) => {
+  const updateBuiltInTemplate = useCallback((docType: DocumentType, updates: Partial<Template>) => {
     setBuiltInTemplates((prev) => ({
       ...prev,
       [docType]: { ...prev[docType], ...updates },
     }));
-  };
+  }, []);
 
-  const createCustomTemplate = (name: string) => {
-    const base = DEFAULT_TEMPLATES['Loan Approval Letter'];
+  const saveTemplate = useCallback((docType: DocumentType) => {
+    setBuiltInTemplates((prev) => {
+      const template = prev[docType];
+      saveBuiltInTemplate(docType, template);
+      return prev;
+    });
+  }, []);
+
+  const createCustomTemplate = useCallback((name: string) => {
+    const base = getTemplate('Loan Approval Letter');
     const newTemplate: CustomTemplate = {
       ...base,
       id: `custom-${Date.now()}`,
@@ -132,32 +60,71 @@ export function useTemplates() {
       saveCustomTemplates(updated);
       return updated;
     });
-  };
+  }, []);
 
-  const updateCustomTemplate = (id: string, updates: Partial<CustomTemplate>) => {
+  const updateCustomTemplate = useCallback((id: string, updates: Partial<CustomTemplate>) => {
     setCustomTemplates((prev) => {
-      const updated = prev.map((t) =>
-        t.id === id ? { ...t, ...updates } : t
-      );
+      const updated = prev.map((t) => (t.id === id ? { ...t, ...updates } : t));
       saveCustomTemplates(updated);
       return updated;
     });
-  };
+  }, []);
 
-  const deleteCustomTemplate = (id: string) => {
+  const deleteCustomTemplate = useCallback((id: string) => {
     setCustomTemplates((prev) => {
       const updated = prev.filter((t) => t.id !== id);
       saveCustomTemplates(updated);
       return updated;
     });
-  };
+  }, []);
+
+  const applyHeaderToAllTemplates = useCallback(
+    (businessName: string, businessAddress: string, logoDataUrl: string | null): boolean => {
+      try {
+        // Update built-in templates
+        setBuiltInTemplates((prev) => {
+          const updated = { ...prev };
+          for (const dt of BUILT_IN_DOC_TYPES) {
+            const updatedTemplate: Template = {
+              ...prev[dt],
+              businessName,
+              businessAddress,
+              ...(logoDataUrl !== null ? { logoDataUrl } : {}),
+            };
+            updated[dt] = updatedTemplate;
+            saveBuiltInTemplate(dt, updatedTemplate);
+          }
+          return updated;
+        });
+
+        // Update custom templates
+        setCustomTemplates((prev) => {
+          const updated = prev.map((t) => ({
+            ...t,
+            businessName,
+            businessAddress,
+            ...(logoDataUrl !== null ? { logoDataUrl } : {}),
+          }));
+          saveCustomTemplates(updated);
+          return updated;
+        });
+
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    []
+  );
 
   return {
     builtInTemplates,
     customTemplates,
     updateBuiltInTemplate,
+    saveTemplate,
     createCustomTemplate,
     updateCustomTemplate,
     deleteCustomTemplate,
+    applyHeaderToAllTemplates,
   };
 }

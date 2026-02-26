@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
@@ -9,8 +9,17 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Upload, Image as ImageIcon, Plus, Trash2, Save } from 'lucide-react';
-import { DocumentType, FormData, Template, CustomTemplate, PositionPreset } from '../types/templates';
+import { Upload, Image as ImageIcon, Plus, Trash2, Save, CheckCircle, Layers } from 'lucide-react';
+import {
+  DocumentType,
+  FormData,
+  Template,
+  CustomTemplate,
+  PositionPreset,
+  BackgroundSettings,
+  WatermarkSettings,
+  ImageElementSettings,
+} from '../types/templates';
 import PreviewDialog from './PreviewDialog';
 import { fileToDataUrl } from '../lib/templateAssets/fileToDataUrl';
 import { toast } from 'sonner';
@@ -36,9 +45,11 @@ interface TemplateDesignerProps {
   builtInTemplates: Record<DocumentType, Template>;
   customTemplates: CustomTemplate[];
   onUpdateBuiltInTemplate: (docType: DocumentType, updates: Partial<Template>) => void;
+  onSaveBuiltInTemplate: (docType: DocumentType) => void;
   onCreateCustomTemplate: (name: string) => void;
   onUpdateCustomTemplate: (id: string, updates: Partial<CustomTemplate>) => void;
   onDeleteCustomTemplate: (id: string) => void;
+  onApplyHeaderToAll: (businessName: string, businessAddress: string, logoDataUrl: string | null) => boolean;
 }
 
 type ActiveTab = DocumentType | string;
@@ -48,16 +59,20 @@ export default function TemplateDesigner({
   builtInTemplates,
   customTemplates,
   onUpdateBuiltInTemplate,
+  onSaveBuiltInTemplate,
   onCreateCustomTemplate,
   onUpdateCustomTemplate,
   onDeleteCustomTemplate,
+  onApplyHeaderToAll,
 }: TemplateDesignerProps) {
   const [activeTab, setActiveTab] = useState<ActiveTab>('Loan Approval Letter');
   const [previewOpen, setPreviewOpen] = useState(false);
   const [newTemplateName, setNewTemplateName] = useState('');
   const [showNewTemplateDialog, setShowNewTemplateDialog] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
+  const [saveState, setSaveState] = useState<'idle' | 'saved'>('idle');
+  const [showApplyHeaderDialog, setShowApplyHeaderDialog] = useState(false);
+  const [applyHeaderSuccess, setApplyHeaderSuccess] = useState(false);
 
   const isBuiltIn = activeTab in builtInTemplates;
   const currentTemplate = isBuiltIn
@@ -75,21 +90,33 @@ export default function TemplateDesigner({
   };
 
   const handleSaveTemplate = () => {
-    setIsSaving(true);
-    try {
-      if (isBuiltIn) {
-        const name = `${activeTab} (Custom)`;
-        onCreateCustomTemplate(name);
-        toast.success('Template saved as custom template!', {
-          description: `"${name}" has been added to your custom templates.`,
-        });
-      } else {
-        toast.success('Template saved!', {
-          description: `"${(currentTemplate as CustomTemplate).name}" has been saved.`,
-        });
-      }
-    } finally {
-      setIsSaving(false);
+    if (isBuiltIn) {
+      onSaveBuiltInTemplate(activeTab as DocumentType);
+    } else {
+      // Custom templates auto-save on every update; just show confirmation
+    }
+    setSaveState('saved');
+    toast.success('Template saved!', {
+      description: isBuiltIn
+        ? `"${activeTab}" has been saved.`
+        : `"${(currentTemplate as CustomTemplate).name}" has been saved.`,
+    });
+    setTimeout(() => setSaveState('idle'), 2000);
+  };
+
+  const handleApplyHeaderToAll = () => {
+    const success = onApplyHeaderToAll(
+      currentTemplate.businessName || '',
+      currentTemplate.businessAddress || '',
+      currentTemplate.logoDataUrl
+    );
+    setShowApplyHeaderDialog(false);
+    if (success) {
+      setApplyHeaderSuccess(true);
+      toast.success('Header applied to all templates!');
+      setTimeout(() => setApplyHeaderSuccess(false), 3000);
+    } else {
+      toast.error('Failed to apply header to all templates.');
     }
   };
 
@@ -195,31 +222,66 @@ export default function TemplateDesigner({
 
   const builtInTabs: DocumentType[] = ['Loan Approval Letter', 'Loan GST Letter', 'Loan Section Letter'];
 
-  // Inline preview of signature/seal two-column layout
   const hasSignature = !!(currentTemplate.signature?.dataUrl);
   const hasSeal = !!(currentTemplate.seal?.dataUrl);
-  const showSignatureRow = hasSignature || hasSeal;
-
-  // Inline preview of header
   const hasBusinessName = !!(currentTemplate.businessName?.trim());
   const hasBusinessAddress = !!(currentTemplate.businessAddress?.trim());
   const hasLogo = !!currentTemplate.logoDataUrl;
   const showHeader = hasBusinessName || hasBusinessAddress || hasLogo;
 
+  const positionOptions: PositionPreset[] = [
+    'top-left', 'top-right', 'bottom-left', 'bottom-right', 'center',
+  ];
+
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-2">
             <div>
               <CardTitle>Advanced Template Designer</CardTitle>
               <CardDescription>Customize templates with background, watermark, seal, and signature</CardDescription>
             </div>
-            <Button onClick={() => setShowNewTemplateDialog(true)} size="sm">
-              <Plus className="mr-2 h-4 w-4" />
-              New Template
-            </Button>
+            <div className="flex items-center gap-2 flex-wrap">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowApplyHeaderDialog(true)}
+                className="flex items-center gap-1.5"
+              >
+                <Layers className="h-4 w-4" />
+                Apply Header to All
+              </Button>
+              <Button
+                variant={saveState === 'saved' ? 'secondary' : 'default'}
+                size="sm"
+                onClick={handleSaveTemplate}
+                className="flex items-center gap-1.5 min-w-[110px]"
+              >
+                {saveState === 'saved' ? (
+                  <>
+                    <CheckCircle className="h-4 w-4" />
+                    Saved!
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4" />
+                    Save Template
+                  </>
+                )}
+              </Button>
+              <Button onClick={() => setShowNewTemplateDialog(true)} size="sm" variant="outline">
+                <Plus className="mr-2 h-4 w-4" />
+                New Template
+              </Button>
+            </div>
           </div>
+          {applyHeaderSuccess && (
+            <div className="flex items-center gap-1.5 text-sm text-green-600 font-medium mt-1">
+              <CheckCircle className="h-4 w-4" />
+              Header applied to all templates!
+            </div>
+          )}
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as ActiveTab)}>
@@ -262,17 +324,25 @@ export default function TemplateDesigner({
 
               {/* Two-column layout: Settings on left, Preview on right */}
               <div className="flex gap-6">
-                {/* Left side: Save button + Settings */}
+                {/* Left side: Settings */}
                 <div className="flex flex-col gap-3 w-80 shrink-0">
-                  {/* Save Template Button */}
+                  {/* Save Template Button (also at bottom for accessibility) */}
                   <Button
+                    variant={saveState === 'saved' ? 'secondary' : 'default'}
                     onClick={handleSaveTemplate}
-                    disabled={isSaving}
                     className="w-full gap-2"
-                    variant="default"
                   >
-                    <Save className="h-4 w-4" />
-                    {isSaving ? 'Saving…' : isBuiltIn ? 'Save as Custom Template' : 'Save Template'}
+                    {saveState === 'saved' ? (
+                      <>
+                        <CheckCircle className="h-4 w-4" />
+                        Saved!
+                      </>
+                    ) : (
+                      <>
+                        <Save className="h-4 w-4" />
+                        Save Template
+                      </>
+                    )}
                   </Button>
 
                   {/* Settings Accordion */}
@@ -434,19 +504,19 @@ export default function TemplateDesigner({
                             </div>
 
                             <div className="space-y-2">
-                              <Label>Fit</Label>
+                              <Label htmlFor="bg-fit">Fit</Label>
                               <Select
                                 value={currentTemplate.background.fit}
                                 onValueChange={(value) =>
                                   handleTemplateChange({
                                     background: {
                                       ...currentTemplate.background!,
-                                      fit: value as 'cover' | 'contain' | 'fill',
+                                      fit: value as BackgroundSettings['fit'],
                                     },
                                   })
                                 }
                               >
-                                <SelectTrigger>
+                                <SelectTrigger id="bg-fit">
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -473,11 +543,11 @@ export default function TemplateDesigner({
                             value={currentTemplate.watermark?.text || currentTemplate.watermarkText || ''}
                             onChange={(e) =>
                               handleTemplateChange({
+                                watermarkText: e.target.value,
                                 watermark: {
                                   ...currentTemplate.watermark!,
                                   text: e.target.value,
                                 },
-                                watermarkText: e.target.value,
                               })
                             }
                           />
@@ -531,7 +601,7 @@ export default function TemplateDesigner({
                             </div>
 
                             <div className="space-y-2">
-                              <Label>Position</Label>
+                              <Label htmlFor="watermark-position">Position</Label>
                               <Select
                                 value={currentTemplate.watermark.position}
                                 onValueChange={(value) =>
@@ -543,15 +613,15 @@ export default function TemplateDesigner({
                                   })
                                 }
                               >
-                                <SelectTrigger>
+                                <SelectTrigger id="watermark-position">
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="center">Center</SelectItem>
-                                  <SelectItem value="top-left">Top Left</SelectItem>
-                                  <SelectItem value="top-right">Top Right</SelectItem>
-                                  <SelectItem value="bottom-left">Bottom Left</SelectItem>
-                                  <SelectItem value="bottom-right">Bottom Right</SelectItem>
+                                  {positionOptions.map((p) => (
+                                    <SelectItem key={p} value={p}>
+                                      {p}
+                                    </SelectItem>
+                                  ))}
                                 </SelectContent>
                               </Select>
                             </div>
@@ -618,7 +688,7 @@ export default function TemplateDesigner({
                               <Slider
                                 min={40}
                                 max={200}
-                                step={10}
+                                step={4}
                                 value={[currentTemplate.seal.size]}
                                 onValueChange={([value]) =>
                                   handleTemplateChange({
@@ -629,7 +699,7 @@ export default function TemplateDesigner({
                             </div>
 
                             <div className="space-y-2">
-                              <Label>Position</Label>
+                              <Label htmlFor="seal-position">Position</Label>
                               <Select
                                 value={currentTemplate.seal.position}
                                 onValueChange={(value) =>
@@ -641,15 +711,15 @@ export default function TemplateDesigner({
                                   })
                                 }
                               >
-                                <SelectTrigger>
+                                <SelectTrigger id="seal-position">
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="bottom-left">Bottom Left</SelectItem>
-                                  <SelectItem value="bottom-right">Bottom Right</SelectItem>
-                                  <SelectItem value="top-left">Top Left</SelectItem>
-                                  <SelectItem value="top-right">Top Right</SelectItem>
-                                  <SelectItem value="center">Center</SelectItem>
+                                  {positionOptions.map((p) => (
+                                    <SelectItem key={p} value={p}>
+                                      {p}
+                                    </SelectItem>
+                                  ))}
                                 </SelectContent>
                               </Select>
                             </div>
@@ -714,9 +784,9 @@ export default function TemplateDesigner({
                             <div className="space-y-2">
                               <Label>Size: {currentTemplate.signature.size}px</Label>
                               <Slider
-                                min={40}
-                                max={200}
-                                step={10}
+                                min={60}
+                                max={300}
+                                step={4}
                                 value={[currentTemplate.signature.size]}
                                 onValueChange={([value]) =>
                                   handleTemplateChange({
@@ -727,7 +797,7 @@ export default function TemplateDesigner({
                             </div>
 
                             <div className="space-y-2">
-                              <Label>Position</Label>
+                              <Label htmlFor="sig-position">Position</Label>
                               <Select
                                 value={currentTemplate.signature.position}
                                 onValueChange={(value) =>
@@ -739,15 +809,15 @@ export default function TemplateDesigner({
                                   })
                                 }
                               >
-                                <SelectTrigger>
+                                <SelectTrigger id="sig-position">
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="bottom-right">Bottom Right</SelectItem>
-                                  <SelectItem value="bottom-left">Bottom Left</SelectItem>
-                                  <SelectItem value="top-left">Top Left</SelectItem>
-                                  <SelectItem value="top-right">Top Right</SelectItem>
-                                  <SelectItem value="center">Center</SelectItem>
+                                  {positionOptions.map((p) => (
+                                    <SelectItem key={p} value={p}>
+                                      {p}
+                                    </SelectItem>
+                                  ))}
                                 </SelectContent>
                               </Select>
                             </div>
@@ -764,14 +834,14 @@ export default function TemplateDesigner({
                           <Label htmlFor="template-headline">Headline</Label>
                           <Input
                             id="template-headline"
-                            placeholder="Document headline"
+                            placeholder="Document title"
                             value={currentTemplate.headline || ''}
                             onChange={(e) => handleTemplateChange({ headline: e.target.value })}
                           />
                         </div>
 
                         <div className="space-y-2">
-                          <Label>Placeholders</Label>
+                          <Label>Insert Placeholder</Label>
                           <div className="flex flex-wrap gap-1">
                             {placeholders.map((p) => (
                               <Button
@@ -802,11 +872,11 @@ export default function TemplateDesigner({
                   </Accordion>
                 </div>
 
-                {/* Right side: Live A4 Preview */}
+                {/* Right side: Live Preview */}
                 <div className="flex-1 min-w-0">
                   <div className="sticky top-4">
                     <div className="mb-2 flex items-center justify-between">
-                      <p className="text-sm font-medium text-muted-foreground">Live Preview</p>
+                      <Label className="text-sm font-medium">Live Preview</Label>
                       <Button
                         variant="outline"
                         size="sm"
@@ -816,92 +886,72 @@ export default function TemplateDesigner({
                       </Button>
                     </div>
 
-                    {/* Scaled A4 preview */}
-                    <div
-                      className="relative overflow-hidden rounded-lg border border-border bg-white shadow-sm"
-                      style={{
-                        width: '100%',
-                        paddingBottom: '141.4%', // A4 aspect ratio
-                        position: 'relative',
-                      }}
-                    >
-                      <div
-                        className="absolute inset-0 overflow-hidden"
-                        style={{ fontSize: '8px' }}
-                      >
-                        {/* Header */}
-                        {showHeader && (
-                          <div className="flex items-center justify-between border-b border-gray-200 px-4 py-2">
-                            <div className="flex-1 min-w-0 pr-2">
-                              {hasBusinessName && (
-                                <div className="font-bold text-gray-900 truncate" style={{ fontSize: '10px' }}>
-                                  {currentTemplate.businessName}
-                                </div>
-                              )}
-                              {hasBusinessAddress && (
-                                <div className="text-gray-500 truncate" style={{ fontSize: '7px' }}>
-                                  {currentTemplate.businessAddress}
-                                </div>
-                              )}
-                            </div>
-                            {hasLogo && (
+                    {/* Mini preview */}
+                    <div className="rounded-lg border border-border bg-white overflow-hidden text-[10px] leading-tight shadow-sm">
+                      {showHeader && (
+                        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
+                          <div className="flex flex-col min-w-0 flex-1 pr-2">
+                            {hasBusinessName && (
+                              <span className="font-bold text-gray-900 truncate">
+                                {currentTemplate.businessName}
+                              </span>
+                            )}
+                            {hasBusinessAddress && (
+                              <span className="text-gray-500 truncate">
+                                {currentTemplate.businessAddress}
+                              </span>
+                            )}
+                          </div>
+                          {hasLogo && (
+                            <img
+                              src={currentTemplate.logoDataUrl!}
+                              alt="Logo"
+                              className="h-8 max-w-[60px] object-contain flex-shrink-0"
+                            />
+                          )}
+                        </div>
+                      )}
+                      <div className="p-4">
+                        <div className="font-bold text-center text-gray-900 mb-2">
+                          {currentTemplate.headline}
+                        </div>
+                        <div className="text-gray-700 whitespace-pre-wrap line-clamp-6">
+                          {currentTemplate.body}
+                        </div>
+                      </div>
+                      {(hasSignature || hasSeal) && (
+                        <div className="flex items-end justify-between gap-4 px-4 pb-3">
+                          <div className="flex-1 flex flex-col items-center">
+                            {hasSignature && (
                               <img
-                                src={currentTemplate.logoDataUrl!}
-                                alt="Logo"
-                                className="h-6 w-auto object-contain flex-shrink-0"
+                                src={currentTemplate.signature!.dataUrl!}
+                                alt="Signature"
+                                className="max-h-8 object-contain mb-1"
                               />
                             )}
+                            <div className="w-full border-t border-gray-300 pt-0.5 text-center text-gray-500">
+                              Signature
+                            </div>
                           </div>
-                        )}
-
-                        {/* Content */}
-                        <div className="px-4 py-2">
-                          <div className="text-center font-bold text-gray-900 mb-1" style={{ fontSize: '9px' }}>
-                            {currentTemplate.headline}
-                          </div>
-                          <div className="text-gray-700 whitespace-pre-wrap leading-tight" style={{ fontSize: '6px' }}>
-                            {currentTemplate.body?.substring(0, 300)}
-                            {(currentTemplate.body?.length || 0) > 300 ? '…' : ''}
+                          <div className="flex-1 flex flex-col items-center">
+                            {hasSeal && (
+                              <img
+                                src={currentTemplate.seal!.dataUrl!}
+                                alt="Seal"
+                                className="max-h-8 object-contain mb-1"
+                              />
+                            )}
+                            <div className="w-full border-t border-gray-300 pt-0.5 text-center text-gray-500">
+                              Stamp
+                            </div>
                           </div>
                         </div>
-
-                        {/* Signature & Seal row */}
-                        {showSignatureRow && (
-                          <div className="absolute bottom-8 left-4 right-4 flex items-end justify-between">
-                            {hasSignature && (
-                              <div className="flex flex-col items-center">
-                                <img
-                                  src={currentTemplate.signature!.dataUrl!}
-                                  alt="Signature"
-                                  className="h-4 w-auto object-contain"
-                                />
-                                <div className="border-t border-gray-300 text-gray-500 text-center" style={{ fontSize: '5px' }}>
-                                  Authorized Signature
-                                </div>
-                              </div>
-                            )}
-                            {hasSeal && (
-                              <div className="flex flex-col items-center">
-                                <img
-                                  src={currentTemplate.seal!.dataUrl!}
-                                  alt="Seal"
-                                  className="h-4 w-auto object-contain"
-                                />
-                                <div className="border-t border-gray-300 text-gray-500 text-center" style={{ fontSize: '5px' }}>
-                                  Official Stamp
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        )}
-
-                        {/* Footer */}
-                        {currentTemplate.footerText && (
-                          <div className="absolute bottom-0 left-0 right-0 border-t border-gray-200 px-4 py-1 text-center text-gray-500" style={{ fontSize: '5px' }}>
-                            {currentTemplate.footerText}
-                          </div>
-                        )}
-                      </div>
+                      )}
+                      {currentTemplate.footerText && (
+                        <div className="border-t border-gray-200 px-4 py-2 text-center text-gray-500">
+                          {currentTemplate.footerText}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -910,15 +960,6 @@ export default function TemplateDesigner({
           </Tabs>
         </CardContent>
       </Card>
-
-      {/* Preview Dialog */}
-      <PreviewDialog
-        open={previewOpen}
-        onOpenChange={setPreviewOpen}
-        template={currentTemplate}
-        formData={formData}
-        documentType={activeTab}
-      />
 
       {/* New Template Dialog */}
       <AlertDialog open={showNewTemplateDialog} onOpenChange={setShowNewTemplateDialog}>
@@ -949,12 +990,15 @@ export default function TemplateDesigner({
       </AlertDialog>
 
       {/* Delete Confirm Dialog */}
-      <AlertDialog open={!!deleteConfirmId} onOpenChange={(open) => !open && setDeleteConfirmId(null)}>
+      <AlertDialog
+        open={!!deleteConfirmId}
+        onOpenChange={(open) => !open && setDeleteConfirmId(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Template</AlertDialogTitle>
+            <AlertDialogTitle>Delete Template?</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this template? This action cannot be undone.
+              This action cannot be undone. The template will be permanently deleted.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -968,6 +1012,33 @@ export default function TemplateDesigner({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Apply Header to All Dialog */}
+      <AlertDialog open={showApplyHeaderDialog} onOpenChange={setShowApplyHeaderDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Apply Header to All Templates?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will overwrite the <strong>business name</strong>, <strong>business address</strong>, and <strong>logo</strong> in <strong>all templates</strong> (built-in and custom) with the current header settings from "{isBuiltIn ? activeTab : (currentTemplate as CustomTemplate).name}". This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleApplyHeaderToAll}>
+              Apply to All
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Full Preview Dialog */}
+      <PreviewDialog
+        open={previewOpen}
+        onOpenChange={setPreviewOpen}
+        template={currentTemplate}
+        formData={formData}
+        documentType={isBuiltIn ? activeTab : (currentTemplate as CustomTemplate).name}
+      />
     </div>
   );
 }

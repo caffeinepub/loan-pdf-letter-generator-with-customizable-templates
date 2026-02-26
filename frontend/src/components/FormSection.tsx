@@ -91,10 +91,10 @@ export default function FormSection({ formData, onFormChange, onDownload, isGene
     try {
       const pdfBlob = await generatePdf(docType, formData);
       const filename = `${typeof docType === 'string' ? docType.toLowerCase().replace(/\s+/g, '-') : 'document'}.pdf`;
+      // Download first, then share
+      downloadFile(pdfBlob, filename);
       const shared = await sharePdf(pdfBlob, filename);
       if (!shared) {
-        // Fallback to download
-        downloadFile(pdfBlob, filename);
         toast.success('Document downloaded!', {
           description: 'Sharing not supported on this device — file downloaded instead.',
         });

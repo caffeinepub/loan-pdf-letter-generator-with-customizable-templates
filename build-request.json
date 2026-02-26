@@ -1,59 +1,79 @@
 {
   "kind": "build_request",
-  "title": "Remove QR option and add Share PDF on mobile view",
+  "title": "Add Save Button to Template Editor, Apply Header to All Templates, and Share After Download",
   "projectName": "Loan Document Generator",
   "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Remove all QR code-related UI options from the application. This includes: removing the QR code tab/section from TemplateDesigner.tsx, removing any QR code toggle or configuration fields from FormSection.tsx, removing the QR code overlay rendering from TemplateOverlay.tsx and renderDocumentToCanvas.ts, and removing the QR code script tag from index.html. The QR code should no longer appear in previews, rendered PDFs, or any settings panel.",
+      "text": "Add a visible 'Save' button inside the template editor (TemplateDesigner component) that explicitly saves the current template configuration to localStorage. The button should provide visual feedback (e.g., a brief 'Saved!' confirmation state) after successfully saving.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-6"
+          "msg-3"
         ],
         "quotes": [
-          "remove Qr option"
+          "want save button in in teplete editor"
         ]
       },
       "acceptanceCriteria": [
-        "No QR code tab, toggle, or configuration section exists in the TemplateDesigner UI",
-        "No QR code is rendered in document previews or generated PDFs",
-        "The QRCode.js CDN script tag is removed from index.html",
-        "The qrPayload.ts and renderQr.ts utilities are no longer called in the render pipeline",
-        "No QR-related fields appear in FormSection or any settings dialog"
+        "A 'Save' button is visibly present within the template editor UI.",
+        "Clicking the Save button persists the current template settings to localStorage.",
+        "The button shows a brief confirmation state (e.g., label changes to 'Saved!') after saving, then reverts to 'Save'.",
+        "The Save button is accessible across all template tabs in the editor."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Add a 'Share PDF' button visible only on mobile viewports (screens narrower than 768px) in the document download/action area within FormSection.tsx. When tapped, this button should generate the PDF blob and use the Web Share API (navigator.share) to share the file if available, with a fallback to triggering a standard file download if the Share API is not supported.",
+      "text": "Add an 'Apply Header to All Templates' action in the template editor that copies the current template's header settings (business name, address, logo) to all other templates stored in localStorage. Display a confirmation prompt before applying to prevent accidental overwrites.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-6"
+          "msg-3"
         ],
         "quotes": [
-          "ad share pdf on mobile view"
+          "aply header to all templete"
         ]
       },
       "acceptanceCriteria": [
-        "A 'Share PDF' button is visible on mobile viewports (< 768px) and hidden on desktop",
-        "Tapping the button invokes navigator.share with the generated PDF file on supported mobile browsers",
-        "On browsers where navigator.share is not available, the button falls back to a standard file download",
-        "The button is placed alongside the existing download buttons in FormSection",
-        "The button is disabled or shows a loading state while the PDF is being generated"
+        "An 'Apply Header to All Templates' button or action is present in the template editor.",
+        "Clicking the action shows a confirmation dialog warning the user that it will overwrite header settings in all templates.",
+        "Upon confirmation, the header settings (business name, address, logo image) from the currently active template are copied to all other templates in localStorage.",
+        "A success message is shown after the operation completes.",
+        "All templates reflect the updated header settings immediately without requiring a page reload."
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "text": "After a document is successfully downloaded (PNG/PDF), automatically trigger the share flow using the Web Share API (falling back to a direct download prompt if unsupported). The Share button should be surfaced in the download confirmation UI or as a follow-up action after download completes in FormSection.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-3"
+        ],
+        "quotes": [
+          "share file after download01"
+        ]
+      },
+      "acceptanceCriteria": [
+        "After a document download completes, a 'Share' option is presented to the user.",
+        "The share action uses the Web Share API (`navigator.share`) with the downloaded file as the shared content.",
+        "If the Web Share API is unavailable, the share button is either hidden or falls back to re-triggering the file download.",
+        "The share flow works consistently with the existing `sharePdf` utility in `frontend/src/lib/shareUtils.ts`.",
+        "The share action is accessible on both mobile and desktop where supported."
       ]
     }
   ],
   "constraints": [
-    "Do not modify files under frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, or frontend/src/components/ui",
-    "Do not remove or break existing PDF generation and download functionality"
+    "Do not modify files under frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, or frontend/src/components/ui.",
+    "All template persistence must continue to use localStorage via the existing useTemplates hook pattern.",
+    "The existing sharePdf utility in frontend/src/lib/shareUtils.ts must be reused, not replaced."
   ],
   "nonGoals": [
-    "Adding QR code back in any form or making it optional/toggleable",
-    "Share PDF button on desktop viewports",
-    "Backend changes",
-    "Changes to template structure or saved template data"
+    "Backend persistence of template data — all template storage remains client-side in localStorage.",
+    "Redesigning or restructuring the existing template editor tabs or layout beyond adding the requested buttons.",
+    "Adding new document types or form fields.",
+    "Real-time collaboration or multi-user template sharing."
   ],
   "imageRequirements": {
     "required": [],

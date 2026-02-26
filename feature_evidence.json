@@ -2,16 +2,10 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-remove-all-qr-code-related-ui-options-from-the-application-this-includes-removing-the-qr-code-tab-section-from-templatedesigner-tsx-removing-any-qr-code-toggle-or-configuration-fields-from-formsection-tsx-removing-the-qr-code-overlay-rendering-from-templateoverlay-tsx-and-renderdocumenttocanvas-ts-and-removing-the-qr-code-script-tag-from-index-html-the-qr-code-should-no-longer-appear-in-previews-rendered-pdfs-or-any-settings-panel",
-      "featureTitle": "Remove all QR code-related UI options from the application. This includes: removing the QR code tab/section from TemplateDesigner.tsx, removing any QR code toggle or configuration fields from FormSection.tsx, removing the QR code overlay rendering from TemplateOverlay.tsx and renderDocumentToCanvas.ts, and removing the QR code script tag from index.html. The QR code should no longer appear in previews, rendered PDFs, or any settings panel.",
+      "featureId": "feature-add-a-visible-save-button-inside-the-template-editor-templatedesigner-component-that-explicitly-saves-the-current-template-configuration-to-localstorage-the-button-should-provide-visual-feedback-e-g-a-brief-saved-confirmation-state-after-successfully-saving",
+      "featureTitle": "Add a visible 'Save' button inside the template editor (TemplateDesigner component) that explicitly saves the current template configuration to localStorage. The button should provide visual feedback (e.g., a brief 'Saved!' confirmation state) after successfully saving.",
       "files": [
-        "frontend/index.html",
-        "frontend/src/components/FormSection.tsx",
-        "frontend/src/components/PreviewDialog.tsx",
-        "frontend/src/components/TemplateDesigner.tsx",
-        "frontend/src/components/preview/TemplateOverlay.tsx",
-        "frontend/src/lib/pdf/renderDocumentToCanvas.ts",
-        "frontend/src/types/templates.ts"
+        "frontend/src/components/TemplateDesigner.tsx"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -30,11 +24,11 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-add-a-share-pdf-button-visible-only-on-mobile-viewports-screens-narrower-than-768px-in-the-document-download-action-area-within-formsection-tsx-when-tapped-this-button-should-generate-the-pdf-blob-and-use-the-web-share-api-navigator-share-to-share-the-file-if-available-with-a-fallback-to-triggering-a-standard-file-download-if-the-share-api-is-not-supported",
-      "featureTitle": "Add a 'Share PDF' button visible only on mobile viewports (screens narrower than 768px) in the document download/action area within FormSection.tsx. When tapped, this button should generate the PDF blob and use the Web Share API (navigator.share) to share the file if available, with a fallback to triggering a standard file download if the Share API is not supported.",
+      "featureId": "feature-add-an-apply-header-to-all-templates-action-in-the-template-editor-that-copies-the-current-template-s-header-settings-business-name-address-logo-to-all-other-templates-stored-in-localstorage-display-a-confirmation-prompt-before-applying-to-prevent-accidental-overwrites",
+      "featureTitle": "Add an 'Apply Header to All Templates' action in the template editor that copies the current template's header settings (business name, address, logo) to all other templates stored in localStorage. Display a confirmation prompt before applying to prevent accidental overwrites.",
       "files": [
-        "frontend/src/components/FormSection.tsx",
-        "frontend/src/lib/shareUtils.ts"
+        "frontend/src/components/TemplateDesigner.tsx",
+        "frontend/src/hooks/useTemplates.ts"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -49,6 +43,29 @@
       ],
       "testIds": [
         "REQ-2"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-after-a-document-is-successfully-downloaded-png-pdf-automatically-trigger-the-share-flow-using-the-web-share-api-falling-back-to-a-direct-download-prompt-if-unsupported-the-share-button-should-be-surfaced-in-the-download-confirmation-ui-or-as-a-follow-up-action-after-download-completes-in-formsection",
+      "featureTitle": "After a document is successfully downloaded (PNG/PDF), automatically trigger the share flow using the Web Share API (falling back to a direct download prompt if unsupported). The Share button should be surfaced in the download confirmation UI or as a follow-up action after download completes in FormSection.",
+      "files": [
+        "frontend/src/App.tsx",
+        "frontend/src/components/FormSection.tsx"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "qr-code@1.0.0",
+        "camera@1.0.0"
+      ],
+      "testIds": [
+        "REQ-3"
       ],
       "confidence": "high"
     }

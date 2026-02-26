@@ -1,73 +1,65 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-25T19:37:13.582Z",
+  "generatedAt": "2026-02-26T03:49:51.700Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 2,
-    "implemented": 2,
+    "total": 3,
+    "implemented": 3,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Remove all QR code-related UI options from the application. This includes: removing the QR code tab/section from TemplateDesigner.tsx, removing any QR code toggle or configuration fields from FormSection.tsx, removing the QR code overlay rendering from TemplateOverlay.tsx and renderDocumentToCanvas.ts, and removing the QR code script tag from index.html. The QR code should no longer appear in previews, rendered PDFs, or any settings panel.",
+        "summary": "Add a visible 'Save' button inside the template editor (TemplateDesigner component) that explicitly saves the current template configuration to localStorage. The button should provide visual feedback (e.g., a brief 'Saved!' confirmation state) after successfully saving.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/index.html",
-          "frontend/src/components/TemplateDesigner.tsx",
-          "frontend/src/components/FormSection.tsx",
-          "frontend/src/components/preview/TemplateOverlay.tsx",
-          "frontend/src/lib/pdf/renderDocumentToCanvas.ts",
-          "frontend/src/components/PreviewDialog.tsx",
-          "frontend/src/types/templates.ts"
+          "frontend/src/components/TemplateDesigner.tsx"
         ],
         "matchedFiles": [
-          "frontend/index.html",
-          "frontend/src/components/TemplateDesigner.tsx",
-          "frontend/src/components/FormSection.tsx",
-          "frontend/src/components/preview/TemplateOverlay.tsx",
-          "frontend/src/lib/pdf/renderDocumentToCanvas.ts",
-          "frontend/src/components/PreviewDialog.tsx",
-          "frontend/src/types/templates.ts"
+          "frontend/src/components/TemplateDesigner.tsx"
         ]
       },
       {
         "id": "REQ-2",
-        "summary": "Add a 'Share PDF' button visible only on mobile viewports (screens narrower than 768px) in the document download/action area within FormSection.tsx. When tapped, this button should generate the PDF blob and use the Web Share API (navigator.share) to share the file if available, with a fallback to triggering a standard file download if the Share API is not supported.",
+        "summary": "Add an 'Apply Header to All Templates' action in the template editor that copies the current template's header settings (business name, address, logo) to all other templates stored in localStorage. Display a confirmation prompt before applying to prevent accidental overwrites.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/FormSection.tsx",
-          "frontend/src/lib/shareUtils.ts"
+          "frontend/src/hooks/useTemplates.ts",
+          "frontend/src/components/TemplateDesigner.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/FormSection.tsx",
-          "frontend/src/lib/shareUtils.ts"
+          "frontend/src/hooks/useTemplates.ts",
+          "frontend/src/components/TemplateDesigner.tsx"
+        ]
+      },
+      {
+        "id": "REQ-3",
+        "summary": "After a document is successfully downloaded (PNG/PDF), automatically trigger the share flow using the Web Share API (falling back to a direct download prompt if unsupported). The Share button should be surfaced in the download confirmation UI or as a follow-up action after download completes in FormSection.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/App.tsx",
+          "frontend/src/components/FormSection.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/App.tsx",
+          "frontend/src/components/FormSection.tsx"
         ]
       }
     ]
   },
   "changedFiles": [
     "build-request.json",
+    "build-template/README.md",
+    "caffeine.lock.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/index.html",
+    "frontend/src/App.tsx",
     "frontend/src/components/FormSection.tsx",
-    "frontend/src/components/PreviewDialog.tsx",
     "frontend/src/components/TemplateDesigner.tsx",
-    "frontend/src/components/preview/TemplateOverlay.tsx",
     "frontend/src/hooks/useTemplates.ts",
-    "frontend/src/lib/pdf/generatePdf.ts",
-    "frontend/src/lib/pdf/renderDocumentToCanvas.ts",
-    "frontend/src/lib/qr/qrPayload.ts",
-    "frontend/src/lib/qr/renderQr.ts",
-    "frontend/src/lib/shareUtils.ts",
-    "frontend/src/lib/templateAssets/positions.ts",
-    "frontend/src/lib/templates/getTemplate.ts",
-    "frontend/src/lib/templates/renderTemplate.ts",
-    "frontend/src/types/templates.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

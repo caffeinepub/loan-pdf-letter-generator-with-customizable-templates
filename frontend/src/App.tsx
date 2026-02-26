@@ -4,11 +4,11 @@ import { toast } from 'sonner';
 import FormSection from './components/FormSection';
 import TemplateDesigner from './components/TemplateDesigner';
 import { DocumentType, FormData } from './types/form';
-import { Template, CustomTemplate } from './types/templates';
 import { validateForm } from './lib/validation';
 import { generatePdf } from './lib/pdf/generatePdf';
 import { downloadFile } from './lib/download';
-import { FileText, Settings2 } from 'lucide-react';
+import { sharePdf } from './lib/shareUtils';
+import { FileText, Settings2, Heart } from 'lucide-react';
 import { useTemplates } from './hooks/useTemplates';
 import { Button } from '@/components/ui/button';
 import {
@@ -39,9 +39,11 @@ function App() {
     builtInTemplates,
     customTemplates,
     updateBuiltInTemplate,
+    saveTemplate,
     createCustomTemplate,
     updateCustomTemplate,
     deleteCustomTemplate,
+    applyHeaderToAllTemplates,
   } = useTemplates();
 
   const handleFormChange = (data: FormData) => {
@@ -68,6 +70,9 @@ function App() {
       toast.success('Document downloaded successfully!', {
         description: `Your document has been generated.`,
       });
+
+      // After download, attempt to share via Web Share API
+      await sharePdf(pdfBlob, filename);
     } catch (error) {
       console.error('PDF generation error:', error);
       toast.error('Failed to generate document', {
@@ -130,7 +135,7 @@ function App() {
               Advanced Template Designer
             </DialogTitle>
             <DialogDescription>
-              Customize templates with logo, background, watermark, seal, signature, and QR code.
+              Customize templates with logo, background, watermark, seal, and signature.
             </DialogDescription>
           </DialogHeader>
           <div className="px-6 pb-6">
@@ -139,9 +144,11 @@ function App() {
               builtInTemplates={builtInTemplates}
               customTemplates={customTemplates}
               onUpdateBuiltInTemplate={updateBuiltInTemplate}
+              onSaveBuiltInTemplate={saveTemplate}
               onCreateCustomTemplate={createCustomTemplate}
               onUpdateCustomTemplate={updateCustomTemplate}
               onDeleteCustomTemplate={deleteCustomTemplate}
+              onApplyHeaderToAll={applyHeaderToAllTemplates}
             />
           </div>
         </DialogContent>
@@ -150,8 +157,10 @@ function App() {
       {/* Footer */}
       <footer className="mt-16 border-t border-border bg-card">
         <div className="container mx-auto px-4 py-6">
-          <p className="text-center text-sm text-muted-foreground">
-            © {new Date().getFullYear()} Built with ❤️ using{' '}
+          <p className="text-center text-sm text-muted-foreground flex items-center justify-center gap-1 flex-wrap">
+            © {new Date().getFullYear()} Built with{' '}
+            <Heart className="h-3.5 w-3.5 text-primary fill-primary" />{' '}
+            using{' '}
             <a
               href={`https://caffeine.ai/?utm_source=Caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(
                 typeof window !== 'undefined' ? window.location.hostname : 'loan-document-generator'
