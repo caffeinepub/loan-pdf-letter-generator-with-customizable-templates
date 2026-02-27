@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
 import { toast } from 'sonner';
 import FormSection from './components/FormSection';
@@ -19,16 +20,27 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 
-function App() {
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: false,
+      throwOnError: false,
+    },
+  },
+});
+
+function AppContent() {
   const [formData, setFormData] = useState<FormData>({
     name: '',
-    mobile: '',
-    address: '',
-    panNumber: '',
+    loanType: '',
     loanAmount: '',
     interestRate: '',
     year: '',
     monthlyEmi: '0',
+    processingCharge: '',
+    bankAccountNumber: '',
+    ifscCode: '',
+    upiId: '',
     customFields: [],
   });
 
@@ -38,12 +50,17 @@ function App() {
   const {
     builtInTemplates,
     customTemplates,
+    isSaving,
+    saveError,
+    clearSaveError,
     updateBuiltInTemplate,
     saveTemplate,
     createCustomTemplate,
     updateCustomTemplate,
     deleteCustomTemplate,
     applyHeaderToAllTemplates,
+    saveCustomTemplateToBackend,
+    getTemplateById,
   } = useTemplates();
 
   const handleFormChange = (data: FormData) => {
@@ -63,15 +80,14 @@ function App() {
     setIsGenerating(docType);
 
     try {
-      const pdfBlob = await generatePdf(docType, formData);
-      const filename = `${typeof docType === 'string' ? docType.toLowerCase().replace(/\s+/g, '-') : 'document'}.pdf`;
+      const pdfBlob = await generatePdf(docType, formData, undefined, getTemplateById);
+      const filename = `${typeof docType === 'string' ? docType.toLowerCase().replace(/\s+/g, '-') : 'document'}.png`;
       downloadFile(pdfBlob, filename);
 
       toast.success('Document downloaded successfully!', {
-        description: `Your document has been generated.`,
+        description: 'Your document has been generated.',
       });
 
-      // After download, attempt to share via Web Share API
       await sharePdf(pdfBlob, filename);
     } catch (error) {
       console.error('PDF generation error:', error);
@@ -97,7 +113,9 @@ function App() {
               </div>
               <div>
                 <h1 className="text-2xl font-bold tracking-tight">Loan Document Generator</h1>
-                <p className="text-sm text-muted-foreground">Create professional loan letters with custom templates</p>
+                <p className="text-sm text-muted-foreground">
+                  Create professional loan letters with custom templates
+                </p>
               </div>
             </div>
 
@@ -135,7 +153,8 @@ function App() {
               Advanced Template Designer
             </DialogTitle>
             <DialogDescription>
-              Customize templates with logo, background, watermark, seal, and signature.
+              Customize templates with watermark, seal, and signature.
+              Header and footer are fixed to Bajaj Finserv branding.
             </DialogDescription>
           </DialogHeader>
           <div className="px-6 pb-6">
@@ -143,39 +162,46 @@ function App() {
               formData={formData}
               builtInTemplates={builtInTemplates}
               customTemplates={customTemplates}
+              isSaving={isSaving}
+              saveError={saveError}
+              onClearSaveError={clearSaveError}
               onUpdateBuiltInTemplate={updateBuiltInTemplate}
               onSaveBuiltInTemplate={saveTemplate}
               onCreateCustomTemplate={createCustomTemplate}
               onUpdateCustomTemplate={updateCustomTemplate}
               onDeleteCustomTemplate={deleteCustomTemplate}
               onApplyHeaderToAll={applyHeaderToAllTemplates}
+              onSaveToBackend={saveCustomTemplateToBackend}
             />
           </div>
         </DialogContent>
       </Dialog>
 
       {/* Footer */}
-      <footer className="mt-16 border-t border-border bg-card">
-        <div className="container mx-auto px-4 py-6">
-          <p className="text-center text-sm text-muted-foreground flex items-center justify-center gap-1 flex-wrap">
-            © {new Date().getFullYear()} Built with{' '}
-            <Heart className="h-3.5 w-3.5 text-primary fill-primary" />{' '}
-            using{' '}
+      <footer className="border-t border-border bg-card mt-12">
+        <div className="container mx-auto px-4 py-6 text-center text-sm text-muted-foreground">
+          <p className="flex items-center justify-center gap-1">
+            Built with <Heart className="h-4 w-4 text-primary fill-primary" /> using{' '}
             <a
-              href={`https://caffeine.ai/?utm_source=Caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(
-                typeof window !== 'undefined' ? window.location.hostname : 'loan-document-generator'
-              )}`}
+              href={`https://caffeine.ai/?utm_source=Caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(window.location.hostname || 'unknown-app')}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="font-medium text-primary hover:underline"
+              className="text-primary hover:underline font-medium"
             >
               caffeine.ai
             </a>
           </p>
+          <p className="mt-1">© {new Date().getFullYear()} Loan Document Generator. All rights reserved.</p>
         </div>
       </footer>
     </div>
   );
 }
 
-export default App;
+export default function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AppContent />
+    </QueryClientProvider>
+  );
+}

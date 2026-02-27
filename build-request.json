@@ -1,82 +1,63 @@
 {
   "kind": "build_request",
-  "title": "Add Save Button to Template Editor, Apply Header to All Templates, and Share After Download",
+  "title": "Fix footer layout and add 4 images to footer",
   "projectName": "Loan Document Generator",
   "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Add a visible 'Save' button inside the template editor (TemplateDesigner component) that explicitly saves the current template configuration to localStorage. The button should provide visual feedback (e.g., a brief 'Saved!' confirmation state) after successfully saving.",
+      "text": "Fix the footer layout and styling in the rendered document (both in PreviewDialog.tsx and renderDocumentToCanvas.ts). Ensure the footer is properly aligned, has consistent padding/margins, and visually matches the overall document design.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-3"
+          "msg-4"
         ],
         "quotes": [
-          "want save button in in teplete editor"
+          "I want fix footer"
         ]
       },
       "acceptanceCriteria": [
-        "A 'Save' button is visibly present within the template editor UI.",
-        "Clicking the Save button persists the current template settings to localStorage.",
-        "The button shows a brief confirmation state (e.g., label changes to 'Saved!') after saving, then reverts to 'Save'.",
-        "The Save button is accessible across all template tabs in the editor."
+        "Footer is correctly positioned at the bottom of the document preview",
+        "Footer has consistent spacing and alignment",
+        "Footer styling is visually coherent with the rest of the document"
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Add an 'Apply Header to All Templates' action in the template editor that copies the current template's header settings (business name, address, logo) to all other templates stored in localStorage. Display a confirmation prompt before applying to prevent accidental overwrites.",
+      "text": "Add 4 user-provided images to the footer area in the rendered document. Display the 4 images as static assets (frontend/public/assets/generated/) and render them horizontally in the footer row within both PreviewDialog.tsx and renderDocumentToCanvas.ts.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-3"
+          "msg-4"
         ],
         "quotes": [
-          "aply header to all templete"
+          "there i want to add 4 images which i will provide you now"
         ]
       },
       "acceptanceCriteria": [
-        "An 'Apply Header to All Templates' button or action is present in the template editor.",
-        "Clicking the action shows a confirmation dialog warning the user that it will overwrite header settings in all templates.",
-        "Upon confirmation, the header settings (business name, address, logo image) from the currently active template are copied to all other templates in localStorage.",
-        "A success message is shown after the operation completes.",
-        "All templates reflect the updated header settings immediately without requiring a page reload."
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "text": "After a document is successfully downloaded (PNG/PDF), automatically trigger the share flow using the Web Share API (falling back to a direct download prompt if unsupported). The Share button should be surfaced in the download confirmation UI or as a follow-up action after download completes in FormSection.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-3"
-        ],
-        "quotes": [
-          "share file after download01"
-        ]
-      },
-      "acceptanceCriteria": [
-        "After a document download completes, a 'Share' option is presented to the user.",
-        "The share action uses the Web Share API (`navigator.share`) with the downloaded file as the shared content.",
-        "If the Web Share API is unavailable, the share button is either hidden or falls back to re-triggering the file download.",
-        "The share flow works consistently with the existing `sharePdf` utility in `frontend/src/lib/shareUtils.ts`.",
-        "The share action is accessible on both mobile and desktop where supported."
+        "4 images are displayed in the footer of the document preview",
+        "Images are laid out horizontally and evenly spaced within the footer",
+        "Images are rendered correctly in both the preview dialog and the PDF canvas output",
+        "Images are served from frontend/public/assets/generated/"
       ]
     }
   ],
   "constraints": [
-    "Do not modify files under frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, or frontend/src/components/ui.",
-    "All template persistence must continue to use localStorage via the existing useTemplates hook pattern.",
-    "The existing sharePdf utility in frontend/src/lib/shareUtils.ts must be reused, not replaced."
+    "Do not modify files under frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, or frontend/src/components/ui",
+    "Footer images must be served as static assets from frontend/public/assets/generated/, not through the backend"
   ],
   "nonGoals": [
-    "Backend persistence of template data — all template storage remains client-side in localStorage.",
-    "Redesigning or restructuring the existing template editor tabs or layout beyond adding the requested buttons.",
-    "Adding new document types or form fields.",
-    "Real-time collaboration or multi-user template sharing."
+    "Changing header layout or logo size",
+    "Modifying backend data models or templates",
+    "Adding footer images to the TemplateDesigner customization flow"
   ],
   "imageRequirements": {
-    "required": [],
+    "required": [
+      "Footer banner image 1 — decorative institutional/financial badge or emblem (footer-img-1.dim_200x80.png)",
+      "Footer banner image 2 — decorative institutional/financial badge or emblem (footer-img-2.dim_200x80.png)",
+      "Footer banner image 3 — decorative institutional/financial badge or emblem (footer-img-3.dim_200x80.png)",
+      "Footer banner image 4 — decorative institutional/financial badge or emblem (footer-img-4.dim_200x80.png)"
+    ],
     "edits": []
   }
 }

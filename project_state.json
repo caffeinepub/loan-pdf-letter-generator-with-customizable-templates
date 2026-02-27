@@ -1,32 +1,27 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "Project involves a template editor with features for saving, applying headers to all templates, and sharing/downloading files.",
+  "summary": "Project involves a web page with a header and footer. User wants to fix the footer and add 4 images to it.",
   "architectural_notes": [],
-  "known_issues": [],
-  "isFixRequest": false,
+  "known_issues": [
+    "Footer requires fixes and 4 images to be added"
+  ],
+  "isFixRequest": true,
+  "imageRequirements": "## Required Images\n- Footer banner image 1 — decorative institutional/financial badge or emblem (footer-img-1.dim_200x80.png)\n- Footer banner image 2 — decorative institutional/financial badge or emblem (footer-img-2.dim_200x80.png)\n- Footer banner image 3 — decorative institutional/financial badge or emblem (footer-img-3.dim_200x80.png)\n- Footer banner image 4 — decorative institutional/financial badge or emblem (footer-img-4.dim_200x80.png)",
   "existing_features": [
     {
-      "id": "feature-add-a-visible-save-button-inside-the-template-editor-templatedesigner-component-that-explicitly-saves-the-current-template-configuration-to-localstorage-the-button-should-provide-visual-feedback-e-g-a-brief-saved-confirmation-state-after-successfully-saving",
-      "title": "Add a visible 'Save' button inside the template editor (TemplateDesigner component) that explicitly saves the current template configuration to localStorage. The button should provide visual feedback (e.g., a brief 'Saved!' confirmation state) after successfully saving.",
+      "id": "feature-fix-the-footer-layout-and-styling-in-the-rendered-document-both-in-previewdialog-tsx-and-renderdocumenttocanvas-ts-ensure-the-footer-is-properly-aligned-has-consistent-padding-margins-and-visually-matches-the-overall-document-design",
+      "title": "Fix the footer layout and styling in the rendered document (both in PreviewDialog.tsx and renderDocumentToCanvas.ts). Ensure the footer is properly aligned, has consistent padding/margins, and visually matches the overall document design.",
       "reqIds": [
         "REQ-1"
       ],
       "version": 1
     },
     {
-      "id": "feature-add-an-apply-header-to-all-templates-action-in-the-template-editor-that-copies-the-current-template-s-header-settings-business-name-address-logo-to-all-other-templates-stored-in-localstorage-display-a-confirmation-prompt-before-applying-to-prevent-accidental-overwrites",
-      "title": "Add an 'Apply Header to All Templates' action in the template editor that copies the current template's header settings (business name, address, logo) to all other templates stored in localStorage. Display a confirmation prompt before applying to prevent accidental overwrites.",
+      "id": "feature-add-4-user-provided-images-to-the-footer-area-in-the-rendered-document-display-the-4-images-as-static-assets-frontend-public-assets-generated-and-render-them-horizontally-in-the-footer-row-within-both-previewdialog-tsx-and-renderdocumenttocanvas-ts",
+      "title": "Add 4 user-provided images to the footer area in the rendered document. Display the 4 images as static assets (frontend/public/assets/generated/) and render them horizontally in the footer row within both PreviewDialog.tsx and renderDocumentToCanvas.ts.",
       "reqIds": [
         "REQ-2"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-after-a-document-is-successfully-downloaded-png-pdf-automatically-trigger-the-share-flow-using-the-web-share-api-falling-back-to-a-direct-download-prompt-if-unsupported-the-share-button-should-be-surfaced-in-the-download-confirmation-ui-or-as-a-follow-up-action-after-download-completes-in-formsection",
-      "title": "After a document is successfully downloaded (PNG/PDF), automatically trigger the share flow using the Web Share API (falling back to a direct download prompt if unsupported). The Share button should be surfaced in the download confirmation UI or as a follow-up action after download completes in FormSection.",
-      "reqIds": [
-        "REQ-3"
       ],
       "version": 1
     }
@@ -34,19 +29,13 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Add a Save button in the template editor",
+      "summary": "Fix footer layout/styling",
       "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-2",
-      "summary": "Apply header to all templates",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-3",
-      "summary": "Share file and apply header after download",
+      "summary": "Add 4 user-provided images to the footer",
       "reqIds": [],
       "status": "pending"
     }

@@ -1,68 +1,48 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Add Save Button to Template Editor, Apply Header to All Templates, and Share After Download",
+  "title": "Fix footer layout and add 4 images to footer",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Add a visible 'Save' button inside the template editor that saves the current template to localStorage with visual confirmation feedback",
+      "summary": "Fix the footer layout and styling in the rendered document to ensure proper alignment, consistent padding/margins, and visual coherence with the overall document design",
       "acceptanceCriteria": [
-        "A 'Save' button is visibly present within the template editor UI.",
-        "Clicking the Save button persists the current template settings to localStorage.",
-        "The button shows a brief confirmation state (e.g., label changes to 'Saved!') after saving, then reverts to 'Save'.",
-        "The Save button is accessible across all template tabs in the editor."
+        "Footer is correctly positioned at the bottom of the document preview",
+        "Footer has consistent spacing and alignment",
+        "Footer styling is visually coherent with the rest of the document"
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/TemplateDesigner.tsx",
+          "path": "frontend/src/components/PreviewDialog.tsx",
           "operation": "modify",
-          "description": "Add a 'Save' button to the template editor UI that explicitly calls the saveTemplate function from useTemplates hook. Implement a temporary 'Saved!' confirmation state that displays for 2 seconds after saving, then reverts to 'Save'. Position the button prominently in the template editor header or action bar, accessible across all template tabs (built-in and custom). Use existing UI components from components/ui for consistent styling."
+          "description": "Fix footer layout in the document preview by adjusting the footer container styling for proper alignment, consistent padding/margins, and visual consistency. Ensure the footer flexbox layout properly spaces content and matches the document's overall design theme."
+        },
+        {
+          "path": "frontend/src/lib/pdf/renderDocumentToCanvas.ts",
+          "operation": "modify",
+          "description": "Fix footer rendering in the canvas-based PDF output by adjusting footer positioning calculations, text alignment, padding values, and spacing to match the corrected PreviewDialog footer layout. Ensure the footer appears at the correct Y position with consistent margins."
         }
       ]
     },
     {
       "id": "REQ-2",
-      "summary": "Add an 'Apply Header to All Templates' action that copies the current template's header settings to all other templates with confirmation prompt",
+      "summary": "Add 4 user-provided images to the footer area in the rendered document, displaying them horizontally as static assets from frontend/public/assets/generated/",
       "acceptanceCriteria": [
-        "An 'Apply Header to All Templates' button or action is present in the template editor.",
-        "Clicking the action shows a confirmation dialog warning the user that it will overwrite header settings in all templates.",
-        "Upon confirmation, the header settings (business name, address, logo image) from the currently active template are copied to all other templates in localStorage.",
-        "A success message is shown after the operation completes.",
-        "All templates reflect the updated header settings immediately without requiring a page reload."
+        "4 images are displayed in the footer of the document preview",
+        "Images are laid out horizontally and evenly spaced within the footer",
+        "Images are rendered correctly in both the preview dialog and the PDF canvas output",
+        "Images are served from frontend/public/assets/generated/"
       ],
       "file_operations": [
         {
-          "path": "frontend/src/hooks/useTemplates.ts",
+          "path": "frontend/src/components/PreviewDialog.tsx",
           "operation": "modify",
-          "description": "Add an 'applyHeaderToAllTemplates' function that accepts businessName, businessAddress, and logoUrl as parameters. This function should iterate through all built-in document types (agreement, sanction, noc) and all custom templates, updating their headerBusinessName, headerBusinessAddress, and logo fields in localStorage. Return success/failure status to allow the UI to show appropriate feedback."
+          "description": "Add 4 footer images to the document preview by creating a horizontal image row container in the footer section. Reference the generated images using their exact workspace paths: frontend/public/assets/generated/footer-img-1.dim_200x80.png, frontend/public/assets/generated/footer-img-2.dim_200x80.png, frontend/public/assets/generated/footer-img-3.dim_200x80.png, and frontend/public/assets/generated/footer-img-4.dim_200x80.png. Use img elements with src='/assets/generated/footer-img-N.dim_200x80.png' and apply flexbox or grid layout to evenly space them horizontally within the footer."
         },
         {
-          "path": "frontend/src/components/TemplateDesigner.tsx",
+          "path": "frontend/src/lib/pdf/renderDocumentToCanvas.ts",
           "operation": "modify",
-          "description": "Add an 'Apply Header to All Templates' button in the template editor header or action bar. When clicked, display a confirmation dialog (using existing UI components from components/ui) warning the user that this action will overwrite header settings in all templates. On confirmation, call the applyHeaderToAllTemplates function from useTemplates hook with the current template's businessName, businessAddress, and logo. Show a success toast or message after completion. Ensure the UI reflects the updated templates immediately by refreshing the template state."
-        }
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "summary": "After a document is successfully downloaded, automatically trigger the share flow using the Web Share API with fallback to download prompt",
-      "acceptanceCriteria": [
-        "After a document download completes, a 'Share' option is presented to the user.",
-        "The share action uses the Web Share API (`navigator.share`) with the downloaded file as the shared content.",
-        "If the Web Share API is unavailable, the share button is either hidden or falls back to re-triggering the file download.",
-        "The share flow works consistently with the existing `sharePdf` utility in `frontend/src/lib/shareUtils.ts`.",
-        "The share action is accessible on both mobile and desktop where supported."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/App.tsx",
-          "operation": "modify",
-          "description": "After a successful PDF download in the handleDownload function, automatically call the sharePdf utility from frontend/src/lib/shareUtils.ts with the generated PDF blob and filename. If sharePdf returns true (share successful), optionally display a brief confirmation. If it returns false (share unsupported or failed), the user already has the downloaded file. Ensure the share action happens after the download completes successfully."
-        },
-        {
-          "path": "frontend/src/components/FormSection.tsx",
-          "operation": "modify",
-          "description": "After the existing mobile-only Share PDF buttons trigger a download, automatically call the sharePdf utility from frontend/src/lib/shareUtils.ts with the generated PDF blob and filename. This ensures the share flow happens immediately after download on mobile devices. Keep the existing Web Share API detection and fallback logic consistent with the sharePdf utility."
+          "description": "Add 4 footer images to the canvas PDF rendering by loading the generated images from their workspace paths (frontend/public/assets/generated/footer-img-1.dim_200x80.png through footer-img-4.dim_200x80.png) and drawing them horizontally in the footer area using canvas drawImage(). Calculate X positions to evenly distribute the 4 images (200x80 each) across the footer width, maintaining consistent spacing. Ensure images are loaded before rendering and handle any loading errors gracefully."
         }
       ]
     }

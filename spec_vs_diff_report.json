@@ -1,25 +1,25 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-26T03:49:51.698Z",
-  "summary": "All three requirements are substantially implemented in the diff. REQ-1 (Save button with 'Saved!' feedback) is present in TemplateDesigner.tsx. REQ-2 (Apply Header to All Templates with confirmation dialog) is implemented in TemplateDesigner.tsx and useTemplates.ts. REQ-3 (share after download using sharePdf) is implemented in both App.tsx (auto-share after download) and FormSection.tsx (explicit Share buttons). No significant missing requirements were found.",
-  "missing_requirements": [],
-  "hallucinated_features": [
+  "generatedAt": "2026-02-27T21:59:23.178Z",
+  "summary": "The diff implements both REQ-1 and REQ-2. PreviewDialog.tsx has been updated with a fixed footer layout including dividers, consistent spacing, and a horizontal row of 4 footer images. renderDocumentToCanvas.ts includes footer layout constants, image loading logic, and a drawBajajFooter function rendering 4 images horizontally. Images are referenced from /assets/generated/ paths. However, the actual image files (footer-img-1 through footer-img-4) do not appear to have been added to frontend/public/assets/generated/ based on the diff summary showing no added files.",
+  "missing_requirements": [
     {
-      "description": "FormSection includes standalone 'Share PDF' buttons that independently generate, download, and then attempt to share documents, operating separately from the main download flow in App.tsx.",
-      "reason": "REQ-3 specifies surfacing a share option after a download completes, not adding independent share-trigger buttons that also re-generate and re-download the PDF. The spec says the share button should follow the download, not duplicate it. These extra buttons add their own PDF generation and download logic beyond what was requested.",
+      "id": "REQ-2",
+      "requirement": "Footer images must be served as static assets from frontend/public/assets/generated/ — the 4 image files (footer-img-1.dim_200x80.png, footer-img-2.dim_200x80.png, footer-img-3.dim_200x80.png, footer-img-4.dim_200x80.png) must be present in that directory.",
+      "reason": "The diff summary shows 'Added: 0' files and lists no new files under frontend/public/assets/generated/. The code references these image paths but the actual PNG files do not appear to have been added to the repository.",
       "evidence": [
-        "frontend/src/components/FormSection.tsx"
+        "frontend/src/components/PreviewDialog.tsx",
+        "frontend/src/lib/pdf/renderDocumentToCanvas.ts"
       ]
     }
   ],
-  "confidence": 0.82,
+  "hallucinated_features": [],
+  "confidence": 0.78,
   "changed_files": [
     "frontend-file-summaries.txt",
-    "frontend/src/App.tsx",
-    "frontend/src/components/FormSection.tsx",
-    "frontend/src/components/TemplateDesigner.tsx",
-    "frontend/src/hooks/useTemplates.ts",
+    "frontend/src/components/PreviewDialog.tsx",
+    "frontend/src/lib/pdf/renderDocumentToCanvas.ts",
     "project_state.json"
   ]
 }

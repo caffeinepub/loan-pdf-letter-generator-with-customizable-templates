@@ -1,6 +1,5 @@
 import React, { useState, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -8,17 +7,14 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Upload, Image as ImageIcon, Plus, Trash2, Save, CheckCircle, Layers } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Image as ImageIcon, Plus, Trash2, Save, CheckCircle, Layers, Globe, Loader2, AlertCircle, X } from 'lucide-react';
 import {
   DocumentType,
   FormData,
   Template,
   CustomTemplate,
-  PositionPreset,
-  BackgroundSettings,
-  WatermarkSettings,
-  ImageElementSettings,
 } from '../types/templates';
 import PreviewDialog from './PreviewDialog';
 import { fileToDataUrl } from '../lib/templateAssets/fileToDataUrl';
@@ -44,12 +40,16 @@ interface TemplateDesignerProps {
   formData: FormData;
   builtInTemplates: Record<DocumentType, Template>;
   customTemplates: CustomTemplate[];
+  isSaving?: boolean;
+  saveError?: string | null;
+  onClearSaveError?: () => void;
   onUpdateBuiltInTemplate: (docType: DocumentType, updates: Partial<Template>) => void;
   onSaveBuiltInTemplate: (docType: DocumentType) => void;
   onCreateCustomTemplate: (name: string) => void;
   onUpdateCustomTemplate: (id: string, updates: Partial<CustomTemplate>) => void;
   onDeleteCustomTemplate: (id: string) => void;
   onApplyHeaderToAll: (businessName: string, businessAddress: string, logoDataUrl: string | null) => boolean;
+  onSaveToBackend: (template: CustomTemplate) => Promise<void>;
 }
 
 type ActiveTab = DocumentType | string;
@@ -58,21 +58,24 @@ export default function TemplateDesigner({
   formData,
   builtInTemplates,
   customTemplates,
+  isSaving,
+  saveError,
+  onClearSaveError,
   onUpdateBuiltInTemplate,
   onSaveBuiltInTemplate,
   onCreateCustomTemplate,
   onUpdateCustomTemplate,
   onDeleteCustomTemplate,
   onApplyHeaderToAll,
+  onSaveToBackend,
 }: TemplateDesignerProps) {
   const [activeTab, setActiveTab] = useState<ActiveTab>('Loan Approval Letter');
   const [previewOpen, setPreviewOpen] = useState(false);
   const [newTemplateName, setNewTemplateName] = useState('');
   const [showNewTemplateDialog, setShowNewTemplateDialog] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
-  const [saveState, setSaveState] = useState<'idle' | 'saved'>('idle');
-  const [showApplyHeaderDialog, setShowApplyHeaderDialog] = useState(false);
-  const [applyHeaderSuccess, setApplyHeaderSuccess] = useState(false);
+  const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [localSaveError, setLocalSaveError] = useState<string | null>(null);
 
   const isBuiltIn = activeTab in builtInTemplates;
   const currentTemplate = isBuiltIn
@@ -81,7 +84,16 @@ export default function TemplateDesigner({
 
   if (!currentTemplate) return null;
 
+  const displayError = localSaveError || saveError || null;
+
+  const handleClearError = () => {
+    setLocalSaveError(null);
+    setSaveState('idle');
+    onClearSaveError?.();
+  };
+
   const handleTemplateChange = (updates: Partial<Template>) => {
+    if (displayError) handleClearError();
     if (isBuiltIn) {
       onUpdateBuiltInTemplate(activeTab as DocumentType, updates);
     } else {
@@ -89,45 +101,37 @@ export default function TemplateDesigner({
     }
   };
 
-  const handleSaveTemplate = () => {
-    if (isBuiltIn) {
-      onSaveBuiltInTemplate(activeTab as DocumentType);
-    } else {
-      // Custom templates auto-save on every update; just show confirmation
-    }
-    setSaveState('saved');
-    toast.success('Template saved!', {
-      description: isBuiltIn
-        ? `"${activeTab}" has been saved.`
-        : `"${(currentTemplate as CustomTemplate).name}" has been saved.`,
-    });
-    setTimeout(() => setSaveState('idle'), 2000);
-  };
-
-  const handleApplyHeaderToAll = () => {
-    const success = onApplyHeaderToAll(
-      currentTemplate.businessName || '',
-      currentTemplate.businessAddress || '',
-      currentTemplate.logoDataUrl
-    );
-    setShowApplyHeaderDialog(false);
-    if (success) {
-      setApplyHeaderSuccess(true);
-      toast.success('Header applied to all templates!');
-      setTimeout(() => setApplyHeaderSuccess(false), 3000);
-    } else {
-      toast.error('Failed to apply header to all templates.');
-    }
-  };
-
-  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleSaveTemplate = async () => {
+    setSaveState('saving');
+    setLocalSaveError(null);
+    onClearSaveError?.();
     try {
-      const dataUrl = await fileToDataUrl(file);
-      handleTemplateChange({ logoDataUrl: dataUrl });
-    } catch (error) {
-      console.error('Failed to upload logo:', error);
+      if (isBuiltIn) {
+        onSaveBuiltInTemplate(activeTab as DocumentType);
+        const templateToSave: CustomTemplate = {
+          ...currentTemplate,
+          id: currentTemplate.id ?? activeTab,
+          name: currentTemplate.name ?? activeTab,
+        };
+        await onSaveToBackend(templateToSave);
+      } else {
+        const customT = currentTemplate as CustomTemplate;
+        await onSaveToBackend(customT);
+      }
+      setSaveState('saved');
+      toast.success('Template saved and shared!', {
+        description: isBuiltIn
+          ? `"${activeTab}" has been saved and shared with all users.`
+          : `"${(currentTemplate as CustomTemplate).name}" has been saved and shared with all users.`,
+      });
+      setTimeout(() => setSaveState('idle'), 2500);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to save template. Please try again.';
+      setSaveState('error');
+      setLocalSaveError(message);
+      if (isBuiltIn) {
+        onSaveBuiltInTemplate(activeTab as DocumentType);
+      }
     }
   };
 
@@ -173,17 +177,12 @@ export default function TemplateDesigner({
   const insertPlaceholder = (placeholder: string) => {
     const textarea = document.getElementById('template-body') as HTMLTextAreaElement;
     if (!textarea) return;
-
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
     const text = currentTemplate.body;
     const before = text.substring(0, start);
     const after = text.substring(end);
-
-    handleTemplateChange({
-      body: before + placeholder + after,
-    });
-
+    handleTemplateChange({ body: before + placeholder + after });
     setTimeout(() => {
       textarea.focus();
       textarea.setSelectionRange(start + placeholder.length, start + placeholder.length);
@@ -207,13 +206,14 @@ export default function TemplateDesigner({
 
   const placeholders = [
     { label: 'Name', value: '{{name}}' },
-    { label: 'Mobile', value: '{{mobile}}' },
-    { label: 'Address', value: '{{address}}' },
-    { label: 'PAN Number', value: '{{panNumber}}' },
     { label: 'Loan Amount', value: '{{loanAmount}}' },
     { label: 'Interest Rate', value: '{{interestRate}}' },
     { label: 'Year', value: '{{year}}' },
     { label: 'Monthly EMI', value: '{{monthlyEmi}}' },
+    { label: 'Processing Charge', value: '{{processingCharge}}' },
+    { label: 'Bank Account No.', value: '{{bankAccountNumber}}' },
+    { label: 'IFSC Code', value: '{{ifscCode}}' },
+    { label: 'UPI ID', value: '{{upiId}}' },
     ...formData.customFields.map((field) => ({
       label: field.label,
       value: `{{custom:${field.label}}}`,
@@ -222,16 +222,12 @@ export default function TemplateDesigner({
 
   const builtInTabs: DocumentType[] = ['Loan Approval Letter', 'Loan GST Letter', 'Loan Section Letter'];
 
-  const hasSignature = !!(currentTemplate.signature?.dataUrl);
-  const hasSeal = !!(currentTemplate.seal?.dataUrl);
-  const hasBusinessName = !!(currentTemplate.businessName?.trim());
-  const hasBusinessAddress = !!(currentTemplate.businessAddress?.trim());
-  const hasLogo = !!currentTemplate.logoDataUrl;
-  const showHeader = hasBusinessName || hasBusinessAddress || hasLogo;
+  const isBusy = saveState === 'saving' || isSaving;
+  const isErrorState = saveState === 'error';
 
-  const positionOptions: PositionPreset[] = [
-    'top-left', 'top-right', 'bottom-left', 'bottom-right', 'center',
-  ];
+  const activeTabLabel = isBuiltIn
+    ? activeTab
+    : (currentTemplate as CustomTemplate).name ?? activeTab;
 
   return (
     <div className="space-y-6">
@@ -239,431 +235,255 @@ export default function TemplateDesigner({
         <CardHeader>
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div>
-              <CardTitle>Advanced Template Designer</CardTitle>
-              <CardDescription>Customize templates with background, watermark, seal, and signature</CardDescription>
+              <CardTitle className="flex items-center gap-2">
+                Advanced Template Designer
+                <Badge variant="secondary" className="text-xs gap-1">
+                  <Globe className="h-3 w-3" />
+                  Shared Globally
+                </Badge>
+              </CardTitle>
+              <CardDescription>
+                Customize templates with watermark, seal, signature, and background. Header and footer are fixed to Bajaj Finserv branding.
+              </CardDescription>
             </div>
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex gap-2">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setShowApplyHeaderDialog(true)}
-                className="flex items-center gap-1.5"
+                onClick={() => setPreviewOpen(true)}
+                className="gap-1"
               >
-                <Layers className="h-4 w-4" />
-                Apply Header to All
+                <ImageIcon className="h-4 w-4" />
+                Preview
               </Button>
               <Button
-                variant={saveState === 'saved' ? 'secondary' : 'default'}
                 size="sm"
                 onClick={handleSaveTemplate}
-                className="flex items-center gap-1.5 min-w-[110px]"
+                disabled={isBusy}
+                variant={isErrorState ? 'destructive' : 'default'}
+                className="gap-1"
               >
-                {saveState === 'saved' ? (
-                  <>
-                    <CheckCircle className="h-4 w-4" />
-                    Saved!
-                  </>
+                {isBusy ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : isErrorState ? (
+                  <AlertCircle className="h-4 w-4" />
+                ) : saveState === 'saved' ? (
+                  <CheckCircle className="h-4 w-4" />
                 ) : (
-                  <>
-                    <Save className="h-4 w-4" />
-                    Save Template
-                  </>
+                  <Save className="h-4 w-4" />
                 )}
-              </Button>
-              <Button onClick={() => setShowNewTemplateDialog(true)} size="sm" variant="outline">
-                <Plus className="mr-2 h-4 w-4" />
-                New Template
+                {isBusy ? 'Saving…' : isErrorState ? 'Retry Save' : saveState === 'saved' ? 'Saved!' : 'Save & Share'}
               </Button>
             </div>
           </div>
-          {applyHeaderSuccess && (
-            <div className="flex items-center gap-1.5 text-sm text-green-600 font-medium mt-1">
-              <CheckCircle className="h-4 w-4" />
-              Header applied to all templates!
-            </div>
+
+          {displayError && (
+            <Alert variant="destructive" className="mt-3">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle className="flex items-center justify-between">
+                <span>Failed to save template</span>
+                <button
+                  onClick={handleClearError}
+                  className="ml-auto -mr-1 rounded p-0.5 hover:bg-destructive/20 transition-colors"
+                  aria-label="Dismiss error"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </AlertTitle>
+              <AlertDescription>{displayError}</AlertDescription>
+            </Alert>
           )}
         </CardHeader>
+
         <CardContent>
-          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as ActiveTab)}>
-            <ScrollArea className="w-full">
-              <TabsList className="inline-flex w-max">
-                {builtInTabs.map((docType) => (
-                  <TabsTrigger key={docType} value={docType}>
-                    {docType}
-                  </TabsTrigger>
-                ))}
-                {customTemplates.map((template) => (
-                  <TabsTrigger key={template.id} value={template.id}>
-                    {template.name}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </ScrollArea>
+          {/* Template Tabs */}
+          <div className="flex flex-wrap gap-2 mb-4">
+            {builtInTabs.map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                  activeTab === tab
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                }`}
+              >
+                {tab}
+              </button>
+            ))}
+            {customTemplates.map((t) => (
+              <button
+                key={t.id}
+                onClick={() => setActiveTab(t.id)}
+                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-1 ${
+                  activeTab === t.id
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                }`}
+              >
+                <Layers className="h-3 w-3" />
+                {t.name}
+              </button>
+            ))}
+            <button
+              onClick={() => setShowNewTemplateDialog(true)}
+              className="px-3 py-1.5 rounded-md text-sm font-medium border border-dashed border-border text-muted-foreground hover:bg-muted transition-colors flex items-center gap-1"
+            >
+              <Plus className="h-3 w-3" />
+              New Template
+            </button>
+          </div>
 
-            <TabsContent value={activeTab} className="space-y-4 pt-4">
-              {/* Custom Template Actions */}
-              {!isBuiltIn && (
-                <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/50 p-3">
-                  <Input
-                    placeholder="Template Name"
-                    value={(currentTemplate as CustomTemplate).name}
-                    onChange={(e) =>
-                      onUpdateCustomTemplate(activeTab, { name: e.target.value })
-                    }
-                    className="flex-1"
-                  />
-                  <Button
-                    variant="destructive"
-                    size="icon"
-                    onClick={() => setDeleteConfirmId(activeTab)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              )}
+          <ScrollArea className="h-[500px] pr-4">
+            <Accordion type="multiple" defaultValue={['content', 'watermark']} className="w-full">
 
-              {/* Two-column layout: Settings on left, Preview on right */}
-              <div className="flex gap-6">
-                {/* Left side: Settings */}
-                <div className="flex flex-col gap-3 w-80 shrink-0">
-                  {/* Save Template Button (also at bottom for accessibility) */}
-                  <Button
-                    variant={saveState === 'saved' ? 'secondary' : 'default'}
-                    onClick={handleSaveTemplate}
-                    className="w-full gap-2"
-                  >
-                    {saveState === 'saved' ? (
-                      <>
-                        <CheckCircle className="h-4 w-4" />
-                        Saved!
-                      </>
-                    ) : (
-                      <>
-                        <Save className="h-4 w-4" />
-                        Save Template
-                      </>
-                    )}
-                  </Button>
+              {/* ── Content ── */}
+              <AccordionItem value="content">
+                <AccordionTrigger>Document Content</AccordionTrigger>
+                <AccordionContent className="space-y-4 pt-2">
+                  <div className="space-y-2">
+                    <Label>Headline</Label>
+                    <Input
+                      value={currentTemplate.headline}
+                      onChange={(e) => handleTemplateChange({ headline: e.target.value })}
+                      placeholder="Document headline"
+                    />
+                  </div>
 
-                  {/* Settings Accordion */}
-                  <Accordion type="multiple" defaultValue={['basic', 'content']} className="w-full">
-                    {/* Basic Settings */}
-                    <AccordionItem value="basic">
-                      <AccordionTrigger>Basic Settings</AccordionTrigger>
-                      <AccordionContent className="space-y-4 pt-4">
-                        {/* Logo Upload */}
-                        <div className="space-y-2">
-                          <Label>Company Logo</Label>
-                          <div className="flex items-center gap-3">
-                            {currentTemplate.logoDataUrl ? (
-                              <div className="relative h-16 w-16 overflow-hidden rounded-lg border border-border">
-                                <img
-                                  src={currentTemplate.logoDataUrl}
-                                  alt="Logo"
-                                  className="h-full w-full object-contain"
-                                />
-                              </div>
-                            ) : (
-                              <div className="flex h-16 w-16 items-center justify-center rounded-lg border border-dashed border-border">
-                                <ImageIcon className="h-6 w-6 text-muted-foreground" />
-                              </div>
-                            )}
-                            <div className="flex-1">
-                              <Input
-                                id={`logo-upload-${activeTab}`}
-                                type="file"
-                                accept="image/*"
-                                onChange={handleLogoUpload}
-                                className="hidden"
-                              />
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => document.getElementById(`logo-upload-${activeTab}`)?.click()}
-                              >
-                                <Upload className="mr-2 h-4 w-4" />
-                                {currentTemplate.logoDataUrl ? 'Change Logo' : 'Upload Logo'}
-                              </Button>
-                              {currentTemplate.logoDataUrl && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleTemplateChange({ logoDataUrl: null })}
-                                  className="ml-2"
-                                >
-                                  Remove
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-                        </div>
+                  <div className="space-y-2">
+                    <Label>Placeholder Tags</Label>
+                    <div className="flex flex-wrap gap-1">
+                      {placeholders.map((p) => (
+                        <button
+                          key={p.value}
+                          onClick={() => insertPlaceholder(p.value)}
+                          className="px-2 py-0.5 rounded text-xs bg-muted hover:bg-muted/80 border border-border transition-colors font-mono"
+                        >
+                          {p.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
 
-                        {/* Business Name */}
-                        <div className="space-y-2">
-                          <Label htmlFor="business-name">Business Name</Label>
-                          <Input
-                            id="business-name"
-                            placeholder="e.g. Acme Finance Ltd."
-                            value={currentTemplate.businessName || ''}
-                            onChange={(e) => handleTemplateChange({ businessName: e.target.value })}
-                          />
-                        </div>
+                  <div className="space-y-2">
+                    <Label>Body Text</Label>
+                    <Textarea
+                      id="template-body"
+                      value={currentTemplate.body}
+                      onChange={(e) => handleTemplateChange({ body: e.target.value })}
+                      rows={12}
+                      className="font-mono text-xs"
+                    />
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
 
-                        {/* Business Address */}
-                        <div className="space-y-2">
-                          <Label htmlFor="business-address">Business Address</Label>
-                          <Textarea
-                            id="business-address"
-                            placeholder="e.g. 123 Main Street, City, State - 000000"
-                            rows={2}
-                            value={currentTemplate.businessAddress || ''}
-                            onChange={(e) => handleTemplateChange({ businessAddress: e.target.value })}
-                          />
-                        </div>
+              {/* ── Watermark ── */}
+              <AccordionItem value="watermark">
+                <AccordionTrigger>Watermark</AccordionTrigger>
+                <AccordionContent className="space-y-4 pt-2">
+                  <div className="flex items-center justify-between">
+                    <Label>Enable Watermark</Label>
+                    <Switch
+                      checked={currentTemplate.watermark?.enabled ?? false}
+                      onCheckedChange={(checked) =>
+                        handleTemplateChange({
+                          watermark: { ...currentTemplate.watermark!, enabled: checked },
+                        })
+                      }
+                    />
+                  </div>
 
-                        {/* Footer */}
-                        <div className="space-y-2">
-                          <Label htmlFor="footer">Footer Text</Label>
-                          <Textarea
-                            id="footer"
-                            placeholder="This is a computer-generated document..."
-                            rows={2}
-                            value={currentTemplate.footerText || ''}
-                            onChange={(e) => handleTemplateChange({ footerText: e.target.value })}
-                          />
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
+                  {currentTemplate.watermark?.enabled && (
+                    <>
+                      <div className="space-y-2">
+                        <Label>Watermark Text</Label>
+                        <Input
+                          value={currentTemplate.watermark?.text ?? ''}
+                          onChange={(e) =>
+                            handleTemplateChange({
+                              watermark: { ...currentTemplate.watermark!, text: e.target.value },
+                            })
+                          }
+                          placeholder="e.g. CONFIDENTIAL"
+                        />
+                      </div>
 
-                    {/* Background */}
-                    <AccordionItem value="background">
-                      <AccordionTrigger>Background Image</AccordionTrigger>
-                      <AccordionContent className="space-y-4 pt-4">
-                        <div className="flex items-center gap-3">
-                          {currentTemplate.background?.dataUrl ? (
-                            <div className="relative h-20 w-20 overflow-hidden rounded-lg border border-border">
-                              <img
-                                src={currentTemplate.background.dataUrl}
-                                alt="Background"
-                                className="h-full w-full object-cover"
-                              />
-                            </div>
-                          ) : (
-                            <div className="flex h-20 w-20 items-center justify-center rounded-lg border border-dashed border-border">
-                              <ImageIcon className="h-6 w-6 text-muted-foreground" />
-                            </div>
-                          )}
-                          <div className="flex-1">
-                            <Input
-                              id={`bg-upload-${activeTab}`}
-                              type="file"
-                              accept="image/*"
-                              onChange={handleBackgroundUpload}
-                              className="hidden"
-                            />
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => document.getElementById(`bg-upload-${activeTab}`)?.click()}
-                            >
-                              <Upload className="mr-2 h-4 w-4" />
-                              {currentTemplate.background?.dataUrl ? 'Change' : 'Upload'}
-                            </Button>
-                            {currentTemplate.background?.dataUrl && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() =>
-                                  handleTemplateChange({
-                                    background: { ...currentTemplate.background!, dataUrl: null },
-                                  })
-                                }
-                                className="ml-2"
-                              >
-                                Remove
-                              </Button>
-                            )}
-                          </div>
-                        </div>
+                      <div className="space-y-2">
+                        <Label>Opacity ({Math.round((currentTemplate.watermark?.opacity ?? 0.05) * 100)}%)</Label>
+                        <Slider
+                          min={1}
+                          max={50}
+                          step={1}
+                          value={[Math.round((currentTemplate.watermark?.opacity ?? 0.05) * 100)]}
+                          onValueChange={([v]) =>
+                            handleTemplateChange({
+                              watermark: { ...currentTemplate.watermark!, opacity: v / 100 },
+                            })
+                          }
+                        />
+                      </div>
 
-                        {currentTemplate.background && (
-                          <>
-                            <div className="space-y-2">
-                              <Label>Opacity: {Math.round(currentTemplate.background.opacity * 100)}%</Label>
-                              <Slider
-                                min={5}
-                                max={100}
-                                step={5}
-                                value={[Math.round(currentTemplate.background.opacity * 100)]}
-                                onValueChange={([value]) =>
-                                  handleTemplateChange({
-                                    background: { ...currentTemplate.background!, opacity: value / 100 },
-                                  })
-                                }
-                              />
-                            </div>
-
-                            <div className="space-y-2">
-                              <Label htmlFor="bg-fit">Fit</Label>
-                              <Select
-                                value={currentTemplate.background.fit}
-                                onValueChange={(value) =>
-                                  handleTemplateChange({
-                                    background: {
-                                      ...currentTemplate.background!,
-                                      fit: value as BackgroundSettings['fit'],
-                                    },
-                                  })
-                                }
-                              >
-                                <SelectTrigger id="bg-fit">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="cover">Cover</SelectItem>
-                                  <SelectItem value="contain">Contain</SelectItem>
-                                  <SelectItem value="fill">Fill</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          </>
-                        )}
-                      </AccordionContent>
-                    </AccordionItem>
-
-                    {/* Watermark */}
-                    <AccordionItem value="watermark">
-                      <AccordionTrigger>Watermark</AccordionTrigger>
-                      <AccordionContent className="space-y-4 pt-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="watermark-text">Watermark Text</Label>
-                          <Input
-                            id="watermark-text"
-                            placeholder="e.g. CONFIDENTIAL"
-                            value={currentTemplate.watermark?.text || currentTemplate.watermarkText || ''}
+                      <div className="space-y-2">
+                        <Label>Color</Label>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="color"
+                            value={currentTemplate.watermark?.color ?? '#cccccc'}
                             onChange={(e) =>
                               handleTemplateChange({
-                                watermarkText: e.target.value,
-                                watermark: {
-                                  ...currentTemplate.watermark!,
-                                  text: e.target.value,
-                                },
+                                watermark: { ...currentTemplate.watermark!, color: e.target.value },
                               })
                             }
+                            className="h-9 w-14 rounded border border-border cursor-pointer"
                           />
                         </div>
+                      </div>
+                    </>
+                  )}
+                </AccordionContent>
+              </AccordionItem>
 
-                        {currentTemplate.watermark && (
-                          <>
-                            <div className="space-y-2">
-                              <Label>Opacity: {Math.round(currentTemplate.watermark.opacity * 100)}%</Label>
-                              <Slider
-                                min={1}
-                                max={30}
-                                step={1}
-                                value={[Math.round(currentTemplate.watermark.opacity * 100)]}
-                                onValueChange={([value]) =>
-                                  handleTemplateChange({
-                                    watermark: { ...currentTemplate.watermark!, opacity: value / 100 },
-                                  })
-                                }
-                              />
-                            </div>
+              {/* ── Seal ── */}
+              <AccordionItem value="seal">
+                <AccordionTrigger>Seal / Stamp</AccordionTrigger>
+                <AccordionContent className="space-y-4 pt-2">
+                  <div className="flex items-center justify-between">
+                    <Label>Enable Seal</Label>
+                    <Switch
+                      checked={currentTemplate.seal?.enabled ?? false}
+                      onCheckedChange={(checked) =>
+                        handleTemplateChange({
+                          seal: { ...currentTemplate.seal!, enabled: checked },
+                        })
+                      }
+                    />
+                  </div>
 
-                            <div className="space-y-2">
-                              <Label>Size: {currentTemplate.watermark.size}px</Label>
-                              <Slider
-                                min={24}
-                                max={120}
-                                step={4}
-                                value={[currentTemplate.watermark.size]}
-                                onValueChange={([value]) =>
-                                  handleTemplateChange({
-                                    watermark: { ...currentTemplate.watermark!, size: value },
-                                  })
-                                }
-                              />
-                            </div>
-
-                            <div className="space-y-2">
-                              <Label>Rotation: {currentTemplate.watermark.rotation}°</Label>
-                              <Slider
-                                min={-90}
-                                max={90}
-                                step={5}
-                                value={[currentTemplate.watermark.rotation]}
-                                onValueChange={([value]) =>
-                                  handleTemplateChange({
-                                    watermark: { ...currentTemplate.watermark!, rotation: value },
-                                  })
-                                }
-                              />
-                            </div>
-
-                            <div className="space-y-2">
-                              <Label htmlFor="watermark-position">Position</Label>
-                              <Select
-                                value={currentTemplate.watermark.position}
-                                onValueChange={(value) =>
-                                  handleTemplateChange({
-                                    watermark: {
-                                      ...currentTemplate.watermark!,
-                                      position: value as PositionPreset,
-                                    },
-                                  })
-                                }
-                              >
-                                <SelectTrigger id="watermark-position">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {positionOptions.map((p) => (
-                                    <SelectItem key={p} value={p}>
-                                      {p}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          </>
-                        )}
-                      </AccordionContent>
-                    </AccordionItem>
-
-                    {/* Seal */}
-                    <AccordionItem value="seal">
-                      <AccordionTrigger>Seal / Stamp</AccordionTrigger>
-                      <AccordionContent className="space-y-4 pt-4">
+                  {currentTemplate.seal?.enabled && (
+                    <>
+                      <div className="space-y-2">
+                        <Label>Upload Seal Image</Label>
                         <div className="flex items-center gap-3">
-                          {currentTemplate.seal?.dataUrl ? (
-                            <div className="relative h-16 w-16 overflow-hidden rounded-lg border border-border">
-                              <img
-                                src={currentTemplate.seal.dataUrl}
-                                alt="Seal"
-                                className="h-full w-full object-contain"
-                              />
-                            </div>
-                          ) : (
-                            <div className="flex h-16 w-16 items-center justify-center rounded-lg border border-dashed border-border">
-                              <ImageIcon className="h-6 w-6 text-muted-foreground" />
-                            </div>
-                          )}
-                          <div className="flex-1">
-                            <Input
-                              id={`seal-upload-${activeTab}`}
-                              type="file"
-                              accept="image/*"
-                              onChange={handleSealUpload}
-                              className="hidden"
+                          {currentTemplate.seal?.dataUrl && (
+                            <img
+                              src={currentTemplate.seal.dataUrl}
+                              alt="Seal preview"
+                              className="h-16 w-16 object-contain rounded border border-border"
                             />
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => document.getElementById(`seal-upload-${activeTab}`)?.click()}
-                            >
-                              <Upload className="mr-2 h-4 w-4" />
-                              {currentTemplate.seal?.dataUrl ? 'Change Seal' : 'Upload Seal'}
-                            </Button>
+                          )}
+                          <div className="flex gap-2">
+                            <label className="cursor-pointer">
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={handleSealUpload}
+                              />
+                              <span className="inline-flex items-center gap-1 px-3 py-2 rounded-md border border-border text-sm hover:bg-muted transition-colors">
+                                Upload Seal
+                              </span>
+                            </label>
                             {currentTemplate.seal?.dataUrl && (
                               <Button
                                 variant="ghost"
@@ -673,95 +493,74 @@ export default function TemplateDesigner({
                                     seal: { ...currentTemplate.seal!, dataUrl: null },
                                   })
                                 }
-                                className="ml-2"
+                                className="text-destructive"
                               >
-                                Remove
+                                <Trash2 className="h-4 w-4" />
                               </Button>
                             )}
                           </div>
                         </div>
+                      </div>
 
-                        {currentTemplate.seal && (
-                          <>
-                            <div className="space-y-2">
-                              <Label>Size: {currentTemplate.seal.size}px</Label>
-                              <Slider
-                                min={40}
-                                max={200}
-                                step={4}
-                                value={[currentTemplate.seal.size]}
-                                onValueChange={([value]) =>
-                                  handleTemplateChange({
-                                    seal: { ...currentTemplate.seal!, size: value },
-                                  })
-                                }
-                              />
-                            </div>
+                      <div className="space-y-2">
+                        <Label>Opacity ({currentTemplate.seal?.opacity ?? 80}%)</Label>
+                        <Slider
+                          min={10}
+                          max={100}
+                          step={5}
+                          value={[currentTemplate.seal?.opacity ?? 80]}
+                          onValueChange={([v]) =>
+                            handleTemplateChange({
+                              seal: { ...currentTemplate.seal!, opacity: v },
+                            })
+                          }
+                        />
+                      </div>
+                    </>
+                  )}
+                </AccordionContent>
+              </AccordionItem>
 
-                            <div className="space-y-2">
-                              <Label htmlFor="seal-position">Position</Label>
-                              <Select
-                                value={currentTemplate.seal.position}
-                                onValueChange={(value) =>
-                                  handleTemplateChange({
-                                    seal: {
-                                      ...currentTemplate.seal!,
-                                      position: value as PositionPreset,
-                                    },
-                                  })
-                                }
-                              >
-                                <SelectTrigger id="seal-position">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {positionOptions.map((p) => (
-                                    <SelectItem key={p} value={p}>
-                                      {p}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          </>
-                        )}
-                      </AccordionContent>
-                    </AccordionItem>
+              {/* ── Signature ── */}
+              <AccordionItem value="signature">
+                <AccordionTrigger>Signature</AccordionTrigger>
+                <AccordionContent className="space-y-4 pt-2">
+                  <div className="flex items-center justify-between">
+                    <Label>Enable Signature</Label>
+                    <Switch
+                      checked={currentTemplate.signature?.enabled ?? false}
+                      onCheckedChange={(checked) =>
+                        handleTemplateChange({
+                          signature: { ...currentTemplate.signature!, enabled: checked },
+                        })
+                      }
+                    />
+                  </div>
 
-                    {/* Signature */}
-                    <AccordionItem value="signature">
-                      <AccordionTrigger>Signature</AccordionTrigger>
-                      <AccordionContent className="space-y-4 pt-4">
+                  {currentTemplate.signature?.enabled && (
+                    <>
+                      <div className="space-y-2">
+                        <Label>Upload Signature Image</Label>
                         <div className="flex items-center gap-3">
-                          {currentTemplate.signature?.dataUrl ? (
-                            <div className="relative h-16 w-16 overflow-hidden rounded-lg border border-border">
-                              <img
-                                src={currentTemplate.signature.dataUrl}
-                                alt="Signature"
-                                className="h-full w-full object-contain"
-                              />
-                            </div>
-                          ) : (
-                            <div className="flex h-16 w-16 items-center justify-center rounded-lg border border-dashed border-border">
-                              <ImageIcon className="h-6 w-6 text-muted-foreground" />
-                            </div>
-                          )}
-                          <div className="flex-1">
-                            <Input
-                              id={`sig-upload-${activeTab}`}
-                              type="file"
-                              accept="image/*"
-                              onChange={handleSignatureUpload}
-                              className="hidden"
+                          {currentTemplate.signature?.dataUrl && (
+                            <img
+                              src={currentTemplate.signature.dataUrl}
+                              alt="Signature preview"
+                              className="h-12 w-auto object-contain rounded border border-border"
                             />
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => document.getElementById(`sig-upload-${activeTab}`)?.click()}
-                            >
-                              <Upload className="mr-2 h-4 w-4" />
-                              {currentTemplate.signature?.dataUrl ? 'Change Signature' : 'Upload Signature'}
-                            </Button>
+                          )}
+                          <div className="flex gap-2">
+                            <label className="cursor-pointer">
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={handleSignatureUpload}
+                              />
+                              <span className="inline-flex items-center gap-1 px-3 py-2 rounded-md border border-border text-sm hover:bg-muted transition-colors">
+                                Upload Signature
+                              </span>
+                            </label>
                             {currentTemplate.signature?.dataUrl && (
                               <Button
                                 variant="ghost"
@@ -771,193 +570,155 @@ export default function TemplateDesigner({
                                     signature: { ...currentTemplate.signature!, dataUrl: null },
                                   })
                                 }
-                                className="ml-2"
+                                className="text-destructive"
                               >
-                                Remove
+                                <Trash2 className="h-4 w-4" />
                               </Button>
                             )}
                           </div>
-                        </div>
-
-                        {currentTemplate.signature && (
-                          <>
-                            <div className="space-y-2">
-                              <Label>Size: {currentTemplate.signature.size}px</Label>
-                              <Slider
-                                min={60}
-                                max={300}
-                                step={4}
-                                value={[currentTemplate.signature.size]}
-                                onValueChange={([value]) =>
-                                  handleTemplateChange({
-                                    signature: { ...currentTemplate.signature!, size: value },
-                                  })
-                                }
-                              />
-                            </div>
-
-                            <div className="space-y-2">
-                              <Label htmlFor="sig-position">Position</Label>
-                              <Select
-                                value={currentTemplate.signature.position}
-                                onValueChange={(value) =>
-                                  handleTemplateChange({
-                                    signature: {
-                                      ...currentTemplate.signature!,
-                                      position: value as PositionPreset,
-                                    },
-                                  })
-                                }
-                              >
-                                <SelectTrigger id="sig-position">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {positionOptions.map((p) => (
-                                    <SelectItem key={p} value={p}>
-                                      {p}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          </>
-                        )}
-                      </AccordionContent>
-                    </AccordionItem>
-
-                    {/* Content */}
-                    <AccordionItem value="content">
-                      <AccordionTrigger>Document Content</AccordionTrigger>
-                      <AccordionContent className="space-y-4 pt-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="template-headline">Headline</Label>
-                          <Input
-                            id="template-headline"
-                            placeholder="Document title"
-                            value={currentTemplate.headline || ''}
-                            onChange={(e) => handleTemplateChange({ headline: e.target.value })}
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label>Insert Placeholder</Label>
-                          <div className="flex flex-wrap gap-1">
-                            {placeholders.map((p) => (
-                              <Button
-                                key={p.value}
-                                variant="outline"
-                                size="sm"
-                                className="h-7 text-xs"
-                                onClick={() => insertPlaceholder(p.value)}
-                              >
-                                {p.label}
-                              </Button>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="template-body">Body</Label>
-                          <Textarea
-                            id="template-body"
-                            rows={12}
-                            value={currentTemplate.body || ''}
-                            onChange={(e) => handleTemplateChange({ body: e.target.value })}
-                            className="font-mono text-xs"
-                          />
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
-                  </Accordion>
-                </div>
-
-                {/* Right side: Live Preview */}
-                <div className="flex-1 min-w-0">
-                  <div className="sticky top-4">
-                    <div className="mb-2 flex items-center justify-between">
-                      <Label className="text-sm font-medium">Live Preview</Label>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setPreviewOpen(true)}
-                      >
-                        Full Preview
-                      </Button>
-                    </div>
-
-                    {/* Mini preview */}
-                    <div className="rounded-lg border border-border bg-white overflow-hidden text-[10px] leading-tight shadow-sm">
-                      {showHeader && (
-                        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
-                          <div className="flex flex-col min-w-0 flex-1 pr-2">
-                            {hasBusinessName && (
-                              <span className="font-bold text-gray-900 truncate">
-                                {currentTemplate.businessName}
-                              </span>
-                            )}
-                            {hasBusinessAddress && (
-                              <span className="text-gray-500 truncate">
-                                {currentTemplate.businessAddress}
-                              </span>
-                            )}
-                          </div>
-                          {hasLogo && (
-                            <img
-                              src={currentTemplate.logoDataUrl!}
-                              alt="Logo"
-                              className="h-8 max-w-[60px] object-contain flex-shrink-0"
-                            />
-                          )}
-                        </div>
-                      )}
-                      <div className="p-4">
-                        <div className="font-bold text-center text-gray-900 mb-2">
-                          {currentTemplate.headline}
-                        </div>
-                        <div className="text-gray-700 whitespace-pre-wrap line-clamp-6">
-                          {currentTemplate.body}
                         </div>
                       </div>
-                      {(hasSignature || hasSeal) && (
-                        <div className="flex items-end justify-between gap-4 px-4 pb-3">
-                          <div className="flex-1 flex flex-col items-center">
-                            {hasSignature && (
-                              <img
-                                src={currentTemplate.signature!.dataUrl!}
-                                alt="Signature"
-                                className="max-h-8 object-contain mb-1"
-                              />
-                            )}
-                            <div className="w-full border-t border-gray-300 pt-0.5 text-center text-gray-500">
-                              Signature
-                            </div>
-                          </div>
-                          <div className="flex-1 flex flex-col items-center">
-                            {hasSeal && (
-                              <img
-                                src={currentTemplate.seal!.dataUrl!}
-                                alt="Seal"
-                                className="max-h-8 object-contain mb-1"
-                              />
-                            )}
-                            <div className="w-full border-t border-gray-300 pt-0.5 text-center text-gray-500">
-                              Stamp
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                      {currentTemplate.footerText && (
-                        <div className="border-t border-gray-200 px-4 py-2 text-center text-gray-500">
-                          {currentTemplate.footerText}
-                        </div>
-                      )}
-                    </div>
+
+                      <div className="space-y-2">
+                        <Label>Signatory Name</Label>
+                        <Input
+                          value={currentTemplate.signature?.signatoryName ?? ''}
+                          onChange={(e) =>
+                            handleTemplateChange({
+                              signature: { ...currentTemplate.signature!, signatoryName: e.target.value },
+                            })
+                          }
+                          placeholder="e.g. John Doe"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Signatory Title</Label>
+                        <Input
+                          value={currentTemplate.signature?.signatoryTitle ?? ''}
+                          onChange={(e) =>
+                            handleTemplateChange({
+                              signature: { ...currentTemplate.signature!, signatoryTitle: e.target.value },
+                            })
+                          }
+                          placeholder="e.g. Authorized Signatory"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Opacity ({currentTemplate.signature?.opacity ?? 100}%)</Label>
+                        <Slider
+                          min={10}
+                          max={100}
+                          step={5}
+                          value={[currentTemplate.signature?.opacity ?? 100]}
+                          onValueChange={([v]) =>
+                            handleTemplateChange({
+                              signature: { ...currentTemplate.signature!, opacity: v },
+                            })
+                          }
+                        />
+                      </div>
+                    </>
+                  )}
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* ── Background ── */}
+              <AccordionItem value="background">
+                <AccordionTrigger>Background Image</AccordionTrigger>
+                <AccordionContent className="space-y-4 pt-2">
+                  <div className="flex items-center justify-between">
+                    <Label>Enable Background</Label>
+                    <Switch
+                      checked={currentTemplate.background?.enabled ?? false}
+                      onCheckedChange={(checked) =>
+                        handleTemplateChange({
+                          background: { ...currentTemplate.background!, enabled: checked },
+                        })
+                      }
+                    />
                   </div>
-                </div>
-              </div>
-            </TabsContent>
-          </Tabs>
+
+                  {currentTemplate.background?.enabled && (
+                    <>
+                      <div className="space-y-2">
+                        <Label>Upload Background Image</Label>
+                        <div className="flex items-center gap-3">
+                          {currentTemplate.background?.dataUrl && (
+                            <img
+                              src={currentTemplate.background.dataUrl}
+                              alt="Background preview"
+                              className="h-16 w-auto object-contain rounded border border-border"
+                            />
+                          )}
+                          <div className="flex gap-2">
+                            <label className="cursor-pointer">
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={handleBackgroundUpload}
+                              />
+                              <span className="inline-flex items-center gap-1 px-3 py-2 rounded-md border border-border text-sm hover:bg-muted transition-colors">
+                                Upload Background
+                              </span>
+                            </label>
+                            {currentTemplate.background?.dataUrl && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() =>
+                                  handleTemplateChange({
+                                    background: { ...currentTemplate.background!, dataUrl: null },
+                                  })
+                                }
+                                className="text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Opacity ({Math.round((currentTemplate.background?.opacity ?? 0.1) * 100)}%)</Label>
+                        <Slider
+                          min={1}
+                          max={50}
+                          step={1}
+                          value={[Math.round((currentTemplate.background?.opacity ?? 0.1) * 100)]}
+                          onValueChange={([v]) =>
+                            handleTemplateChange({
+                              background: { ...currentTemplate.background!, opacity: v / 100 },
+                            })
+                          }
+                        />
+                      </div>
+                    </>
+                  )}
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* ── Delete custom template ── */}
+              {!isBuiltIn && (
+                <AccordionItem value="danger">
+                  <AccordionTrigger className="text-destructive">Danger Zone</AccordionTrigger>
+                  <AccordionContent className="pt-2">
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => setDeleteConfirmId(activeTab)}
+                    >
+                      <Trash2 className="h-4 w-4 mr-1" />
+                      Delete This Template
+                    </Button>
+                  </AccordionContent>
+                </AccordionItem>
+              )}
+            </Accordion>
+          </ScrollArea>
         </CardContent>
       </Card>
 
@@ -971,11 +732,10 @@ export default function TemplateDesigner({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <Input
-            placeholder="Template name"
             value={newTemplateName}
             onChange={(e) => setNewTemplateName(e.target.value)}
+            placeholder="Template name"
             onKeyDown={(e) => e.key === 'Enter' && handleCreateCustomTemplate()}
-            className="my-2"
           />
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setNewTemplateName('')}>Cancel</AlertDialogCancel>
@@ -996,9 +756,9 @@ export default function TemplateDesigner({
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Template?</AlertDialogTitle>
+            <AlertDialogTitle>Delete Template</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. The template will be permanently deleted.
+              Are you sure you want to delete this template? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -1013,31 +773,13 @@ export default function TemplateDesigner({
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Apply Header to All Dialog */}
-      <AlertDialog open={showApplyHeaderDialog} onOpenChange={setShowApplyHeaderDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Apply Header to All Templates?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will overwrite the <strong>business name</strong>, <strong>business address</strong>, and <strong>logo</strong> in <strong>all templates</strong> (built-in and custom) with the current header settings from "{isBuiltIn ? activeTab : (currentTemplate as CustomTemplate).name}". This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleApplyHeaderToAll}>
-              Apply to All
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Full Preview Dialog */}
+      {/* Preview Dialog */}
       <PreviewDialog
         open={previewOpen}
         onOpenChange={setPreviewOpen}
         template={currentTemplate}
         formData={formData}
-        documentType={isBuiltIn ? activeTab : (currentTemplate as CustomTemplate).name}
+        documentType={activeTabLabel}
       />
     </div>
   );

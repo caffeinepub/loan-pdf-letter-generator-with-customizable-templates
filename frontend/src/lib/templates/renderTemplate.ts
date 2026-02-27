@@ -1,20 +1,33 @@
 import { Template } from '../../types/templates';
 import { FormData } from '../../types/form';
+import { formatCurrency } from '../loan/calculateEmi';
 
-export function renderTemplate(template: Template, formData: FormData): { headline: string; body: string } {
+export function renderTemplate(
+  template: Template,
+  formData: FormData
+): { headline: string; body: string } {
   let renderedHeadline = template.headline || '';
   let renderedBody = template.body || '';
+
+  const processingChargeNum = parseFloat(formData.processingCharge) || 0;
+  const monthlyEmiNum = parseFloat(formData.monthlyEmi) || 0;
 
   // Replace standard placeholders
   const replacements: Record<string, string> = {
     '{{name}}': formData.name || '[Name]',
-    '{{mobile}}': formData.mobile || '[Mobile]',
-    '{{address}}': formData.address || '[Address]',
-    '{{panNumber}}': formData.panNumber || '[PAN Number]',
+    '{{loanType}}': formData.loanType || '[Loan Type]',
     '{{loanAmount}}': formData.loanAmount || '[Loan Amount]',
     '{{interestRate}}': formData.interestRate || '[Interest Rate]',
     '{{year}}': formData.year || '[Year]',
-    '{{monthlyEmi}}': formData.monthlyEmi || '[Monthly EMI]',
+    '{{monthlyEmi}}': monthlyEmiNum > 0 ? formatCurrency(monthlyEmiNum) : '[Monthly EMI]',
+    '{{processingCharge}}': processingChargeNum > 0 ? formatCurrency(processingChargeNum) : '[Processing Charge]',
+    '{{bankAccountNumber}}': formData.bankAccountNumber || '[Bank Account Number]',
+    '{{ifscCode}}': formData.ifscCode || '[IFSC Code]',
+    '{{upiId}}': formData.upiId || '[UPI ID]',
+    // Legacy placeholders — kept for backward compatibility
+    '{{mobile}}': '[Mobile]',
+    '{{address}}': '[Address]',
+    '{{panNumber}}': '[PAN Number]',
   };
 
   // Add custom field placeholders

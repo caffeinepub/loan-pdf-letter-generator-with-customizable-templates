@@ -1,11 +1,10 @@
 # Specification
 
 ## Summary
-**Goal:** Enhance the Loan Document Generator's template editor with an explicit Save button, an "Apply Header to All Templates" action, and an automatic share flow triggered after document download.
+**Goal:** Fix the document footer layout and add 4 images displayed horizontally in the footer area of the rendered loan document.
 
 **Planned changes:**
-- Add a "Save" button inside the TemplateDesigner component that saves the current template to localStorage and briefly shows a "Saved!" confirmation state before reverting.
-- Add an "Apply Header to All Templates" button in the template editor that, after a confirmation prompt, copies the current template's header settings (business name, address, logo) to all other templates in localStorage and shows a success message.
-- After a document (PNG/PDF) is successfully downloaded in FormSection, automatically present a "Share" option using the Web Share API (via the existing `sharePdf` utility), falling back to re-triggering the download if the API is unsupported.
+- Fix footer alignment, padding, margins, and styling in both `PreviewDialog.tsx` and `renderDocumentToCanvas.ts` to be visually consistent with the overall document design
+- Add 4 static images served from `frontend/public/assets/generated/` and render them horizontally and evenly spaced in the footer row in both the preview dialog and PDF canvas output
 
-**User-visible outcome:** Users can explicitly save templates, propagate header branding across all templates at once, and share downloaded documents immediately after download completes.
+**User-visible outcome:** The document footer is properly aligned and styled, and displays 4 images laid out horizontally — visible in both the preview dialog and the exported PDF.

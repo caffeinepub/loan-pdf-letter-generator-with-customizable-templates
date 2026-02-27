@@ -40,6 +40,23 @@ export interface LayoutSettings {
     { 'sideBySide' : null },
   'footerText' : string,
 }
+export interface LoanProcessingData {
+  'id' : string,
+  'loanType' : LoanType,
+  'timestamp' : bigint,
+  'amount' : bigint,
+  'processingCharge' : bigint,
+}
+export type LoanType = { 'home' : null } |
+  { 'education' : null } |
+  { 'personal' : null } |
+  { 'business' : null } |
+  { 'vehicle' : null };
+export type TemplateResult = { 'unexpectedError' : string } |
+  { 'alreadyExists' : null } |
+  { 'unauthorizedField' : null } |
+  { 'notFound' : null } |
+  { 'success' : null };
 export interface UserProfile { 'name' : string, 'email' : [] | [string] }
 export type UserRole = { 'admin' : null } |
   { 'user' : null } |
@@ -72,8 +89,13 @@ export interface _SERVICE {
   >,
   '_caffeineStorageUpdateGatewayPrincipals' : ActorMethod<[], undefined>,
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
+  'addCustomTemplate' : ActorMethod<
+    [string, GlobalMasterTemplate],
+    TemplateResult
+  >,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
-  'convertDocumentToTemplate' : ActorMethod<[string], undefined>,
+  'createLoanProcessingRecord' : ActorMethod<[LoanProcessingData], undefined>,
+  'deleteLoanProcessingRecord' : ActorMethod<[string], undefined>,
   'getAllDocumentContents' : ActorMethod<
     [string],
     {
@@ -81,15 +103,27 @@ export interface _SERVICE {
       'businessTemplates' : [] | [GlobalMasterTemplate],
     }
   >,
+  'getAllLoanProcessingRecords' : ActorMethod<[], Array<LoanProcessingData>>,
+  'getAllTemplates' : ActorMethod<[], Array<GlobalMasterTemplate>>,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
+  'getCustomTemplateById' : ActorMethod<[string], [] | [GlobalMasterTemplate]>,
   'getDocumentContent' : ActorMethod<[string, string], [] | [DocumentContent]>,
   'getGlobalTemplate' : ActorMethod<[string], [] | [GlobalMasterTemplate]>,
+  'getLoanProcessingRecord' : ActorMethod<[string], [] | [LoanProcessingData]>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
+  'updateCustomTemplate' : ActorMethod<
+    [string, GlobalMasterTemplate],
+    TemplateResult
+  >,
   'updateGlobalTemplate' : ActorMethod<
     [string, GlobalMasterTemplate],
+    undefined
+  >,
+  'updateLoanProcessingRecord' : ActorMethod<
+    [string, LoanProcessingData],
     undefined
   >,
   'updateMultipleDocumentTypes' : ActorMethod<

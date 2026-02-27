@@ -1,65 +1,54 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-26T03:49:51.700Z",
+  "generatedAt": "2026-02-27T21:59:23.182Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 3,
-    "implemented": 3,
+    "total": 2,
+    "implemented": 2,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Add a visible 'Save' button inside the template editor (TemplateDesigner component) that explicitly saves the current template configuration to localStorage. The button should provide visual feedback (e.g., a brief 'Saved!' confirmation state) after successfully saving.",
+        "summary": "Fix the footer layout and styling in the rendered document (both in PreviewDialog.tsx and renderDocumentToCanvas.ts). Ensure the footer is properly aligned, has consistent padding/margins, and visually matches the overall document design.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/TemplateDesigner.tsx"
+          "frontend/src/components/PreviewDialog.tsx",
+          "frontend/src/lib/pdf/renderDocumentToCanvas.ts"
         ],
         "matchedFiles": [
-          "frontend/src/components/TemplateDesigner.tsx"
+          "frontend/src/components/PreviewDialog.tsx",
+          "frontend/src/lib/pdf/renderDocumentToCanvas.ts"
         ]
       },
       {
         "id": "REQ-2",
-        "summary": "Add an 'Apply Header to All Templates' action in the template editor that copies the current template's header settings (business name, address, logo) to all other templates stored in localStorage. Display a confirmation prompt before applying to prevent accidental overwrites.",
+        "summary": "Add 4 user-provided images to the footer area in the rendered document. Display the 4 images as static assets (frontend/public/assets/generated/) and render them horizontally in the footer row within both PreviewDialog.tsx and renderDocumentToCanvas.ts.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/hooks/useTemplates.ts",
-          "frontend/src/components/TemplateDesigner.tsx"
+          "frontend/src/components/PreviewDialog.tsx",
+          "frontend/src/lib/pdf/renderDocumentToCanvas.ts"
         ],
         "matchedFiles": [
-          "frontend/src/hooks/useTemplates.ts",
-          "frontend/src/components/TemplateDesigner.tsx"
-        ]
-      },
-      {
-        "id": "REQ-3",
-        "summary": "After a document is successfully downloaded (PNG/PDF), automatically trigger the share flow using the Web Share API (falling back to a direct download prompt if unsupported). The Share button should be surfaced in the download confirmation UI or as a follow-up action after download completes in FormSection.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/App.tsx",
-          "frontend/src/components/FormSection.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/App.tsx",
-          "frontend/src/components/FormSection.tsx"
+          "frontend/src/components/PreviewDialog.tsx",
+          "frontend/src/lib/pdf/renderDocumentToCanvas.ts"
         ]
       }
     ]
   },
   "changedFiles": [
     "build-request.json",
-    "build-template/README.md",
-    "caffeine.lock.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/App.tsx",
-    "frontend/src/components/FormSection.tsx",
-    "frontend/src/components/TemplateDesigner.tsx",
-    "frontend/src/hooks/useTemplates.ts",
+    "frontend/public/assets/generated/footer-img-1.dim_200x80.png",
+    "frontend/public/assets/generated/footer-img-2.dim_200x80.png",
+    "frontend/public/assets/generated/footer-img-3.dim_200x80.png",
+    "frontend/public/assets/generated/footer-img-4.dim_200x80.png",
+    "frontend/src/components/PreviewDialog.tsx",
+    "frontend/src/lib/pdf/renderDocumentToCanvas.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

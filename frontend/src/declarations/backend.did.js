@@ -19,11 +19,6 @@ export const _CaffeineStorageRefillResult = IDL.Record({
   'success' : IDL.Opt(IDL.Bool),
   'topped_up_amount' : IDL.Opt(IDL.Nat),
 });
-export const UserRole = IDL.Variant({
-  'admin' : IDL.Null,
-  'user' : IDL.Null,
-  'guest' : IDL.Null,
-});
 export const ExternalBlob = IDL.Vec(IDL.Nat8);
 export const LayoutSettings = IDL.Record({
   'watermarkText' : IDL.Text,
@@ -52,6 +47,32 @@ export const GlobalMasterTemplate = IDL.Record({
   'stamp' : IDL.Opt(ExternalBlob),
   'optionalCustomFieldLabel' : IDL.Opt(IDL.Text),
   'adminId' : IDL.Text,
+});
+export const TemplateResult = IDL.Variant({
+  'unexpectedError' : IDL.Text,
+  'alreadyExists' : IDL.Null,
+  'unauthorizedField' : IDL.Null,
+  'notFound' : IDL.Null,
+  'success' : IDL.Null,
+});
+export const UserRole = IDL.Variant({
+  'admin' : IDL.Null,
+  'user' : IDL.Null,
+  'guest' : IDL.Null,
+});
+export const LoanType = IDL.Variant({
+  'home' : IDL.Null,
+  'education' : IDL.Null,
+  'personal' : IDL.Null,
+  'business' : IDL.Null,
+  'vehicle' : IDL.Null,
+});
+export const LoanProcessingData = IDL.Record({
+  'id' : IDL.Text,
+  'loanType' : LoanType,
+  'timestamp' : IDL.Int,
+  'amount' : IDL.Nat,
+  'processingCharge' : IDL.Nat,
 });
 export const UserProfile = IDL.Record({
   'name' : IDL.Text,
@@ -91,8 +112,14 @@ export const idlService = IDL.Service({
     ),
   '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
   '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
+  'addCustomTemplate' : IDL.Func(
+      [IDL.Text, GlobalMasterTemplate],
+      [TemplateResult],
+      [],
+    ),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
-  'convertDocumentToTemplate' : IDL.Func([IDL.Text], [], ['oneway']),
+  'createLoanProcessingRecord' : IDL.Func([LoanProcessingData], [], []),
+  'deleteLoanProcessingRecord' : IDL.Func([IDL.Text], [], []),
   'getAllDocumentContents' : IDL.Func(
       [IDL.Text],
       [
@@ -103,8 +130,19 @@ export const idlService = IDL.Service({
       ],
       ['query'],
     ),
+  'getAllLoanProcessingRecords' : IDL.Func(
+      [],
+      [IDL.Vec(LoanProcessingData)],
+      ['query'],
+    ),
+  'getAllTemplates' : IDL.Func([], [IDL.Vec(GlobalMasterTemplate)], ['query']),
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+  'getCustomTemplateById' : IDL.Func(
+      [IDL.Text],
+      [IDL.Opt(GlobalMasterTemplate)],
+      ['query'],
+    ),
   'getDocumentContent' : IDL.Func(
       [IDL.Text, IDL.Text],
       [IDL.Opt(DocumentContent)],
@@ -115,6 +153,11 @@ export const idlService = IDL.Service({
       [IDL.Opt(GlobalMasterTemplate)],
       ['query'],
     ),
+  'getLoanProcessingRecord' : IDL.Func(
+      [IDL.Text],
+      [IDL.Opt(LoanProcessingData)],
+      ['query'],
+    ),
   'getUserProfile' : IDL.Func(
       [IDL.Principal],
       [IDL.Opt(UserProfile)],
@@ -122,7 +165,17 @@ export const idlService = IDL.Service({
     ),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
   'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
+  'updateCustomTemplate' : IDL.Func(
+      [IDL.Text, GlobalMasterTemplate],
+      [TemplateResult],
+      [],
+    ),
   'updateGlobalTemplate' : IDL.Func([IDL.Text, GlobalMasterTemplate], [], []),
+  'updateLoanProcessingRecord' : IDL.Func(
+      [IDL.Text, LoanProcessingData],
+      [],
+      [],
+    ),
   'updateMultipleDocumentTypes' : IDL.Func(
       [IDL.Text, IDL.Vec(IDL.Tuple(IDL.Text, DocumentContent))],
       [],
@@ -143,11 +196,6 @@ export const idlFactory = ({ IDL }) => {
   const _CaffeineStorageRefillResult = IDL.Record({
     'success' : IDL.Opt(IDL.Bool),
     'topped_up_amount' : IDL.Opt(IDL.Nat),
-  });
-  const UserRole = IDL.Variant({
-    'admin' : IDL.Null,
-    'user' : IDL.Null,
-    'guest' : IDL.Null,
   });
   const ExternalBlob = IDL.Vec(IDL.Nat8);
   const LayoutSettings = IDL.Record({
@@ -177,6 +225,32 @@ export const idlFactory = ({ IDL }) => {
     'stamp' : IDL.Opt(ExternalBlob),
     'optionalCustomFieldLabel' : IDL.Opt(IDL.Text),
     'adminId' : IDL.Text,
+  });
+  const TemplateResult = IDL.Variant({
+    'unexpectedError' : IDL.Text,
+    'alreadyExists' : IDL.Null,
+    'unauthorizedField' : IDL.Null,
+    'notFound' : IDL.Null,
+    'success' : IDL.Null,
+  });
+  const UserRole = IDL.Variant({
+    'admin' : IDL.Null,
+    'user' : IDL.Null,
+    'guest' : IDL.Null,
+  });
+  const LoanType = IDL.Variant({
+    'home' : IDL.Null,
+    'education' : IDL.Null,
+    'personal' : IDL.Null,
+    'business' : IDL.Null,
+    'vehicle' : IDL.Null,
+  });
+  const LoanProcessingData = IDL.Record({
+    'id' : IDL.Text,
+    'loanType' : LoanType,
+    'timestamp' : IDL.Int,
+    'amount' : IDL.Nat,
+    'processingCharge' : IDL.Nat,
   });
   const UserProfile = IDL.Record({
     'name' : IDL.Text,
@@ -216,8 +290,14 @@ export const idlFactory = ({ IDL }) => {
       ),
     '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
     '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
+    'addCustomTemplate' : IDL.Func(
+        [IDL.Text, GlobalMasterTemplate],
+        [TemplateResult],
+        [],
+      ),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
-    'convertDocumentToTemplate' : IDL.Func([IDL.Text], [], ['oneway']),
+    'createLoanProcessingRecord' : IDL.Func([LoanProcessingData], [], []),
+    'deleteLoanProcessingRecord' : IDL.Func([IDL.Text], [], []),
     'getAllDocumentContents' : IDL.Func(
         [IDL.Text],
         [
@@ -228,8 +308,23 @@ export const idlFactory = ({ IDL }) => {
         ],
         ['query'],
       ),
+    'getAllLoanProcessingRecords' : IDL.Func(
+        [],
+        [IDL.Vec(LoanProcessingData)],
+        ['query'],
+      ),
+    'getAllTemplates' : IDL.Func(
+        [],
+        [IDL.Vec(GlobalMasterTemplate)],
+        ['query'],
+      ),
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+    'getCustomTemplateById' : IDL.Func(
+        [IDL.Text],
+        [IDL.Opt(GlobalMasterTemplate)],
+        ['query'],
+      ),
     'getDocumentContent' : IDL.Func(
         [IDL.Text, IDL.Text],
         [IDL.Opt(DocumentContent)],
@@ -240,6 +335,11 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Opt(GlobalMasterTemplate)],
         ['query'],
       ),
+    'getLoanProcessingRecord' : IDL.Func(
+        [IDL.Text],
+        [IDL.Opt(LoanProcessingData)],
+        ['query'],
+      ),
     'getUserProfile' : IDL.Func(
         [IDL.Principal],
         [IDL.Opt(UserProfile)],
@@ -247,7 +347,17 @@ export const idlFactory = ({ IDL }) => {
       ),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
     'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
+    'updateCustomTemplate' : IDL.Func(
+        [IDL.Text, GlobalMasterTemplate],
+        [TemplateResult],
+        [],
+      ),
     'updateGlobalTemplate' : IDL.Func([IDL.Text, GlobalMasterTemplate], [], []),
+    'updateLoanProcessingRecord' : IDL.Func(
+        [IDL.Text, LoanProcessingData],
+        [],
+        [],
+      ),
     'updateMultipleDocumentTypes' : IDL.Func(
         [IDL.Text, IDL.Vec(IDL.Tuple(IDL.Text, DocumentContent))],
         [],

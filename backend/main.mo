@@ -1,8 +1,7 @@
 import Text "mo:core/Text";
-import Runtime "mo:core/Runtime";
 import Map "mo:core/Map";
-import Char "mo:core/Char";
 import Principal "mo:core/Principal";
+import Runtime "mo:core/Runtime";
 import Iter "mo:core/Iter";
 import AccessControl "authorization/access-control";
 import MixinAuthorization "authorization/MixinAuthorization";
@@ -13,6 +12,23 @@ actor {
   let accessControlState = AccessControl.initState();
   include MixinAuthorization(accessControlState);
   include MixinStorage();
+
+  public type LoanType = {
+    #home;
+    #personal;
+    #business;
+    #vehicle;
+    #education;
+  };
+
+  public type LoanProcessingData = {
+    id : Text;
+    amount : Nat;
+    loanType : LoanType;
+    processingCharge : Nat;
+    timestamp : Int;
+  };
+
   type LayoutSettings = {
     headerColor : Text;
     footerText : Text;
@@ -50,25 +66,36 @@ actor {
     content : DocumentContent;
     template : GlobalMasterTemplate;
   };
+  public type TemplateResult = {
+    #success;
+    #alreadyExists;
+    #notFound;
+    #unauthorizedField;
+    #unexpectedError : Text;
+  };
   let templatesMap = Map.empty<Text, GlobalMasterTemplate>();
   let documentContentsMap = Map.empty<Text, Map.Map<Text, DocumentContent>>();
   let documentsMap = Map.empty<Text, Map.Map<Text, Document>>();
-  var nextDocumentId = 1;
   let userProfiles = Map.empty<Principal, UserProfile>();
+  let loanProcessingRecords = Map.empty<Text, LoanProcessingData>();
+  let customTemplates = Map.empty<Text, GlobalMasterTemplate>();
+  let customTemplateOwners = Map.empty<Text, Principal>();
 
-  func validateNonEmptyField(fieldName : Text, text : Text) {
-    let isEmpty = text.isEmpty();
-    if (isEmpty) {
-      Runtime.trap("Validation failed: " # fieldName # " cannot be empty.");
-    };
-  };
-
-  // User profile functions required by the frontend
+  ///////////////////////////////////////
+  // User Profile Functions
+  ///////////////////////////////////////
   public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can get their profile");
     };
     userProfiles.get(caller);
+  };
+
+  public query ({ caller }) func getUserProfile(user : Principal) : async ?UserProfile {
+    if (caller != user and not AccessControl.isAdmin(accessControlState, caller)) {
+      Runtime.trap("Unauthorized: Can only view your own profile");
+    };
+    userProfiles.get(user);
   };
 
   public shared ({ caller }) func saveCallerUserProfile(profile : UserProfile) : async () {
@@ -78,17 +105,9 @@ actor {
     userProfiles.add(caller, profile);
   };
 
-  public query ({ caller }) func getUserProfile(user : Principal) : async ?UserProfile {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can view profiles");
-    };
-    if (caller != user and not AccessControl.isAdmin(accessControlState, caller)) {
-      Runtime.trap("Unauthorized: Can only view your own profile");
-    };
-    userProfiles.get(user);
-  };
-
-  // Fetch global template - accessible to authenticated users
+  ///////////////////////////////////////
+  // Template Functions
+  ///////////////////////////////////////
   public query ({ caller }) func getGlobalTemplate(adminId : Text) : async ?GlobalMasterTemplate {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can view templates");
@@ -96,7 +115,6 @@ actor {
     templatesMap.get(adminId);
   };
 
-  // Update global template - only the owning admin or a system admin can update
   public shared ({ caller }) func updateGlobalTemplate(
     adminId : Text,
     template : GlobalMasterTemplate,
@@ -107,43 +125,19 @@ actor {
     templatesMap.add(adminId, template);
   };
 
-  // Get document content - accessible to authenticated users
+  ///////////////////////////////////////
+  // Document Content Functions
+  ///////////////////////////////////////
   public query ({ caller }) func getDocumentContent(adminId : Text, docType : Text) : async ?DocumentContent {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can view document content");
     };
     switch (documentContentsMap.get(adminId)) {
-      case (null) {
-        Runtime.trap("Content not found for adminId: " # adminId);
-      };
-      case (?contents) {
-        contents.get(docType);
-      };
+      case (null) { Runtime.trap("Content not found for adminId: " # adminId) };
+      case (?contents) { contents.get(docType) };
     };
   };
 
-  func isCallerAuthorizedForAdmin(caller : Principal, adminId : Text) : Bool {
-    let userRole : AccessControl.UserRole = AccessControl.getUserRole(accessControlState, caller);
-    switch (userRole) {
-      case (#admin) {
-        true;
-      };
-      case (#user) {
-        switch (userProfiles.get(caller)) {
-          case (null) { false };
-          case (?profile) {
-            switch (profile.name == adminId) {
-              case (true) { true };
-              case (false) { false };
-            };
-          };
-        };
-      };
-      case (_) { false };
-    };
-  };
-
-  // Update multiple document types - only the owning admin or a system admin
   public shared ({ caller }) func updateMultipleDocumentTypes(adminId : Text, docTypeContentList : [(Text, DocumentContent)]) : async () {
     if (not isCallerAuthorizedForAdmin(caller, adminId)) {
       Runtime.trap("Unauthorized: You are not authorized to manage content for this adminId");
@@ -168,11 +162,9 @@ actor {
         };
       };
     };
-
     documentContentsMap.add(adminId, documentContents);
   };
 
-  // Get all document contents - accessible to authenticated users
   public query ({ caller }) func getAllDocumentContents(adminId : Text) : async {
     businessTemplates : ?GlobalMasterTemplate;
     contents : [Text];
@@ -181,9 +173,7 @@ actor {
       Runtime.trap("Unauthorized: Only users can view document contents");
     };
     switch (documentContentsMap.get(adminId)) {
-      case (null) {
-        Runtime.trap("Content not found for adminId: " # adminId);
-      };
+      case (null) { Runtime.trap("Content not found for adminId: " # adminId) };
       case (?contents) {
         let contentList : [Text] = contents.keys().toArray();
         {
@@ -194,45 +184,104 @@ actor {
     };
   };
 
-  // Convert document to template - only the owning admin or a system admin
-  public shared ({ caller }) func convertDocumentToTemplate(documentId : Text) {
-    let documentFolder = switch (documentsMap.get(documentId)) {
-      case (null) {
-        Map.empty<Text, Document>();
-      };
-      case (?existingFolder) {
-        existingFolder;
-      };
+  ///////////////////////////////////////
+  // Custom Templates Functions
+  ///////////////////////////////////////
+  public query ({ caller }) func getAllTemplates() : async [GlobalMasterTemplate] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can view templates");
     };
+    customTemplates.values().toArray();
+  };
 
-    switch (documentFolder.get(documentId)) {
-      case (null) {
-        Runtime.trap("Document not found with id: " # documentId);
-      };
-      case (?document) {
-        if (not isCallerAuthorizedForAdmin(caller, document.adminId)) {
-          Runtime.trap("Unauthorized: You are not authorized to convert documents for this adminId");
+  public query ({ caller }) func getCustomTemplateById(templateId : Text) : async ?GlobalMasterTemplate {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can view templates");
+    };
+    customTemplates.get(templateId);
+  };
+
+  public shared ({ caller }) func addCustomTemplate(templateId : Text, template : GlobalMasterTemplate) : async TemplateResult {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      return #unauthorizedField;
+    };
+    if (customTemplates.containsKey(templateId)) {
+      return #alreadyExists;
+    };
+    customTemplates.add(templateId, template);
+    customTemplateOwners.add(templateId, caller);
+    #success;
+  };
+
+  public shared ({ caller }) func updateCustomTemplate(templateId : Text, template : GlobalMasterTemplate) : async TemplateResult {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      return #unauthorizedField;
+    };
+    if (not customTemplates.containsKey(templateId)) {
+      return #notFound;
+    };
+    let isOwner = switch (customTemplateOwners.get(templateId)) {
+      case (null) { false };
+      case (?owner) { owner == caller };
+    };
+    if (not isOwner and not AccessControl.isAdmin(accessControlState, caller)) {
+      return #unauthorizedField;
+    };
+    customTemplates.add(templateId, template);
+    #success;
+  };
+
+  func isCallerAuthorizedForAdmin(caller : Principal, adminId : Text) : Bool {
+    switch (AccessControl.getUserRole(accessControlState, caller)) {
+      case (#admin) { true };
+      case (#user) {
+        switch (userProfiles.get(caller)) {
+          case (null) { false };
+          case (?profile) { profile.name == adminId };
         };
-        let documentContent = extractDocumentContent(document);
-        switch (documentContentsMap.get(document.adminId)) {
-          case (null) {
-            let newContentFolder = Map.empty<Text, DocumentContent>();
-            newContentFolder.add(document.documentType, documentContent);
-            documentContentsMap.add(document.adminId, newContentFolder);
-          };
-          case (?existingContentFolder) {
-            existingContentFolder.add(document.documentType, documentContent);
-          };
-        };
       };
+      case (_) { false };
     };
   };
 
-  func extractDocumentContent(document : Document) : DocumentContent {
-    {
-      title = document.content.title;
-      body = document.content.body;
-      adminId = document.adminId;
+  ///////////////////////////////////////
+  // Loan Processing Functions
+  ///////////////////////////////////////
+  public shared ({ caller }) func createLoanProcessingRecord(record : LoanProcessingData) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can create loan processing records");
     };
+    loanProcessingRecords.add(record.id, record);
+  };
+
+  public query ({ caller }) func getLoanProcessingRecord(id : Text) : async ?LoanProcessingData {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can view loan processing records");
+    };
+    loanProcessingRecords.get(id);
+  };
+
+  public shared ({ caller }) func updateLoanProcessingRecord(id : Text, update : LoanProcessingData) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can update loan processing records");
+    };
+    if (not loanProcessingRecords.containsKey(id)) {
+      Runtime.trap("Loan processing record not found: " # id);
+    };
+    loanProcessingRecords.add(id, update);
+  };
+
+  public shared ({ caller }) func deleteLoanProcessingRecord(id : Text) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admins can delete loan processing records");
+    };
+    loanProcessingRecords.remove(id);
+  };
+
+  public query ({ caller }) func getAllLoanProcessingRecords() : async [LoanProcessingData] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can view loan processing records");
+    };
+    loanProcessingRecords.values().toArray();
   };
 };
