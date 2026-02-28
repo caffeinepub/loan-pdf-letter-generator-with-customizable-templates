@@ -1,34 +1,78 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-28T04:03:30.321Z",
-  "summary": "The diff updates PreviewDialog.tsx and renderDocumentToCanvas.ts to use a new first footer image path. However, the image is referenced as '/assets/20260228_092922_0002.png' instead of the required path '/assets/generated/footer-image-1.png', and there is no evidence that the image file was saved as 'frontend/public/assets/generated/footer-image-1.png'.",
+  "generatedAt": "2026-02-28T07:57:22.477Z",
+  "summary": "The diff implements most of the requested requirements but has several gaps. The Motoko backend actor (REQ-1) is referenced but not shown in the diff, making it unverifiable. The footer image grouping (4 then 3) required by REQ-4 is not evidenced in the canvas rendering code. The Template Designer lacks a visible live preview pane. Backend persistence for templates uses React Query mutations referencing an actor but custom templates are also stored locally via localStorage, and the backend actor source is absent. The amber/orange theme is implemented. PDF generation uses raw PDF syntax as required. Internet Identity integration is present in the header.",
   "missing_requirements": [
     {
       "id": "REQ-1",
-      "requirement": "Save the uploaded image as a static asset at 'frontend/public/assets/generated/footer-image-1.png'",
-      "reason": "No new file was added to 'frontend/public/assets/generated/footer-image-1.png'. The diff shows 0 added files, and the image is referenced by its original filename '/assets/20260228_092922_0002.png' rather than '/assets/generated/footer-image-1.png'.",
+      "requirement": "Create a Motoko backend actor that manages user profiles, global and custom document templates (CRUD), loan document storage, and loan processing records with role-based access control.",
+      "reason": "No backend/main.mo file is present in the diff. The frontend hooks reference actor methods but the actual Motoko actor implementation is not shown. Role-based access control, loan document storage keyed by principal, and loan processing records are not verifiable.",
       "evidence": [
-        "frontend/src/components/PreviewDialog.tsx",
-        "frontend/src/lib/pdf/renderDocumentToCanvas.ts"
+        "frontend/src/hooks/useQueries.ts"
       ]
     },
     {
-      "id": "REQ-1",
-      "requirement": "PreviewDialog.tsx and renderDocumentToCanvas.ts must reference the new image at '/assets/generated/footer-image-1.png'",
-      "reason": "Both files use '/assets/20260228_092922_0002.png' as the first footer image path instead of the required '/assets/generated/footer-image-1.png'.",
+      "id": "REQ-3",
+      "requirement": "A live preview of the template is shown inside the designer dialog.",
+      "reason": "The TemplateDesigner component is shown but no live preview pane or embedded canvas/image rendering inside the designer dialog is visible. The TemplateEditor sub-component does not appear to render a live document preview.",
       "evidence": [
-        "frontend/src/components/PreviewDialog.tsx",
+        "frontend/src/components/TemplateDesigner.tsx"
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "requirement": "Footer images are displayed in two rows: 4 images then 3 images, sized prominently.",
+      "reason": "The renderDocumentToCanvas.ts file is truncated and the footer rendering logic is not visible in the diff. No evidence of footer image grouping logic (4 then 3) is present in the shown code sections.",
+      "evidence": [
         "frontend/src/lib/pdf/renderDocumentToCanvas.ts"
       ]
     }
   ],
-  "hallucinated_features": [],
-  "confidence": 0.9,
+  "hallucinated_features": [
+    {
+      "description": "ProfileSetupModal — a modal that prompts authenticated users to set up a name and email profile on first login.",
+      "reason": "The build request does not mention a profile setup onboarding modal as a distinct UI requirement. It is an extra feature not specified in any REQ.",
+      "evidence": [
+        "frontend/src/components/ProfileSetupModal.tsx",
+        "frontend/src/App.tsx"
+      ]
+    },
+    {
+      "description": "useLocalStorageState hook for persisting state to localStorage.",
+      "reason": "The build request does not specify a localStorage-based state persistence utility hook as a feature. This is an unrequested implementation addition.",
+      "evidence": [
+        "frontend/src/hooks/useLocalStorageState.ts"
+      ]
+    }
+  ],
+  "confidence": 0.62,
   "changed_files": [
     "frontend-file-summaries.txt",
+    "frontend/src/App.tsx",
+    "frontend/src/components/FormSection.tsx",
     "frontend/src/components/PreviewDialog.tsx",
+    "frontend/src/components/ProfileSetupModal.tsx",
+    "frontend/src/components/TemplateDesigner.tsx",
+    "frontend/src/components/preview/TemplateOverlay.tsx",
+    "frontend/src/hooks/useLocalStorageState.ts",
+    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/hooks/useTemplates.ts",
+    "frontend/src/index.css",
+    "frontend/src/lib/download.ts",
+    "frontend/src/lib/loan/calculateEmi.ts",
+    "frontend/src/lib/pdf/generatePdf.ts",
+    "frontend/src/lib/pdf/layout.ts",
     "frontend/src/lib/pdf/renderDocumentToCanvas.ts",
+    "frontend/src/lib/shareUtils.ts",
+    "frontend/src/lib/templateAssets/fileToDataUrl.ts",
+    "frontend/src/lib/templateAssets/positions.ts",
+    "frontend/src/lib/templates/getTemplate.ts",
+    "frontend/src/lib/templates/renderTemplate.ts",
+    "frontend/src/lib/validation.ts",
+    "frontend/src/types/form.ts",
+    "frontend/src/types/templates.ts",
+    "frontend/tailwind.config.js",
     "project_state.json"
   ]
 }

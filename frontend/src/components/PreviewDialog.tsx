@@ -4,315 +4,139 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
+  DialogFooter,
 } from '@/components/ui/dialog';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Button } from '@/components/ui/button';
 import { Template } from '../types/templates';
 import { FormData } from '../types/form';
-import { renderTemplate } from '../lib/templates/renderTemplate';
-import TemplateOverlay from './preview/TemplateOverlay';
-
-// ── Hardcoded Bajaj Finserv branding ──────────────────────────────────────────
-const BAJAJ_COMPANY_NAME = 'Bajaj Finserv Limited';
-const BAJAJ_ADDRESS_LINES = [
-  'Regd. Office',
-  'Bajaj Auto Limited Complex',
-  'Mumbai - Pune Road,',
-  'Pune - 411035 MH (IN)',
-  'Email ID: investors@bajajfinserv.in',
-  'Corporate Identity Number (CIN)',
-  'L65910MH1987PLC042961',
-  'IRDAI Corporate Agency (Composite)',
-];
-// Use the exact uploaded Bajaj Finserv logo — no modifications
-const BAJAJ_LOGO_PATH = '/assets/bajaj_finserv-logo_brandlogos.net_z2tuf-2.png';
-const FOOTER_TEXT =
-  'This document is system generated. For queries, contact investors@bajajfinserv.in';
-
-// Footer partner/brand images — first image replaced with Dhani Finance LTD. signature block
-const FOOTER_IMAGES = [
-  '/assets/20260228_092922_0002.png',
-  '/assets/generated/footer-img-2.dim_200x80.png',
-  '/assets/generated/footer-img-3.dim_200x80.png',
-  '/assets/generated/footer-img-4.dim_200x80.png',
-];
+import { renderDocumentToCanvas } from '../lib/pdf/renderDocumentToCanvas';
+import { generatePdf } from '../lib/pdf/generatePdf';
+import { downloadBlob } from '../lib/download';
+import { sharePdf } from '../lib/shareUtils';
+import { Download, Share2, Loader2, X } from 'lucide-react';
 
 interface PreviewDialogProps {
   open: boolean;
-  onOpenChange: (open: boolean) => void;
+  onClose: () => void;
   template: Template;
   formData: FormData;
-  documentType: string;
 }
 
 export default function PreviewDialog({
   open,
-  onOpenChange,
+  onClose,
   template,
   formData,
-  documentType,
 }: PreviewDialogProps) {
-  const rendered = renderTemplate(template, formData);
-  const leftContentRef = useRef<HTMLDivElement>(null);
-  const [leftHeight, setLeftHeight] = useState<number>(0);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [isRendering, setIsRendering] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
+  const [previewDataUrl, setPreviewDataUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    if (open && leftContentRef.current) {
-      // Use requestAnimationFrame to ensure layout is complete
-      requestAnimationFrame(() => {
-        if (leftContentRef.current) {
-          setLeftHeight(leftContentRef.current.offsetHeight);
-        }
-      });
+    if (!open) return;
+    setIsRendering(true);
+    setPreviewDataUrl(null);
+
+    renderDocumentToCanvas(template, formData)
+      .then((canvas) => {
+        setPreviewDataUrl(canvas.toDataURL('image/jpeg', 0.85));
+      })
+      .catch(console.error)
+      .finally(() => setIsRendering(false));
+  }, [open, template, formData]);
+
+  const handleDownload = async () => {
+    setIsDownloading(true);
+    try {
+      const pdf = await generatePdf(template, formData);
+      downloadBlob(pdf, `loan-document-${formData.name || 'document'}.pdf`);
+    } catch (err) {
+      console.error('Download failed:', err);
+    } finally {
+      setIsDownloading(false);
     }
-  }, [open]);
+  };
 
-  const hasSignature = !!(template.signature?.enabled && template.signature?.dataUrl);
-  const hasSeal = !!(template.seal?.enabled && template.seal?.dataUrl);
-  const showSignatureRow = hasSignature || hasSeal;
-
-  // Increase logo height by 40% compared to the left content block
-  const logoHeight = leftHeight > 0 ? Math.round(leftHeight * 1.4) : 0;
+  const handleShare = async () => {
+    setIsSharing(true);
+    try {
+      const pdf = await generatePdf(template, formData);
+      const shared = await sharePdf(pdf, `loan-document-${formData.name || 'document'}.pdf`);
+      if (!shared) {
+        // Fallback to download
+        downloadBlob(pdf, `loan-document-${formData.name || 'document'}.pdf`);
+      }
+    } catch (err) {
+      console.error('Share failed:', err);
+    } finally {
+      setIsSharing(false);
+    }
+  };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl">
-        <DialogHeader>
-          <DialogTitle>Preview: {documentType}</DialogTitle>
-          <DialogDescription>
-            This is how your document will appear with the current form data
-          </DialogDescription>
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-4xl w-full max-h-[95vh] flex flex-col p-0">
+        <DialogHeader className="px-6 pt-6 pb-4 border-b flex-shrink-0">
+          <div className="flex items-center justify-between">
+            <DialogTitle className="font-serif text-xl">Document Preview</DialogTitle>
+            <Button variant="ghost" size="icon" onClick={onClose}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
         </DialogHeader>
-        <ScrollArea className="h-[600px] rounded-lg border border-border bg-white">
-          <div className="relative" style={{ fontFamily: 'Arial, sans-serif' }}>
-            {/* Overlay elements (background, watermark, seal, signature) */}
-            <TemplateOverlay template={template} />
 
-            {/* ── HARDCODED BAJAJ FINSERV HEADER ── */}
-            <div
-              className="relative"
-              style={{ padding: '16px 32px 0 32px', zIndex: 2 }}
-            >
-              <div className="flex items-center justify-between">
-                {/* Left: Company Details */}
-                <div ref={leftContentRef} style={{ flex: 1, paddingRight: '16px' }}>
-                  <p
-                    style={{
-                      fontWeight: 'bold',
-                      fontSize: '13px',
-                      color: '#1a1a1a',
-                      marginBottom: '4px',
-                      lineHeight: 1.3,
-                    }}
-                  >
-                    {BAJAJ_COMPANY_NAME}
-                  </p>
-                  {BAJAJ_ADDRESS_LINES.map((line, idx) => (
-                    <p
-                      key={idx}
-                      style={{
-                        fontSize: '9px',
-                        color: '#333333',
-                        lineHeight: 1.5,
-                        margin: 0,
-                      }}
-                    >
-                      {line}
-                    </p>
-                  ))}
-                </div>
-
-                {/* Right: Logo — increased size, no visual modifications */}
-                <div
-                  style={{
-                    flexShrink: 0,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'flex-end',
-                  }}
-                >
-                  <img
-                    src={BAJAJ_LOGO_PATH}
-                    alt="Bajaj Finserv"
-                    style={{
-                      height: logoHeight > 0 ? `${logoHeight}px` : 'auto',
-                      maxWidth: '280px',
-                      width: 'auto',
-                      objectFit: 'contain',
-                      display: 'block',
-                    }}
-                    onLoad={() => {
-                      if (leftContentRef.current) {
-                        setLeftHeight(leftContentRef.current.offsetHeight);
-                      }
-                    }}
-                  />
-                </div>
-              </div>
-
-              {/* Divider line */}
-              <div
-                style={{
-                  borderBottom: '2px solid #1a56a0',
-                  marginTop: '10px',
-                }}
+        <div className="flex-1 overflow-auto p-4 bg-muted/30">
+          {isRendering ? (
+            <div className="flex items-center justify-center h-64">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <span className="ml-3 text-muted-foreground">Rendering document...</span>
+            </div>
+          ) : previewDataUrl ? (
+            <div className="flex justify-center">
+              <img
+                src={previewDataUrl}
+                alt="Document Preview"
+                className="max-w-full shadow-lg border border-border"
+                style={{ maxHeight: '70vh', objectFit: 'contain' }}
               />
             </div>
-
-            {/* ── DOCUMENT CONTENT ── */}
-            <div style={{ padding: '20px 32px', zIndex: 2, position: 'relative' }}>
-              {/* Document Title */}
-              <h2
-                style={{
-                  fontSize: '18px',
-                  fontWeight: 'bold',
-                  color: '#111111',
-                  textAlign: 'center',
-                  marginBottom: '20px',
-                }}
-              >
-                {rendered.headline}
-              </h2>
-
-              {/* Document Body */}
-              <div
-                style={{
-                  fontSize: '11px',
-                  color: '#222222',
-                  lineHeight: 1.7,
-                  whiteSpace: 'pre-wrap',
-                }}
-              >
-                {rendered.body}
-              </div>
-
-              {/* Signature / Stamp Row */}
-              {showSignatureRow && (
-                <div
-                  style={{
-                    display: 'flex',
-                    gap: '40px',
-                    marginTop: '40px',
-                  }}
-                >
-                  {hasSignature && template.signature?.dataUrl && (
-                    <div style={{ flex: 1, textAlign: 'center' }}>
-                      <img
-                        src={template.signature.dataUrl}
-                        alt="Signature"
-                        style={{
-                          maxHeight: '70px',
-                          maxWidth: '100%',
-                          objectFit: 'contain',
-                          opacity: (template.signature.opacity ?? 100) / 100,
-                        }}
-                      />
-                      <div
-                        style={{
-                          borderTop: '1px solid #cccccc',
-                          marginTop: '4px',
-                          paddingTop: '4px',
-                          fontSize: '10px',
-                          color: '#666666',
-                        }}
-                      >
-                        {template.signature.signatoryName || 'Authorized Signature'}
-                      </div>
-                    </div>
-                  )}
-                  {hasSeal && template.seal?.dataUrl && (
-                    <div style={{ flex: 1, textAlign: 'center' }}>
-                      <img
-                        src={template.seal.dataUrl}
-                        alt="Official Stamp"
-                        style={{
-                          maxHeight: '70px',
-                          maxWidth: '100%',
-                          objectFit: 'contain',
-                          opacity: (template.seal.opacity ?? 80) / 100,
-                        }}
-                      />
-                      <div
-                        style={{
-                          borderTop: '1px solid #cccccc',
-                          marginTop: '4px',
-                          paddingTop: '4px',
-                          fontSize: '10px',
-                          color: '#666666',
-                        }}
-                      >
-                        Official Stamp
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
+          ) : (
+            <div className="flex items-center justify-center h-64 text-muted-foreground">
+              Failed to render preview
             </div>
+          )}
+        </div>
 
-            {/* ── HARDCODED BAJAJ FINSERV FOOTER ── */}
-            <div
-              style={{
-                padding: '0 32px 16px 32px',
-                zIndex: 2,
-                position: 'relative',
-              }}
-            >
-              {/* Top divider */}
-              <div style={{ borderTop: '2px solid #1a56a0', marginBottom: '10px' }} />
-
-              {/* Footer images row */}
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  gap: '8px',
-                  marginBottom: '10px',
-                }}
-              >
-                {FOOTER_IMAGES.map((src, idx) => (
-                  <div
-                    key={idx}
-                    style={{
-                      flex: 1,
-                      display: 'flex',
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                    }}
-                  >
-                    <img
-                      src={src}
-                      alt={`Partner ${idx + 1}`}
-                      style={{
-                        maxHeight: '48px',
-                        maxWidth: '100%',
-                        width: 'auto',
-                        objectFit: 'contain',
-                        display: 'block',
-                      }}
-                    />
-                  </div>
-                ))}
-              </div>
-
-              {/* Bottom divider */}
-              <div style={{ borderTop: '1px solid #cccccc', paddingTop: '8px' }}>
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    fontSize: '8px',
-                    color: '#555555',
-                  }}
-                >
-                  <span>{FOOTER_TEXT}</span>
-                  <span>Generated: {new Date().toLocaleDateString('en-IN')}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </ScrollArea>
+        <DialogFooter className="px-6 py-4 border-t flex-shrink-0 gap-3">
+          <Button variant="outline" onClick={onClose}>
+            Close
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleShare}
+            disabled={isRendering || isSharing || isDownloading}
+          >
+            {isSharing ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Share2 className="mr-2 h-4 w-4" />
+            )}
+            Share
+          </Button>
+          <Button
+            onClick={handleDownload}
+            disabled={isRendering || isDownloading || isSharing}
+          >
+            {isDownloading ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="mr-2 h-4 w-4" />
+            )}
+            Download PDF
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

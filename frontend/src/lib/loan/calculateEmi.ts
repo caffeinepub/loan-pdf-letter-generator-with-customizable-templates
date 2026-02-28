@@ -1,41 +1,31 @@
 /**
- * Calculate Monthly EMI (Equated Monthly Installment)
- * Formula: EMI = [P x R x (1+R)^N] / [(1+R)^N-1]
- * where:
- * P = Principal loan amount
- * R = Monthly interest rate (annual rate / 12 / 100)
- * N = Number of monthly installments (years * 12)
+ * Calculate EMI using the standard formula:
+ * EMI = P * r * (1 + r)^n / ((1 + r)^n - 1)
+ * where P = principal, r = monthly interest rate, n = number of months
  */
 export function calculateEmi(
-  loanAmount: number,
+  principal: number,
   annualInterestRate: number,
-  years: number
+  tenureYears: number
 ): number {
-  if (loanAmount <= 0 || annualInterestRate < 0 || years <= 0) {
-    return 0;
-  }
+  if (principal <= 0 || annualInterestRate <= 0 || tenureYears <= 0) return 0;
 
-  const principal = loanAmount;
   const monthlyRate = annualInterestRate / 12 / 100;
-  const numberOfMonths = years * 12;
+  const months = tenureYears * 12;
 
-  // Handle zero interest rate case
-  if (monthlyRate === 0) {
-    return principal / numberOfMonths;
-  }
+  if (monthlyRate === 0) return principal / months;
 
   const emi =
-    (principal * monthlyRate * Math.pow(1 + monthlyRate, numberOfMonths)) /
-    (Math.pow(1 + monthlyRate, numberOfMonths) - 1);
+    (principal * monthlyRate * Math.pow(1 + monthlyRate, months)) /
+    (Math.pow(1 + monthlyRate, months) - 1);
 
-  return Math.round(emi * 100) / 100; // Round to 2 decimal places
+  return Math.round(emi);
 }
 
 export function formatCurrency(amount: number): string {
   return new Intl.NumberFormat('en-IN', {
     style: 'currency',
     currency: 'INR',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    maximumFractionDigits: 0,
   }).format(amount);
 }

@@ -1,29 +1,55 @@
 export interface CustomField {
-  id: string;
-  label: string;
+  key: string;
   value: string;
 }
 
-export type LoanType =
-  | 'Home Loan'
-  | 'Personal Loan'
-  | 'Business Loan'
-  | 'Vehicle Loan'
-  | 'Education Loan'
-  | '';
-
 export interface FormData {
+  // Applicant details
   name: string;
-  loanType: LoanType;
+  email: string;
+  phone: string;
+  address: string;
+
+  // Loan parameters
   loanAmount: string;
   interestRate: string;
-  year: string;
-  monthlyEmi: string;
+  tenureYears: string;
   processingCharge: string;
-  bankAccountNumber: string;
+
+  // Bank account fields
+  accountNumber: string;
   ifscCode: string;
-  upiId: string;
+  bankName: string;
+
+  // Custom fields
   customFields: CustomField[];
+
+  // Document type
+  documentType: string;
 }
 
-export type DocumentType = 'Loan Approval Letter' | 'Loan GST Letter' | 'Loan Section Letter';
+export type LoanType = 'home' | 'personal' | 'business' | 'vehicle' | 'education';
+
+export const LOAN_TYPE_LABELS: Record<LoanType, string> = {
+  home: 'Home Loan',
+  personal: 'Personal Loan',
+  business: 'Business Loan',
+  vehicle: 'Vehicle Loan',
+  education: 'Education Loan',
+};
+
+export const DEFAULT_FORM_DATA: FormData = {
+  name: '',
+  email: '',
+  phone: '',
+  address: '',
+  loanAmount: '',
+  interestRate: '',
+  tenureYears: '',
+  processingCharge: '',
+  accountNumber: '',
+  ifscCode: '',
+  bankName: '',
+  customFields: [],
+  documentType: 'home',
+};

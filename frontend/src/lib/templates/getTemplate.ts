@@ -1,242 +1,224 @@
-import type { DocumentType } from '../../types/form';
-import { Template, CustomTemplate } from '../../types/templates';
+import { Template } from '../../types/templates';
 
-const BUILT_IN_DOC_TYPES: DocumentType[] = [
-  'Loan Approval Letter',
-  'Loan GST Letter',
-  'Loan Section Letter',
+export const BUILT_IN_DOC_TYPES = ['home', 'personal', 'vehicle', 'business', 'education'];
+
+const DEFAULT_BUSINESS_NAME = 'Bajaj Finserv';
+const DEFAULT_BUSINESS_ADDRESS = 'Bajaj Auto Limited Complex, Mumbai - Pune Road, Akurdi, Pune - 411035';
+
+export const BUILT_IN_TEMPLATES: Template[] = [
+  {
+    id: 'home',
+    name: 'Home Loan',
+    documentType: 'home',
+    headline: 'HOME LOAN SANCTION LETTER',
+    body: `Dear {{name}},
+
+We are pleased to inform you that your Home Loan application has been sanctioned with the following terms:
+
+Loan Amount: ₹{{loanAmount}}
+Rate of Interest: {{interestRate}}% per annum
+Loan Tenure: {{tenureYears}} years
+EMI Amount: ₹{{emi}}
+Processing Charge: ₹{{processingCharge}}
+
+Bank Account Details:
+Account Number: {{accountNumber}}
+IFSC Code: {{ifscCode}}
+Bank Name: {{bankName}}
+
+This sanction is subject to the terms and conditions of the loan agreement. Please sign and return the enclosed copy of this letter as your acceptance.
+
+Yours sincerely,
+Bajaj Finserv Home Finance Limited`,
+    businessName: DEFAULT_BUSINESS_NAME,
+    businessAddress: DEFAULT_BUSINESS_ADDRESS,
+    watermarkText: 'BAJAJ FINSERV',
+    watermarkOpacity: 0.08,
+    showWatermark: true,
+    footerText: 'Bajaj Finserv | CIN: U65910MH2007PLC174987 | www.bajajfinserv.in',
+    footerLayout: 'centered',
+    headerColor: '#003087',
+    showQrCode: false,
+    qrPayload: '',
+    signatureLayout: 'sideBySide',
+  },
+  {
+    id: 'personal',
+    name: 'Personal Loan',
+    documentType: 'personal',
+    headline: 'PERSONAL LOAN SANCTION LETTER',
+    body: `Dear {{name}},
+
+We are delighted to inform you that your Personal Loan application has been approved with the following details:
+
+Loan Amount: ₹{{loanAmount}}
+Rate of Interest: {{interestRate}}% per annum
+Loan Tenure: {{tenureYears}} years
+EMI Amount: ₹{{emi}}
+Processing Charge: ₹{{processingCharge}}
+
+Disbursement Account:
+Account Number: {{accountNumber}}
+IFSC Code: {{ifscCode}}
+Bank Name: {{bankName}}
+
+The loan amount will be disbursed to your registered bank account within 24-48 hours of document verification. This offer is valid for 30 days from the date of this letter.
+
+Yours sincerely,
+Bajaj Finserv Lending Limited`,
+    businessName: DEFAULT_BUSINESS_NAME,
+    businessAddress: DEFAULT_BUSINESS_ADDRESS,
+    watermarkText: 'BAJAJ FINSERV',
+    watermarkOpacity: 0.08,
+    showWatermark: true,
+    footerText: 'Bajaj Finserv | CIN: U65910MH2007PLC174987 | www.bajajfinserv.in',
+    footerLayout: 'centered',
+    headerColor: '#003087',
+    showQrCode: false,
+    qrPayload: '',
+    signatureLayout: 'sideBySide',
+  },
+  {
+    id: 'vehicle',
+    name: 'Vehicle Loan',
+    documentType: 'vehicle',
+    headline: 'VEHICLE LOAN SANCTION LETTER',
+    body: `Dear {{name}},
+
+We are pleased to sanction your Vehicle Loan application with the following terms and conditions:
+
+Loan Amount: ₹{{loanAmount}}
+Rate of Interest: {{interestRate}}% per annum
+Loan Tenure: {{tenureYears}} years
+EMI Amount: ₹{{emi}}
+Processing Charge: ₹{{processingCharge}}
+
+Repayment Account:
+Account Number: {{accountNumber}}
+IFSC Code: {{ifscCode}}
+Bank Name: {{bankName}}
+
+The loan is sanctioned for the purchase of the vehicle as mentioned in your application. The vehicle will be hypothecated to Bajaj Finserv until the loan is fully repaid.
+
+Yours sincerely,
+Bajaj Finserv Auto Finance Limited`,
+    businessName: DEFAULT_BUSINESS_NAME,
+    businessAddress: DEFAULT_BUSINESS_ADDRESS,
+    watermarkText: 'BAJAJ FINSERV',
+    watermarkOpacity: 0.08,
+    showWatermark: true,
+    footerText: 'Bajaj Finserv | CIN: U65910MH2007PLC174987 | www.bajajfinserv.in',
+    footerLayout: 'centered',
+    headerColor: '#003087',
+    showQrCode: false,
+    qrPayload: '',
+    signatureLayout: 'sideBySide',
+  },
+  {
+    id: 'business',
+    name: 'Business Loan',
+    documentType: 'business',
+    headline: 'BUSINESS LOAN SANCTION LETTER',
+    body: `Dear {{name}},
+
+We are pleased to inform you that your Business Loan application has been sanctioned:
+
+Loan Amount: ₹{{loanAmount}}
+Rate of Interest: {{interestRate}}% per annum
+Loan Tenure: {{tenureYears}} years
+EMI Amount: ₹{{emi}}
+Processing Charge: ₹{{processingCharge}}
+
+Disbursement Account:
+Account Number: {{accountNumber}}
+IFSC Code: {{ifscCode}}
+Bank Name: {{bankName}}
+
+This loan is sanctioned for business purposes only. Misuse of funds may result in immediate recall of the loan. Please ensure timely repayment to maintain a healthy credit score.
+
+Yours sincerely,
+Bajaj Finserv Business Finance`,
+    businessName: DEFAULT_BUSINESS_NAME,
+    businessAddress: DEFAULT_BUSINESS_ADDRESS,
+    watermarkText: 'BAJAJ FINSERV',
+    watermarkOpacity: 0.08,
+    showWatermark: true,
+    footerText: 'Bajaj Finserv | CIN: U65910MH2007PLC174987 | www.bajajfinserv.in',
+    footerLayout: 'centered',
+    headerColor: '#003087',
+    showQrCode: false,
+    qrPayload: '',
+    signatureLayout: 'sideBySide',
+  },
+  {
+    id: 'education',
+    name: 'Education Loan',
+    documentType: 'education',
+    headline: 'EDUCATION LOAN SANCTION LETTER',
+    body: `Dear {{name}},
+
+We are happy to inform you that your Education Loan application has been approved:
+
+Loan Amount: ₹{{loanAmount}}
+Rate of Interest: {{interestRate}}% per annum
+Loan Tenure: {{tenureYears}} years
+EMI Amount: ₹{{emi}}
+Processing Charge: ₹{{processingCharge}}
+
+Disbursement Account:
+Account Number: {{accountNumber}}
+IFSC Code: {{ifscCode}}
+Bank Name: {{bankName}}
+
+The loan will be disbursed directly to the educational institution as per the fee schedule. Repayment will commence 6 months after course completion or 12 months after the first disbursement, whichever is earlier.
+
+Yours sincerely,
+Bajaj Finserv Education Finance`,
+    businessName: DEFAULT_BUSINESS_NAME,
+    businessAddress: DEFAULT_BUSINESS_ADDRESS,
+    watermarkText: 'BAJAJ FINSERV',
+    watermarkOpacity: 0.08,
+    showWatermark: true,
+    footerText: 'Bajaj Finserv | CIN: U65910MH2007PLC174987 | www.bajajfinserv.in',
+    footerLayout: 'centered',
+    headerColor: '#003087',
+    showQrCode: false,
+    qrPayload: '',
+    signatureLayout: 'sideBySide',
+  },
 ];
 
-const DEFAULT_TEMPLATES: Record<DocumentType, Template> = {
-  'Loan Approval Letter': {
-    id: 'Loan Approval Letter',
-    name: 'Loan Approval Letter',
-    headline: 'Loan Approval Letter',
-    body: `Dear {{name}},
+export function getBuiltInTemplate(documentType: string): Template | undefined {
+  return BUILT_IN_TEMPLATES.find((t) => t.documentType === documentType);
+}
 
-We are pleased to inform you that your loan application has been approved.
+export function normalizeTemplate(template: Partial<Template>): Template {
+  const base = getBuiltInTemplate(template.documentType || 'home') || BUILT_IN_TEMPLATES[0];
+  return {
+    ...base,
+    ...template,
+    id: template.id || base.id,
+    name: template.name || base.name,
+    documentType: template.documentType || base.documentType,
+  };
+}
 
-Applicant Details:
-Name: {{name}}
-
-Loan Details:
-Loan Type: {{loanType}}
-Loan Amount: ₹{{loanAmount}}
-Interest Rate: {{interestRate}}% per annum
-Tenure: {{year}} years
-Monthly EMI: {{monthlyEmi}}
-Processing Charge: {{processingCharge}}
-
-Bank Account Details:
-Bank Account Number: {{bankAccountNumber}}
-IFSC Code: {{ifscCode}}
-UPI ID: {{upiId}}
-
-Please contact us to complete the documentation process.
-
-Best regards,
-Loan Department`,
-    logoDataUrl: null,
-    headerColor: '#1a365d',
-    businessName: '',
-    businessAddress: '',
-    watermarkText: 'APPROVED',
-    footerText: 'This is a computer-generated document and does not require a signature.',
-    logoSize: 'medium',
-    background: { enabled: false, dataUrl: null, opacity: 0.1, fit: 'cover' },
-    watermark: { enabled: false, text: 'APPROVED', opacity: 0.05, size: 72, rotation: -45, position: 'center', color: '#cccccc' },
-    seal: { enabled: false, dataUrl: null, size: 100, position: 'bottom-left', opacity: 80 },
-    signature: { enabled: false, dataUrl: null, size: 120, position: 'bottom-right', opacity: 100, signatoryName: '', signatoryTitle: '' },
-  },
-  'Loan GST Letter': {
-    id: 'Loan GST Letter',
-    name: 'Loan GST Letter',
-    headline: 'Loan GST Letter',
-    body: `Dear {{name}},
-
-This letter confirms the GST details for your approved loan.
-
-Applicant Details:
-Name: {{name}}
-
-Loan Details:
-Loan Type: {{loanType}}
-Loan Amount: ₹{{loanAmount}}
-Interest Rate: {{interestRate}}% per annum
-Tenure: {{year}} years
-Monthly EMI: {{monthlyEmi}}
-Processing Charge: {{processingCharge}}
-
-Bank Account Details:
-Bank Account Number: {{bankAccountNumber}}
-IFSC Code: {{ifscCode}}
-UPI ID: {{upiId}}
-
-GST will be applicable as per government regulations.
-
-Best regards,
-Loan Department`,
-    logoDataUrl: null,
-    headerColor: '#1a365d',
-    businessName: '',
-    businessAddress: '',
-    watermarkText: 'GST DOCUMENT',
-    footerText: 'This is a computer-generated document and does not require a signature.',
-    logoSize: 'medium',
-    background: { enabled: false, dataUrl: null, opacity: 0.1, fit: 'cover' },
-    watermark: { enabled: false, text: 'GST DOCUMENT', opacity: 0.05, size: 72, rotation: -45, position: 'center', color: '#cccccc' },
-    seal: { enabled: false, dataUrl: null, size: 100, position: 'bottom-left', opacity: 80 },
-    signature: { enabled: false, dataUrl: null, size: 120, position: 'bottom-right', opacity: 100, signatoryName: '', signatoryTitle: '' },
-  },
-  'Loan Section Letter': {
-    id: 'Loan Section Letter',
-    name: 'Loan Section Letter',
-    headline: 'Loan Section Letter',
-    body: `Dear {{name}},
-
-This letter is issued under the relevant loan section for your reference.
-
-Applicant Details:
-Name: {{name}}
-
-Loan Details:
-Loan Type: {{loanType}}
-Loan Amount: ₹{{loanAmount}}
-Interest Rate: {{interestRate}}% per annum
-Tenure: {{year}} years
-Monthly EMI: {{monthlyEmi}}
-Processing Charge: {{processingCharge}}
-
-Bank Account Details:
-Bank Account Number: {{bankAccountNumber}}
-IFSC Code: {{ifscCode}}
-UPI ID: {{upiId}}
-
-Please retain this letter for your records.
-
-Best regards,
-Loan Department`,
-    logoDataUrl: null,
-    headerColor: '#1a365d',
-    businessName: '',
-    businessAddress: '',
-    watermarkText: 'SECTION LETTER',
-    footerText: 'This is a computer-generated document and does not require a signature.',
-    logoSize: 'medium',
-    background: { enabled: false, dataUrl: null, opacity: 0.1, fit: 'cover' },
-    watermark: { enabled: false, text: 'SECTION LETTER', opacity: 0.05, size: 72, rotation: -45, position: 'center', color: '#cccccc' },
-    seal: { enabled: false, dataUrl: null, size: 100, position: 'bottom-left', opacity: 80 },
-    signature: { enabled: false, dataUrl: null, size: 120, position: 'bottom-right', opacity: 100, signatoryName: '', signatoryTitle: '' },
-  },
-};
-
-const STORAGE_KEY_PREFIX = 'loan_template_';
 const CUSTOM_TEMPLATES_KEY = 'loan_custom_templates';
 
-export function getTemplate(docType: DocumentType): Template {
-  const stored = localStorage.getItem(`${STORAGE_KEY_PREFIX}${docType}`);
-  if (stored) {
-    try {
-      const parsed = JSON.parse(stored) as Template;
-      return normalizeTemplate({ ...DEFAULT_TEMPLATES[docType], ...parsed });
-    } catch {
-      // fall through to default
-    }
+export function getCustomTemplates(): Template[] {
+  try {
+    const stored = localStorage.getItem(CUSTOM_TEMPLATES_KEY);
+    if (!stored) return [];
+    return JSON.parse(stored) as Template[];
+  } catch {
+    return [];
   }
-  return normalizeTemplate({ ...DEFAULT_TEMPLATES[docType] });
 }
 
-export function getDefaultSanctionLetterTemplate(): Template {
-  return normalizeTemplate({ ...DEFAULT_TEMPLATES['Loan Approval Letter'] });
-}
-
-export function getDefaultDisbursementTemplate(): Template {
-  return normalizeTemplate({ ...DEFAULT_TEMPLATES['Loan GST Letter'] });
-}
-
-export function getDefaultNocTemplate(): Template {
-  return normalizeTemplate({ ...DEFAULT_TEMPLATES['Loan Section Letter'] });
-}
-
-export function saveTemplate(docType: DocumentType, template: Template): void {
-  localStorage.setItem(`${STORAGE_KEY_PREFIX}${docType}`, JSON.stringify(template));
-}
-
-export function getCustomTemplates(): CustomTemplate[] {
-  const stored = localStorage.getItem(CUSTOM_TEMPLATES_KEY);
-  if (stored) {
-    try {
-      const parsed = JSON.parse(stored) as CustomTemplate[];
-      return parsed.map((t) => normalizeTemplate(t) as CustomTemplate);
-    } catch {
-      return [];
-    }
+export function saveCustomTemplates(templates: Template[]): void {
+  try {
+    localStorage.setItem(CUSTOM_TEMPLATES_KEY, JSON.stringify(templates));
+  } catch {
+    // ignore
   }
-  return [];
 }
-
-export function saveCustomTemplates(templates: CustomTemplate[]): void {
-  localStorage.setItem(CUSTOM_TEMPLATES_KEY, JSON.stringify(templates));
-}
-
-export function normalizeTemplate<T extends Partial<Template>>(template: T): T & Template {
-  const background = {
-    enabled: false,
-    dataUrl: null,
-    opacity: 0.1,
-    fit: 'cover' as const,
-    ...(template.background ?? {}),
-  };
-
-  const watermark = {
-    enabled: false,
-    text: '',
-    opacity: 0.05,
-    size: 72,
-    rotation: -45,
-    position: 'center' as const,
-    color: '#cccccc',
-    ...(template.watermark ?? {}),
-  };
-
-  const seal = {
-    enabled: false,
-    dataUrl: null,
-    size: 100,
-    position: 'bottom-left' as const,
-    opacity: 80,
-    ...(template.seal ?? {}),
-  };
-
-  const signature = {
-    enabled: false,
-    dataUrl: null,
-    size: 120,
-    position: 'bottom-right' as const,
-    opacity: 100,
-    signatoryName: '',
-    signatoryTitle: '',
-    ...(template.signature ?? {}),
-  };
-
-  return {
-    ...template,
-    id: template.id ?? '',
-    name: template.name ?? '',
-    headline: template.headline ?? '',
-    body: template.body ?? '',
-    logoDataUrl: template.logoDataUrl ?? null,
-    headerColor: template.headerColor ?? '#1a365d',
-    businessName: template.businessName ?? '',
-    businessAddress: template.businessAddress ?? '',
-    watermarkText: template.watermarkText ?? '',
-    footerText: template.footerText ?? '',
-    logoSize: template.logoSize ?? 'medium',
-    background,
-    watermark,
-    seal,
-    signature,
-  } as T & Template;
-}
-
-export { BUILT_IN_DOC_TYPES };

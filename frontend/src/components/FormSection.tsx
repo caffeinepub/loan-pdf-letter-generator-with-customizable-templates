@@ -1,458 +1,366 @@
+import React, { useMemo } from 'react';
+import { FormData, CustomField, LOAN_TYPE_LABELS, LoanType } from '../types/form';
+import { Template } from '../types/templates';
+import { validateForm } from '../lib/validation';
+import { calculateEmi, formatCurrency } from '../lib/loan/calculateEmi';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { Plus, X, Download, Loader2, Share2, IndianRupee, Landmark } from 'lucide-react';
-import { FormData, CustomField, DocumentType, LoanType } from '../types/form';
-import { Template } from '../types/templates';
-import { useState, useEffect } from 'react';
-import { calculateEmi, formatCurrency } from '../lib/loan/calculateEmi';
-import { generatePdf } from '../lib/pdf/generatePdf';
-import { downloadFile } from '../lib/download';
-import { sharePdf } from '../lib/shareUtils';
-import { toast } from 'sonner';
+import { Separator } from '@/components/ui/separator';
+import {
+  Plus,
+  Trash2,
+  FileText,
+  User,
+  DollarSign,
+  Building2,
+  Settings,
+  Calculator,
+  AlertCircle,
+} from 'lucide-react';
 
 interface FormSectionProps {
   formData: FormData;
-  onFormChange: (data: FormData) => void;
-  onDownload: (docType: DocumentType | string) => void;
-  isGenerating: string | null;
+  onChange: (data: FormData) => void;
+  onGenerate: () => void;
+  selectedTemplate: Template | undefined;
   customTemplates: Template[];
+  onOpenTemplateDesigner: () => void;
 }
 
-const LOAN_TYPES: LoanType[] = [
-  'Home Loan',
-  'Personal Loan',
-  'Business Loan',
-  'Vehicle Loan',
-  'Education Loan',
-];
-
-export default function FormSection({ formData, onFormChange, onDownload, isGenerating, customTemplates }: FormSectionProps) {
-  const [newFieldLabel, setNewFieldLabel] = useState('');
-  const [newFieldValue, setNewFieldValue] = useState('');
-  const [sharingDoc, setSharingDoc] = useState<string | null>(null);
-
-  // Auto-calculate EMI when loan amount, interest rate, or year changes
-  useEffect(() => {
-    const loanAmount = parseFloat(formData.loanAmount) || 0;
-    const interestRate = parseFloat(formData.interestRate) || 0;
-    const year = parseInt(formData.year) || 0;
-
-    if (loanAmount > 0 && year > 0) {
-      const emi = calculateEmi(loanAmount, interestRate, year);
-      const formattedEmi = emi.toFixed(2);
-
-      if (formData.monthlyEmi !== formattedEmi) {
-        onFormChange({
-          ...formData,
-          monthlyEmi: formattedEmi,
-        });
-      }
-    } else if (formData.monthlyEmi !== '0') {
-      onFormChange({
-        ...formData,
-        monthlyEmi: '0',
-      });
-    }
-  }, [formData.loanAmount, formData.interestRate, formData.year]);
-
-  const handleAddCustomField = () => {
-    if (!newFieldLabel.trim() || !newFieldValue.trim()) return;
-
-    const newField: CustomField = {
-      id: Date.now().toString(),
-      label: newFieldLabel.trim(),
-      value: newFieldValue.trim(),
-    };
-
-    onFormChange({
-      ...formData,
-      customFields: [...formData.customFields, newField],
-    });
-
-    setNewFieldLabel('');
-    setNewFieldValue('');
+export default function FormSection({
+  formData,
+  onChange,
+  onGenerate,
+  selectedTemplate,
+  customTemplates,
+  onOpenTemplateDesigner,
+}: FormSectionProps) {
+  const update = (field: keyof FormData, value: any) => {
+    onChange({ ...formData, [field]: value });
   };
 
-  const handleRemoveCustomField = (id: string) => {
-    onFormChange({
-      ...formData,
-      customFields: formData.customFields.filter((field) => field.id !== id),
-    });
+  const emi = useMemo(() => {
+    const p = parseFloat(formData.loanAmount);
+    const r = parseFloat(formData.interestRate);
+    const t = parseInt(formData.tenureYears, 10);
+    if (p > 0 && r > 0 && t > 0) return calculateEmi(p, r, t);
+    return 0;
+  }, [formData.loanAmount, formData.interestRate, formData.tenureYears]);
+
+  const validation = useMemo(() => validateForm(formData), [formData]);
+
+  const addCustomField = () => {
+    update('customFields', [...formData.customFields, { key: '', value: '' }]);
   };
 
-  const handleUpdateCustomField = (id: string, label: string, value: string) => {
-    onFormChange({
-      ...formData,
-      customFields: formData.customFields.map((field) =>
-        field.id === id ? { ...field, label, value } : field
-      ),
-    });
+  const updateCustomField = (index: number, field: Partial<CustomField>) => {
+    const updated = formData.customFields.map((f, i) =>
+      i === index ? { ...f, ...field } : f
+    );
+    update('customFields', updated);
   };
 
-  const handleShare = async (docType: DocumentType | string) => {
-    setSharingDoc(docType);
-    try {
-      const pdfBlob = await generatePdf(docType, formData);
-      const filename = `${typeof docType === 'string' ? docType.toLowerCase().replace(/\s+/g, '-') : 'document'}.png`;
-      downloadFile(pdfBlob, filename);
-      const shared = await sharePdf(pdfBlob, filename);
-      if (!shared) {
-        toast.success('Document downloaded!', {
-          description: 'Sharing not supported on this device — file downloaded instead.',
-        });
-      }
-    } catch (error) {
-      console.error('Share error:', error);
-      toast.error('Failed to share document', {
-        description: 'Please try again.',
-      });
-    } finally {
-      setSharingDoc(null);
-    }
+  const removeCustomField = (index: number) => {
+    update('customFields', formData.customFields.filter((_, i) => i !== index));
   };
 
-  // Generate year options (1-30 years)
-  const yearOptions = Array.from({ length: 30 }, (_, i) => i + 1);
+  const handleGenerate = () => {
+    if (!validation.isValid) return;
+    onGenerate();
+  };
 
-  const builtInDocTypes: DocumentType[] = ['Loan Approval Letter', 'Loan GST Letter', 'Loan Section Letter'];
-
-  const processingChargeNum = parseFloat(formData.processingCharge) || 0;
-  const monthlyEmiNum = parseFloat(formData.monthlyEmi) || 0;
+  const allDocTypes = [
+    ...Object.entries(LOAN_TYPE_LABELS).map(([value, label]) => ({ value, label })),
+    ...customTemplates.map((t) => ({ value: t.id, label: t.name })),
+  ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
+      {/* Document Type & Template */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <FileText className="h-4 w-4 text-primary" />
+            Document Type
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label htmlFor="documentType">Loan Type</Label>
+              <Select
+                value={formData.documentType}
+                onValueChange={(v) => update('documentType', v)}
+              >
+                <SelectTrigger id="documentType">
+                  <SelectValue placeholder="Select loan type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {allDocTypes.map((dt) => (
+                    <SelectItem key={dt.value} value={dt.value}>
+                      {dt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-end">
+              <Button
+                variant="outline"
+                className="w-full gap-2"
+                onClick={onOpenTemplateDesigner}
+              >
+                <Settings className="h-4 w-4" />
+                Template Designer
+              </Button>
+            </div>
+          </div>
+          {selectedTemplate && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Badge variant="secondary">{selectedTemplate.name}</Badge>
+              <span>template selected</span>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Applicant Details */}
       <Card>
-        <CardHeader>
-          <CardTitle>Applicant Details</CardTitle>
-          <CardDescription>Enter the loan applicant information</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Full Name *</Label>
-            <Input
-              id="name"
-              placeholder="John Doe"
-              value={formData.name}
-              onChange={(e) => onFormChange({ ...formData, name: e.target.value })}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Loan Details */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Loan Details</CardTitle>
-          <CardDescription>Enter loan type, amount, interest rate, and tenure</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Loan Type */}
-          <div className="space-y-2">
-            <Label htmlFor="loanType">Loan Type</Label>
-            <Select
-              value={formData.loanType}
-              onValueChange={(value) => onFormChange({ ...formData, loanType: value as LoanType })}
-            >
-              <SelectTrigger id="loanType">
-                <SelectValue placeholder="Select Loan Type" />
-              </SelectTrigger>
-              <SelectContent>
-                {LOAN_TYPES.map((type) => (
-                  <SelectItem key={type} value={type}>
-                    {type}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Loan Amount */}
-          <div className="space-y-2">
-            <Label htmlFor="loanAmount">Loan Amount (₹) *</Label>
-            <Input
-              id="loanAmount"
-              type="number"
-              placeholder="500000"
-              value={formData.loanAmount}
-              onChange={(e) => onFormChange({ ...formData, loanAmount: e.target.value })}
-              onWheel={(e) => e.currentTarget.blur()}
-              min="0"
-              step="1000"
-            />
-          </div>
-
-          {/* Interest Rate */}
-          <div className="space-y-2">
-            <Label htmlFor="interestRate">Interest Rate (% per annum) *</Label>
-            <Input
-              id="interestRate"
-              type="number"
-              placeholder="8.5"
-              value={formData.interestRate}
-              onChange={(e) => onFormChange({ ...formData, interestRate: e.target.value })}
-              onWheel={(e) => e.currentTarget.blur()}
-              min="0"
-              step="0.1"
-            />
-          </div>
-
-          {/* Loan Tenure */}
-          <div className="space-y-2">
-            <Label htmlFor="year">Loan Tenure (Years) *</Label>
-            <Select
-              value={formData.year}
-              onValueChange={(value) => onFormChange({ ...formData, year: value })}
-            >
-              <SelectTrigger id="year">
-                <SelectValue placeholder="Select tenure" />
-              </SelectTrigger>
-              <SelectContent
-                position="popper"
-                className="max-h-60 overflow-y-auto"
-                onWheel={(e) => e.stopPropagation()}
-              >
-                {yearOptions.map((year) => (
-                  <SelectItem key={year} value={year.toString()}>
-                    {year} {year === 1 ? 'Year' : 'Years'}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Monthly EMI (read-only) */}
-          <div className="space-y-2">
-            <Label htmlFor="monthlyEmi">Monthly EMI (₹)</Label>
-            <Input
-              id="monthlyEmi"
-              value={monthlyEmiNum > 0 ? formatCurrency(monthlyEmiNum) : '₹0.00'}
-              readOnly
-              disabled
-              className="bg-muted"
-            />
-            <p className="text-xs text-muted-foreground">
-              Automatically calculated based on loan amount, interest rate, and tenure
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Processing Charge */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <IndianRupee className="h-5 w-5 text-primary" />
-            Processing Charge
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <User className="h-4 w-4 text-primary" />
+            Applicant Details
           </CardTitle>
-          <CardDescription>Enter the one-time processing fee charged for this loan</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="processingCharge">Processing Charge (₹)</Label>
-            <Input
-              id="processingCharge"
-              type="number"
-              placeholder="e.g. 5000"
-              value={formData.processingCharge}
-              onChange={(e) => onFormChange({ ...formData, processingCharge: e.target.value })}
-              onWheel={(e) => e.currentTarget.blur()}
-              min="0"
-            />
+        <CardContent className="space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label htmlFor="name">Full Name *</Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => update('name', e.target.value)}
+                placeholder="Enter applicant's full name"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={formData.email}
+                onChange={(e) => update('email', e.target.value)}
+                placeholder="applicant@email.com"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="phone">Phone</Label>
+              <Input
+                id="phone"
+                value={formData.phone}
+                onChange={(e) => update('phone', e.target.value)}
+                placeholder="+91 XXXXX XXXXX"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="address">Address</Label>
+              <Input
+                id="address"
+                value={formData.address}
+                onChange={(e) => update('address', e.target.value)}
+                placeholder="Full address"
+              />
+            </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Loan Parameters */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <DollarSign className="h-4 w-4 text-primary" />
+            Loan Parameters
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label htmlFor="loanAmount">Loan Amount (₹) *</Label>
+              <Input
+                id="loanAmount"
+                type="number"
+                value={formData.loanAmount}
+                onChange={(e) => update('loanAmount', e.target.value)}
+                placeholder="e.g. 500000"
+                min="0"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="interestRate">Interest Rate (% p.a.) *</Label>
+              <Input
+                id="interestRate"
+                type="number"
+                value={formData.interestRate}
+                onChange={(e) => update('interestRate', e.target.value)}
+                placeholder="e.g. 8.5"
+                min="0"
+                step="0.1"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="tenureYears">Tenure (Years) *</Label>
+              <Input
+                id="tenureYears"
+                type="number"
+                value={formData.tenureYears}
+                onChange={(e) => update('tenureYears', e.target.value)}
+                placeholder="e.g. 20"
+                min="1"
+                step="1"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="processingCharge">Processing Charge (₹)</Label>
+              <Input
+                id="processingCharge"
+                type="number"
+                value={formData.processingCharge}
+                onChange={(e) => update('processingCharge', e.target.value)}
+                placeholder="e.g. 5000"
+                min="0"
+              />
+            </div>
+          </div>
+
+          {/* EMI Display */}
+          {emi > 0 && (
+            <div className="mt-2 p-3 bg-accent rounded-lg flex items-center gap-3">
+              <Calculator className="h-5 w-5 text-primary flex-shrink-0" />
+              <div>
+                <p className="text-xs text-muted-foreground">Estimated Monthly EMI</p>
+                <p className="text-lg font-bold text-primary">{formatCurrency(emi)}</p>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
       {/* Bank Account Details */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Landmark className="h-5 w-5 text-primary" />
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Building2 className="h-4 w-4 text-primary" />
             Bank Account Details
           </CardTitle>
-          <CardDescription>Enter the bank account details for loan disbursement</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="bankAccountNumber">Bank Account Number</Label>
-            <Input
-              id="bankAccountNumber"
-              placeholder="e.g. 1234567890"
-              value={formData.bankAccountNumber}
-              onChange={(e) => onFormChange({ ...formData, bankAccountNumber: e.target.value })}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="ifscCode">IFSC Code</Label>
-            <Input
-              id="ifscCode"
-              placeholder="e.g. SBIN0001234"
-              value={formData.ifscCode}
-              onChange={(e) =>
-                onFormChange({ ...formData, ifscCode: e.target.value.toUpperCase() })
-              }
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="upiId">UPI ID</Label>
-            <Input
-              id="upiId"
-              placeholder="e.g. name@upi"
-              value={formData.upiId}
-              onChange={(e) => onFormChange({ ...formData, upiId: e.target.value })}
-            />
+        <CardContent className="space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label htmlFor="accountNumber">Account Number</Label>
+              <Input
+                id="accountNumber"
+                value={formData.accountNumber}
+                onChange={(e) => update('accountNumber', e.target.value)}
+                placeholder="Enter account number"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="ifscCode">IFSC Code</Label>
+              <Input
+                id="ifscCode"
+                value={formData.ifscCode}
+                onChange={(e) => update('ifscCode', e.target.value.toUpperCase())}
+                placeholder="e.g. SBIN0001234"
+              />
+            </div>
+            <div className="space-y-1 sm:col-span-2">
+              <Label htmlFor="bankName">Bank Name</Label>
+              <Input
+                id="bankName"
+                value={formData.bankName}
+                onChange={(e) => update('bankName', e.target.value)}
+                placeholder="e.g. State Bank of India"
+              />
+            </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Custom Fields */}
       <Card>
-        <CardHeader>
-          <CardTitle>Custom Fields</CardTitle>
-          <CardDescription>Add additional fields to include in your documents</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {formData.customFields.map((field) => (
-            <div key={field.id} className="flex items-center gap-2">
-              <Input
-                placeholder="Label"
-                value={field.label}
-                onChange={(e) => handleUpdateCustomField(field.id, e.target.value, field.value)}
-                className="flex-1"
-              />
-              <Input
-                placeholder="Value"
-                value={field.value}
-                onChange={(e) => handleUpdateCustomField(field.id, field.label, e.target.value)}
-                className="flex-1"
-              />
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => handleRemoveCustomField(field.id)}
-                className="text-destructive shrink-0"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-          ))}
-
-          <div className="flex items-center gap-2">
-            <Input
-              placeholder="Field Label"
-              value={newFieldLabel}
-              onChange={(e) => setNewFieldLabel(e.target.value)}
-              className="flex-1"
-            />
-            <Input
-              placeholder="Field Value"
-              value={newFieldValue}
-              onChange={(e) => setNewFieldValue(e.target.value)}
-              className="flex-1"
-            />
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={handleAddCustomField}
-              disabled={!newFieldLabel.trim() || !newFieldValue.trim()}
-              className="shrink-0"
-            >
-              <Plus className="h-4 w-4" />
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Plus className="h-4 w-4 text-primary" />
+              Custom Fields
+            </CardTitle>
+            <Button variant="outline" size="sm" onClick={addCustomField} className="gap-1">
+              <Plus className="h-3 w-3" />
+              Add Field
             </Button>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Document Generation */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Generate Documents</CardTitle>
-          <CardDescription>Download your loan documents as PNG images</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Built-in document types */}
-          <div className="space-y-2">
-            {builtInDocTypes.map((docType) => (
-              <div key={docType} className="flex items-center gap-2">
-                <Button
-                  className="flex-1 justify-start gap-2"
-                  variant="outline"
-                  onClick={() => onDownload(docType)}
-                  disabled={isGenerating === docType}
-                >
-                  {isGenerating === docType ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Download className="h-4 w-4" />
-                  )}
-                  {docType}
-                </Button>
+        {formData.customFields.length > 0 && (
+          <CardContent className="space-y-2">
+            {formData.customFields.map((field, index) => (
+              <div key={index} className="flex gap-2 items-center">
+                <Input
+                  value={field.key}
+                  onChange={(e) => updateCustomField(index, { key: e.target.value })}
+                  placeholder="Field name"
+                  className="flex-1"
+                />
+                <Input
+                  value={field.value}
+                  onChange={(e) => updateCustomField(index, { value: e.target.value })}
+                  placeholder="Value"
+                  className="flex-1"
+                />
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => handleShare(docType)}
-                  disabled={sharingDoc === docType}
-                  title="Share document"
+                  onClick={() => removeCustomField(index)}
+                  className="text-destructive hover:text-destructive flex-shrink-0"
                 >
-                  {sharingDoc === docType ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Share2 className="h-4 w-4" />
-                  )}
+                  <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
             ))}
-          </div>
-
-          {/* Custom templates */}
-          {customTemplates.length > 0 && (
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-muted-foreground">Custom Templates</p>
-              {customTemplates.map((t) => {
-                const id = (t as { id?: string }).id ?? t.name ?? 'custom';
-                const label = (t as { name?: string }).name ?? t.headline ?? 'Custom Template';
-                return (
-                  <div key={id} className="flex items-center gap-2">
-                    <Button
-                      className="flex-1 justify-start gap-2"
-                      variant="outline"
-                      onClick={() => onDownload(id)}
-                      disabled={isGenerating === id}
-                    >
-                      {isGenerating === id ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Download className="h-4 w-4" />
-                      )}
-                      <Badge variant="secondary" className="text-xs mr-1">
-                        Custom
-                      </Badge>
-                      {label}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleShare(id)}
-                      disabled={sharingDoc === id}
-                      title="Share document"
-                    >
-                      {sharingDoc === id ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Share2 className="h-4 w-4" />
-                      )}
-                    </Button>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </CardContent>
+          </CardContent>
+        )}
       </Card>
+
+      {/* Validation Errors */}
+      {!validation.isValid && formData.name && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            <ul className="list-disc list-inside space-y-1">
+              {validation.errors.map((err, i) => (
+                <li key={i}>{err}</li>
+              ))}
+            </ul>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      <Separator />
+
+      {/* Generate Button */}
+      <Button
+        className="w-full h-12 text-base font-semibold gap-2"
+        onClick={handleGenerate}
+        disabled={!validation.isValid}
+      >
+        <FileText className="h-5 w-5" />
+        Generate Document
+      </Button>
     </div>
   );
 }

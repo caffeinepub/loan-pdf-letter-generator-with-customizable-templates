@@ -1,33 +1,202 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Replace first footer image with uploaded signature/branding image",
+  "title": "Rebuild Loan Document Generator Frontend",
   "requirements": [
     {
-      "id": "REQ-1",
-      "summary": "Replace the first of the 4 footer images with the uploaded Dhani Finance LTD. signature block image in both preview and PDF rendering",
+      "id": "REQ-2",
+      "summary": "Build a loan form UI that collects applicant details, loan parameters, bank account fields, and custom key-value fields, with automatic EMI calculation",
       "acceptanceCriteria": [
-        "The uploaded image (Dhani Finance LTD. signature block) is saved as frontend/public/assets/generated/footer-image-1.png",
-        "PreviewDialog.tsx renders the new image as the first footer image",
-        "renderDocumentToCanvas.ts draws the new image as the first footer image in generated PDFs",
-        "The other 3 footer images remain unchanged",
-        "The first footer image visually displays the 'Yours faithfully, Dhani Finance LTD.' signature block with P Harish Reddy CEO details"
+        "All required fields (name, loan amount, interest rate, year, processing charge) are present and validated",
+        "EMI is auto-calculated and displayed when loan amount, rate, and tenure are filled",
+        "Custom fields can be added and removed dynamically",
+        "Validation errors are surfaced inline before document generation"
       ],
       "file_operations": [
         {
-          "path": "frontend/public/assets/generated/footer-image-1.png",
-          "operation": "create",
-          "description": "Save the uploaded image file '20260228_092922_0002.png' (showing 'Yours faithfully, Dhani Finance LTD.' with signature and 'P Harish Reddy, Chief Executive Officer') as the first footer image asset. This image will replace the existing first footer image in both the preview dialog and PDF rendering."
+          "path": "frontend/src/components/FormSection.tsx",
+          "operation": "modify",
+          "description": "Rebuild the loan form UI to collect applicant details (name, email, phone, address), loan parameters (amount, interest rate, tenure in years, processing charge), bank account fields (account number, IFSC code, bank name), and custom key-value fields with add/remove functionality. Implement automatic EMI calculation using frontend/src/lib/loan/calculateEmi.ts when amount, rate, and tenure are filled. Add inline validation that checks for missing/invalid fields before allowing document generation using frontend/src/lib/validation.ts. Display validation errors clearly to the user. Ensure all form inputs are accessible and properly labeled."
         },
+        {
+          "path": "frontend/src/types/form.ts",
+          "operation": "modify",
+          "description": "Update the FormData interface to include all required fields: applicant details (name, email, phone, address), loan parameters (loanAmount, interestRate, tenureYears, processingCharge), bank account fields (accountNumber, ifscCode, bankName), and a customFields array of CustomField objects. Ensure the LoanType and DocumentType types match the backend LoanType enum and document type requirements."
+        },
+        {
+          "path": "frontend/src/lib/validation.ts",
+          "operation": "modify",
+          "description": "Update validation logic to validate all form fields: name (required, non-empty), loanAmount (required, positive number), interestRate (required, positive number), tenureYears (required, positive integer), processingCharge (required, non-negative number), bank account fields (required when present), and custom fields (key-value pairs). Return a comprehensive array of error messages for any missing or invalid fields."
+        }
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "summary": "Implement a Template Designer dialog that allows users to view built-in templates and create, edit, preview, save, and delete custom document templates including background image, watermark, logo, seal, and signature configuration",
+      "acceptanceCriteria": [
+        "Built-in templates for at least three loan document types are preloaded",
+        "Custom templates can be created, edited, and deleted",
+        "Template changes are persisted to the backend via React Query mutations",
+        "A live preview of the template is shown inside the designer dialog"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/TemplateDesigner.tsx",
+          "operation": "modify",
+          "description": "Rebuild the Template Designer dialog to display built-in templates (home, personal, vehicle loans) and allow authenticated users to create, edit, preview, and delete custom templates. Use the authorization component to ensure only authenticated users can save/delete custom templates. Integrate with backend queries using frontend/src/hooks/useQueries.ts for getAllTemplates, addCustomTemplate, updateCustomTemplate. Provide UI for uploading background image, logo, seal, signature (using the blob-storage component's ExternalBlob.fromBytes for file uploads). Configure watermark text, opacity, QR code payload, header color, footer text, and layout settings (signatureLayout, footerLayout). Include a live preview panel inside the dialog that shows the template with sample data. Display loading states during mutations and clear success/error feedback. Verify the blob-storage component's usage instructions before implementing file upload logic."
+        },
+        {
+          "path": "frontend/src/hooks/useQueries.ts",
+          "operation": "modify",
+          "description": "Update React Query hooks to use the backend interface methods: getAllTemplates() returns Array<GlobalMasterTemplate>, getCustomTemplateById(templateId: string) returns GlobalMasterTemplate | null, addCustomTemplate(templateId: string, template: GlobalMasterTemplate) returns TemplateResult, updateCustomTemplate(templateId: string, template: GlobalMasterTemplate) returns TemplateResult. Handle the TemplateResult enum (success, notFound, alreadyExists, unauthorizedField, unexpectedError) and surface appropriate error messages. Invalidate the 'templates' query key after successful mutations."
+        },
+        {
+          "path": "frontend/src/hooks/useTemplates.ts",
+          "operation": "modify",
+          "description": "Update the useTemplates hook to fetch custom templates from the backend using getAllTemplates query from useQueries.ts. Merge built-in templates (home, personal, vehicle) with fetched custom templates. Keep localStorage synchronization for offline fallback. Serialize/deserialize GlobalMasterTemplate records including ExternalBlob fields (logo, signature, stamp) using ExternalBlob.fromURL() for deserialization. Provide helper functions to get a template by ID or document type."
+        },
+        {
+          "path": "frontend/src/lib/templates/getTemplate.ts",
+          "operation": "modify",
+          "description": "Define at least three built-in templates (home, personal, vehicle loans) with default GlobalMasterTemplate configuration matching the backend GlobalMasterTemplate interface. Include default layout settings (watermark, QR code, header color, footer text, signature layout, footer layout). Ensure businessName and businessAddress are set. Update helper functions to normalize and retrieve templates from backend or localStorage."
+        },
+        {
+          "path": "frontend/src/types/templates.ts",
+          "operation": "modify",
+          "description": "Update template interfaces to match the backend GlobalMasterTemplate interface exactly: signature, logo, layout (LayoutSettings), businessName, businessAddress, optionalCustomFieldLabel, optionalCustomFieldValue, stamp, adminId. Define LayoutSettings interface with watermarkText, qrPayload, headerColor, watermarkOpacity, showQrCode, footerLayout, showWatermark, signatureLayout, footerText. Use ExternalBlob type from backend.d.ts for logo, signature, stamp fields. Define signatureLayout and footerLayout enums matching backend (Variant_stacked_sideBySide, Variant_twoColumn_centered)."
+        }
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "summary": "Implement document preview in a modal (PreviewDialog) that renders the filled template on a canvas with a two-column header, body content, watermark, seal, signature overlays, and a footer with images arranged in groups of 4 and 3 horizontally",
+      "acceptanceCriteria": [
+        "Preview modal opens after form submission",
+        "All overlay elements (watermark, seal, signature) are positioned according to the template configuration",
+        "Footer images are displayed in two rows: 4 images then 3 images, sized prominently",
+        "Canvas renders correctly at A4 dimensions (96 DPI)"
+      ],
+      "file_operations": [
         {
           "path": "frontend/src/components/PreviewDialog.tsx",
           "operation": "modify",
-          "description": "Update the first footer image reference from its current path to '/assets/generated/footer-image-1.png'. Ensure the other three footer images remain unchanged. The component currently renders four hardcoded footer images; modify only the first one to use the new Dhani Finance LTD. signature block image."
+          "description": "Rebuild the preview dialog to render a filled document template on a canvas at A4 dimensions (96 DPI) using frontend/src/lib/pdf/layout.ts constants. Display a two-column header with business name/address on the left and loan details on the right. Render body content with replaced placeholders from the selected template. Include a TemplateOverlay component to position watermark, seal, and signature elements according to the template's LayoutSettings. Display footer images in two rows: 4 images in the first row, 3 images in the second row, sized prominently and spaced evenly. Use the generated footer images at frontend/public/assets/generated/footer-img-1.dim_200x80.png, footer-img-2.dim_200x80.png, footer-img-3.dim_200x80.png, footer-img-4.dim_200x80.png (and additional images if needed). Wire the preview dialog to open after form submission via App.tsx state management."
+        },
+        {
+          "path": "frontend/src/components/preview/TemplateOverlay.tsx",
+          "operation": "modify",
+          "description": "Update TemplateOverlay to render absolute-positioned overlay elements on the preview canvas: background image (if provided), watermark text with configurable opacity and positioning, seal image with position preset, and signature image with layout preset (stacked or side-by-side). Use the template's LayoutSettings (watermarkText, watermarkOpacity, showWatermark, signatureLayout) and ExternalBlob fields (logo, signature, stamp) to render overlays. Use frontend/src/lib/templateAssets/positions.ts helpers to convert position presets to CSS styles."
         },
         {
           "path": "frontend/src/lib/pdf/renderDocumentToCanvas.ts",
           "operation": "modify",
-          "description": "Update the first footer image path in the canvas rendering logic from its current location to '/assets/generated/footer-image-1.png'. The function currently draws four footer images onto the canvas; modify only the first image loading/drawing logic to use the new Dhani Finance LTD. signature block. Preserve the rendering of the remaining three footer images exactly as they are."
+          "description": "Update the canvas rendering function to draw the filled document with a two-column header (business details on left, loan details on right), body content with replaced placeholders, watermark overlay, seal and signature images positioned per template configuration, and a footer with generated images arranged in two rows (4 images, then 3 images). Use A4 dimensions from frontend/src/lib/pdf/layout.ts. Reference the generated footer images using the full workspace paths: frontend/public/assets/generated/footer-img-1.dim_200x80.png through footer-img-4.dim_200x80.png. Ensure all overlay elements respect the template's LayoutSettings and render at the correct canvas coordinates."
+        },
+        {
+          "path": "frontend/src/lib/templates/renderTemplate.ts",
+          "operation": "modify",
+          "description": "Update the template rendering function to replace all placeholder tokens ({{name}}, {{loanAmount}}, {{interestRate}}, {{tenureYears}}, {{processingCharge}}, {{emi}}, {{accountNumber}}, {{ifscCode}}, {{bankName}}, custom field tokens) with actual form data values. Return the processed headline and body strings for use in the preview and PDF generation. Handle missing data gracefully by substituting empty strings or default values."
+        }
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "summary": "Implement PDF generation and download: render the document to a canvas, convert to JPEG, and assemble a valid PDF file that can be downloaded or shared via the Web Share API with a fallback to direct download",
+      "acceptanceCriteria": [
+        "Clicking Download triggers a browser file download of a valid PDF",
+        "Clicking Share invokes the Web Share API when available",
+        "If Web Share API is unavailable, the PDF is downloaded instead",
+        "Generated PDF matches the canvas preview fidelity"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/lib/pdf/generatePdf.ts",
+          "operation": "modify",
+          "description": "Update the PDF generation function to render the document to a canvas using renderDocumentToCanvas, convert the canvas to JPEG bytes, and assemble a minimal valid PDF file using raw PDF syntax (no external libraries). Ensure the PDF includes the JPEG image embedded at A4 dimensions. Return a Blob with MIME type 'application/pdf'. The generated PDF must match the canvas preview fidelity."
+        },
+        {
+          "path": "frontend/src/lib/shareUtils.ts",
+          "operation": "modify",
+          "description": "Update the share utility to attempt sharing a PDF Blob via the Web Share API (navigator.share). If the API is unavailable or sharing fails, return false to signal a download fallback. Provide a clear error message when sharing is not supported."
+        },
+        {
+          "path": "frontend/src/lib/download.ts",
+          "operation": "modify",
+          "description": "Update the download utility to trigger a browser file download by creating a temporary anchor element from a Blob URL. Accept a filename parameter (e.g., 'loan-document.pdf') and ensure the blob is revoked after download to prevent memory leaks."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Wire the Download and Share buttons in the preview dialog to call generatePdf from frontend/src/lib/pdf/generatePdf.ts. On Download click, generate the PDF and trigger a download using frontend/src/lib/download.ts. On Share click, attempt sharing via frontend/src/lib/shareUtils.ts; if sharing fails or is unavailable, fall back to download. Display loading states during PDF generation and clear success/error feedback after download/share attempts."
+        }
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "summary": "Integrate Internet Identity authentication so users can log in and access their saved custom templates and documents stored on the backend",
+      "acceptanceCriteria": [
+        "Login/logout controls are visible in the app header",
+        "Authenticated principal is used for all backend calls",
+        "Custom templates are scoped to the authenticated user",
+        "Unauthenticated users can still use built-in templates and generate documents locally"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Add a login/logout button in the app header using the authorization component's pattern. Use the useInternetIdentity hook from frontend/src/hooks/useInternetIdentity.ts to manage authentication state. Display the user's name (from UserProfile) when authenticated. On logout, clear all cached queries using queryClient.clear(). Show a profile setup modal on first login if the user has no profile (use getCallerUserProfile from backend). Implement the profile setup flow using saveCallerUserProfile. Ensure unauthenticated users can still access built-in templates and generate documents locally without backend calls. Verify the authorization component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/hooks/useQueries.ts",
+          "operation": "modify",
+          "description": "Add a useGetCallerUserProfile query hook that calls getCallerUserProfile() from the backend. Return a custom loading state that properly reflects actor dependency to prevent profile setup modal flash (see authorization component usage pattern). Add a useSaveCallerUserProfile mutation hook that calls saveCallerUserProfile(profile: UserProfile). Ensure all template queries are enabled only when the actor is available."
+        },
+        {
+          "path": "frontend/src/components/ProfileSetupModal.tsx",
+          "operation": "create",
+          "description": "Create a ProfileSetupModal component that displays on first login when the user has no profile. Show a form collecting the user's name and optional email. Use the useSaveCallerUserProfile mutation from useQueries.ts to save the profile. Display validation errors and loading states. Close the modal after successful profile save and invalidate the 'currentUserProfile' query key. Use the showProfileSetup pattern from the authorization component to prevent modal flash."
+        }
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "summary": "Apply a professional, clean visual theme using a warm amber/orange color palette with clear typography, card-based layout sections, and consistent spacing that suits a financial document application",
+      "acceptanceCriteria": [
+        "Color tokens use the warm amber/orange OKLCH palette in both light and dark modes",
+        "All primary actions (download, share, generate) use the primary brand color",
+        "Typography is legible and hierarchy is clear across form, preview, and designer views",
+        "Layout is responsive and usable on both desktop and tablet screen sizes"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/index.css",
+          "operation": "modify",
+          "description": "Update the global CSS to define a warm amber/orange OKLCH color palette for both light and dark modes using CSS custom properties. Define primary, secondary, accent, muted, and destructive color tokens. Set base typography styles with clear font hierarchy (headings, body text, captions). Define consistent border radius, spacing scale, and shadow tokens. Ensure the palette suits a professional financial document application with high contrast and legibility."
+        },
+        {
+          "path": "frontend/tailwind.config.js",
+          "operation": "modify",
+          "description": "Update the Tailwind config to reference the CSS custom properties for colors (primary, secondary, accent, muted, destructive). Define custom font families for headings and body text. Set default border radius, spacing scale, and shadow utilities. Enable responsive breakpoints for desktop and tablet layouts. Ensure all primary actions (download, share, generate buttons) use the primary brand color."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Apply a card-based layout to the main app view. Wrap the FormSection in a card component with padding and border. Use consistent spacing between sections (header, form, template designer trigger). Ensure the layout is responsive and adapts to desktop and tablet screen sizes. Use the primary brand color for the header background and primary action buttons."
+        },
+        {
+          "path": "frontend/src/components/FormSection.tsx",
+          "operation": "modify",
+          "description": "Apply consistent spacing and typography to the form inputs and labels. Use card-based sections for grouping related fields (applicant details, loan parameters, bank account, custom fields). Style primary action buttons (Generate Document, Download, Share) with the primary brand color. Ensure the form is responsive and usable on both desktop and tablet screen sizes."
+        },
+        {
+          "path": "frontend/src/components/TemplateDesigner.tsx",
+          "operation": "modify",
+          "description": "Apply consistent spacing and typography to the template designer dialog. Use card-based sections for built-in templates, custom template editor, and live preview. Style save and delete buttons with appropriate colors (primary for save, destructive for delete). Ensure the dialog is responsive and usable on both desktop and tablet screen sizes."
+        },
+        {
+          "path": "frontend/src/components/PreviewDialog.tsx",
+          "operation": "modify",
+          "description": "Apply consistent spacing and typography to the preview dialog. Use a card-based layout for the canvas preview and action buttons (Download, Share). Style buttons with the primary brand color. Ensure the dialog is responsive and the canvas scales appropriately on different screen sizes."
         }
       ]
     }

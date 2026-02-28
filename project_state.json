@@ -1,18 +1,56 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "Project with a footer section containing 4 images that can be updated individually.",
-  "architectural_notes": [
-    "Footer section contains 4 images that are managed individually"
-  ],
+  "summary": "New project",
+  "architectural_notes": [],
   "known_issues": [],
   "isFixRequest": false,
   "existing_features": [
     {
-      "id": "feature-replace-the-first-of-the-4-footer-images-in-the-document-preview-and-pdf-rendering-with-the-uploaded-image-20260228-092922-0002-png-showing-yours-faithfully-dhani-finance-ltd-with-signature-and-p-harish-reddy-chief-executive-officer-save-this-image-as-a-static-asset-at-frontend-public-assets-generated-footer-image-1-png-and-update-both-previewdialog-tsx-and-renderdocumenttocanvas-ts-to-use-this-new-image-as-the-first-footer-image-instead-of-the-previous-one",
-      "title": "Replace the first of the 4 footer images in the document preview and PDF rendering with the uploaded image '20260228_092922_0002.png' (showing 'Yours faithfully, Dhani Finance LTD.' with signature and 'P Harish Reddy, Chief Executive Officer'). Save this image as a static asset at 'frontend/public/assets/generated/footer-image-1.png' and update both PreviewDialog.tsx and renderDocumentToCanvas.ts to use this new image as the first footer image instead of the previous one.",
+      "id": "feature-build-a-loan-form-ui-that-collects-applicant-details-name-etc-loan-parameters-amount-interest-rate-tenure-processing-charge-bank-account-fields-and-custom-key-value-fields-with-automatic-emi-calculation",
+      "title": "Build a loan form UI that collects applicant details (name, etc.), loan parameters (amount, interest rate, tenure, processing charge), bank account fields, and custom key-value fields, with automatic EMI calculation.",
       "reqIds": [
-        "REQ-1"
+        "REQ-2"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-a-template-designer-dialog-that-allows-users-to-view-built-in-templates-and-create-edit-preview-save-and-delete-custom-document-templates-including-background-image-watermark-logo-seal-and-signature-configuration",
+      "title": "Implement a Template Designer dialog that allows users to view built-in templates and create, edit, preview, save, and delete custom document templates including background image, watermark, logo, seal, and signature configuration.",
+      "reqIds": [
+        "REQ-3"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-document-preview-in-a-modal-previewdialog-that-renders-the-filled-template-on-a-canvas-with-a-two-column-header-body-content-watermark-seal-signature-overlays-and-a-footer-with-images-arranged-in-groups-of-4-and-3-horizontally",
+      "title": "Implement document preview in a modal (PreviewDialog) that renders the filled template on a canvas with a two-column header, body content, watermark, seal, signature overlays, and a footer with images arranged in groups of 4 and 3 horizontally.",
+      "reqIds": [
+        "REQ-4"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-pdf-generation-and-download-render-the-document-to-a-canvas-convert-to-jpeg-and-assemble-a-valid-pdf-file-that-can-be-downloaded-or-shared-via-the-web-share-api-with-a-fallback-to-direct-download",
+      "title": "Implement PDF generation and download: render the document to a canvas, convert to JPEG, and assemble a valid PDF file that can be downloaded or shared via the Web Share API with a fallback to direct download.",
+      "reqIds": [
+        "REQ-5"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-integrate-internet-identity-authentication-so-users-can-log-in-and-access-their-saved-custom-templates-and-documents-stored-on-the-backend",
+      "title": "Integrate Internet Identity authentication so users can log in and access their saved custom templates and documents stored on the backend.",
+      "reqIds": [
+        "REQ-6"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-apply-a-professional-clean-visual-theme-using-a-warm-amber-orange-color-palette-with-clear-typography-card-based-layout-sections-and-consistent-spacing-that-suits-a-financial-document-application",
+      "title": "Apply a professional, clean visual theme using a warm amber/orange color palette with clear typography, card-based layout sections, and consistent spacing that suits a financial document application.",
+      "reqIds": [
+        "REQ-7"
       ],
       "version": 1
     }
@@ -20,13 +58,14 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Replace footer images one by one (starting with first image)",
-      "reqIds": [],
+      "summary": "Create a Motoko backend actor that manages user profiles, global and custom document templates (CRUD), loan document storage, and loan processing records with role-based access control.",
+      "reqIds": [
+        "REQ-1"
+      ],
       "status": "pending"
     }
   ],
-  "gameProjectType": "none",
-  "projectName": "Replace first footer image with uploaded signature/branding image",
+  "projectName": "Loan Document Generator",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

@@ -1,38 +1,154 @@
 {
   "kind": "build_request",
-  "title": "Replace first footer image with uploaded signature/branding image",
+  "title": "Rebuild Loan Document Generator from scratch",
+  "projectName": "Loan Document Generator",
   "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Replace the first of the 4 footer images in the document preview and PDF rendering with the uploaded image '20260228_092922_0002.png' (showing 'Yours faithfully, Dhani Finance LTD.' with signature and 'P Harish Reddy, Chief Executive Officer'). Save this image as a static asset at 'frontend/public/assets/generated/footer-image-1.png' and update both PreviewDialog.tsx and renderDocumentToCanvas.ts to use this new image as the first footer image instead of the previous one.",
-      "target": "frontend",
+      "text": "Create a Motoko backend actor that manages user profiles, global and custom document templates (CRUD), loan document storage, and loan processing records with role-based access control.",
+      "target": "backend",
       "source": {
         "messageIds": [
-          "msg-recent-1"
+          "msg-1"
         ],
         "quotes": [
-          "Now change one by one footer 4 image",
-          "Replace this for first"
+          "Start again"
         ]
       },
       "acceptanceCriteria": [
-        "The uploaded image (Dhani Finance LTD. signature block) is saved as frontend/public/assets/generated/footer-image-1.png",
-        "PreviewDialog.tsx renders the new image as the first footer image",
-        "renderDocumentToCanvas.ts draws the new image as the first footer image in generated PDFs",
-        "The other 3 footer images remain unchanged",
-        "The first footer image visually displays the 'Yours faithfully, Dhani Finance LTD.' signature block with P Harish Reddy CEO details"
+        "Actor exposes methods to create, read, update, and delete custom templates",
+        "Actor stores loan document records keyed by user principal",
+        "Role-based access control prevents unauthorized mutations",
+        "Global/built-in templates can be seeded and retrieved by any authenticated user"
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "text": "Build a loan form UI that collects applicant details (name, etc.), loan parameters (amount, interest rate, tenure, processing charge), bank account fields, and custom key-value fields, with automatic EMI calculation.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "Start again"
+        ]
+      },
+      "acceptanceCriteria": [
+        "All required fields (name, loan amount, interest rate, year, processing charge) are present and validated",
+        "EMI is auto-calculated and displayed when loan amount, rate, and tenure are filled",
+        "Custom fields can be added and removed dynamically",
+        "Validation errors are surfaced inline before document generation"
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "text": "Implement a Template Designer dialog that allows users to view built-in templates and create, edit, preview, save, and delete custom document templates including background image, watermark, logo, seal, and signature configuration.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "Start again"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Built-in templates for at least three loan document types are preloaded",
+        "Custom templates can be created, edited, and deleted",
+        "Template changes are persisted to the backend via React Query mutations",
+        "A live preview of the template is shown inside the designer dialog"
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "text": "Implement document preview in a modal (PreviewDialog) that renders the filled template on a canvas with a two-column header, body content, watermark, seal, signature overlays, and a footer with images arranged in groups of 4 and 3 horizontally.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "Start again"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Preview modal opens after form submission",
+        "All overlay elements (watermark, seal, signature) are positioned according to the template configuration",
+        "Footer images are displayed in two rows: 4 images then 3 images, sized prominently",
+        "Canvas renders correctly at A4 dimensions (96 DPI)"
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "text": "Implement PDF generation and download: render the document to a canvas, convert to JPEG, and assemble a valid PDF file that can be downloaded or shared via the Web Share API with a fallback to direct download.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "Start again"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Clicking Download triggers a browser file download of a valid PDF",
+        "Clicking Share invokes the Web Share API when available",
+        "If Web Share API is unavailable, the PDF is downloaded instead",
+        "Generated PDF matches the canvas preview fidelity"
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "text": "Integrate Internet Identity authentication so users can log in and access their saved custom templates and documents stored on the backend.",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "Start again"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Login/logout controls are visible in the app header",
+        "Authenticated principal is used for all backend calls",
+        "Custom templates are scoped to the authenticated user",
+        "Unauthenticated users can still use built-in templates and generate documents locally"
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "text": "Apply a professional, clean visual theme using a warm amber/orange color palette with clear typography, card-based layout sections, and consistent spacing that suits a financial document application.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "Start again"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Color tokens use the warm amber/orange OKLCH palette in both light and dark modes",
+        "All primary actions (download, share, generate) use the primary brand color",
+        "Typography is legible and hierarchy is clear across form, preview, and designer views",
+        "Layout is responsive and usable on both desktop and tablet screen sizes"
       ]
     }
   ],
   "constraints": [
-    "Only the first footer image should be replaced; the remaining 3 footer images must stay the same",
-    "Do not modify any files listed in frontend.immutablePaths"
+    "All Motoko logic must remain in a single backend/main.mo actor file",
+    "Do not edit files under frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, or frontend/src/components/ui",
+    "PDF generation must not rely on external PDF libraries — assemble raw PDF syntax directly",
+    "Footer images must be arranged in groups of 4 then 3 horizontally"
   ],
   "nonGoals": [
-    "Replacing the 2nd, 3rd, or 4th footer images (those will be handled in separate subsequent requests)",
-    "Changes to the document body, header, or any other layout sections",
-    "Backend changes"
+    "No external database or cloud storage integration",
+    "No real-time features or WebSockets",
+    "No third-party payment or email integrations",
+    "No mobile app or React Native version"
   ],
   "imageRequirements": {
     "required": [],
