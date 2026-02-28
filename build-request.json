@@ -1,63 +1,41 @@
 {
   "kind": "build_request",
-  "title": "Fix footer layout and add 4 images to footer",
-  "projectName": "Loan Document Generator",
+  "title": "Replace first footer image with uploaded signature/branding image",
   "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Fix the footer layout and styling in the rendered document (both in PreviewDialog.tsx and renderDocumentToCanvas.ts). Ensure the footer is properly aligned, has consistent padding/margins, and visually matches the overall document design.",
+      "text": "Replace the first of the 4 footer images in the document preview and PDF rendering with the uploaded image '20260228_092922_0002.png' (showing 'Yours faithfully, Dhani Finance LTD.' with signature and 'P Harish Reddy, Chief Executive Officer'). Save this image as a static asset at 'frontend/public/assets/generated/footer-image-1.png' and update both PreviewDialog.tsx and renderDocumentToCanvas.ts to use this new image as the first footer image instead of the previous one.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-4"
+          "msg-recent-1"
         ],
         "quotes": [
-          "I want fix footer"
+          "Now change one by one footer 4 image",
+          "Replace this for first"
         ]
       },
       "acceptanceCriteria": [
-        "Footer is correctly positioned at the bottom of the document preview",
-        "Footer has consistent spacing and alignment",
-        "Footer styling is visually coherent with the rest of the document"
-      ]
-    },
-    {
-      "id": "REQ-2",
-      "text": "Add 4 user-provided images to the footer area in the rendered document. Display the 4 images as static assets (frontend/public/assets/generated/) and render them horizontally in the footer row within both PreviewDialog.tsx and renderDocumentToCanvas.ts.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-4"
-        ],
-        "quotes": [
-          "there i want to add 4 images which i will provide you now"
-        ]
-      },
-      "acceptanceCriteria": [
-        "4 images are displayed in the footer of the document preview",
-        "Images are laid out horizontally and evenly spaced within the footer",
-        "Images are rendered correctly in both the preview dialog and the PDF canvas output",
-        "Images are served from frontend/public/assets/generated/"
+        "The uploaded image (Dhani Finance LTD. signature block) is saved as frontend/public/assets/generated/footer-image-1.png",
+        "PreviewDialog.tsx renders the new image as the first footer image",
+        "renderDocumentToCanvas.ts draws the new image as the first footer image in generated PDFs",
+        "The other 3 footer images remain unchanged",
+        "The first footer image visually displays the 'Yours faithfully, Dhani Finance LTD.' signature block with P Harish Reddy CEO details"
       ]
     }
   ],
   "constraints": [
-    "Do not modify files under frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, or frontend/src/components/ui",
-    "Footer images must be served as static assets from frontend/public/assets/generated/, not through the backend"
+    "Only the first footer image should be replaced; the remaining 3 footer images must stay the same",
+    "Do not modify any files listed in frontend.immutablePaths"
   ],
   "nonGoals": [
-    "Changing header layout or logo size",
-    "Modifying backend data models or templates",
-    "Adding footer images to the TemplateDesigner customization flow"
+    "Replacing the 2nd, 3rd, or 4th footer images (those will be handled in separate subsequent requests)",
+    "Changes to the document body, header, or any other layout sections",
+    "Backend changes"
   ],
   "imageRequirements": {
-    "required": [
-      "Footer banner image 1 — decorative institutional/financial badge or emblem (footer-img-1.dim_200x80.png)",
-      "Footer banner image 2 — decorative institutional/financial badge or emblem (footer-img-2.dim_200x80.png)",
-      "Footer banner image 3 — decorative institutional/financial badge or emblem (footer-img-3.dim_200x80.png)",
-      "Footer banner image 4 — decorative institutional/financial badge or emblem (footer-img-4.dim_200x80.png)"
-    ],
+    "required": [],
     "edits": []
   }
 }

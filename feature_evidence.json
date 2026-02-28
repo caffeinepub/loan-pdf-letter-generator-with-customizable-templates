@@ -2,8 +2,8 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-fix-the-footer-layout-and-styling-in-the-rendered-document-both-in-previewdialog-tsx-and-renderdocumenttocanvas-ts-ensure-the-footer-is-properly-aligned-has-consistent-padding-margins-and-visually-matches-the-overall-document-design",
-      "featureTitle": "Fix the footer layout and styling in the rendered document (both in PreviewDialog.tsx and renderDocumentToCanvas.ts). Ensure the footer is properly aligned, has consistent padding/margins, and visually matches the overall document design.",
+      "featureId": "feature-replace-the-first-of-the-4-footer-images-in-the-document-preview-and-pdf-rendering-with-the-uploaded-image-20260228-092922-0002-png-showing-yours-faithfully-dhani-finance-ltd-with-signature-and-p-harish-reddy-chief-executive-officer-save-this-image-as-a-static-asset-at-frontend-public-assets-generated-footer-image-1-png-and-update-both-previewdialog-tsx-and-renderdocumenttocanvas-ts-to-use-this-new-image-as-the-first-footer-image-instead-of-the-previous-one",
+      "featureTitle": "Replace the first of the 4 footer images in the document preview and PDF rendering with the uploaded image '20260228_092922_0002.png' (showing 'Yours faithfully, Dhani Finance LTD.' with signature and 'P Harish Reddy, Chief Executive Officer'). Save this image as a static asset at 'frontend/public/assets/generated/footer-image-1.png' and update both PreviewDialog.tsx and renderDocumentToCanvas.ts to use this new image as the first footer image instead of the previous one.",
       "files": [
         "frontend/src/components/PreviewDialog.tsx",
         "frontend/src/lib/pdf/renderDocumentToCanvas.ts"
@@ -21,29 +21,6 @@
       ],
       "testIds": [
         "REQ-1"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-add-4-user-provided-images-to-the-footer-area-in-the-rendered-document-display-the-4-images-as-static-assets-frontend-public-assets-generated-and-render-them-horizontally-in-the-footer-row-within-both-previewdialog-tsx-and-renderdocumenttocanvas-ts",
-      "featureTitle": "Add 4 user-provided images to the footer area in the rendered document. Display the 4 images as static assets (frontend/public/assets/generated/) and render them horizontally in the footer row within both PreviewDialog.tsx and renderDocumentToCanvas.ts.",
-      "files": [
-        "frontend/src/components/PreviewDialog.tsx",
-        "frontend/src/lib/pdf/renderDocumentToCanvas.ts"
-      ],
-      "components": [
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0",
-        "authorization@4.0.0",
-        "blob-storage@4.0.0",
-        "qr-code@1.0.0",
-        "camera@1.0.0"
-      ],
-      "testIds": [
-        "REQ-2"
       ],
       "confidence": "high"
     }

@@ -29,9 +29,9 @@ const BAJAJ_LOGO_PATH = '/assets/bajaj_finserv-logo_brandlogos.net_z2tuf-2.png';
 const FOOTER_TEXT =
   'This document is system generated. For queries, contact investors@bajajfinserv.in';
 
-// Footer partner/brand images
+// Footer partner/brand images — first image replaced with Dhani Finance LTD. signature block
 const FOOTER_IMAGES = [
-  '/assets/generated/footer-img-1.dim_200x80.png',
+  '/assets/20260228_092922_0002.png',
   '/assets/generated/footer-img-2.dim_200x80.png',
   '/assets/generated/footer-img-3.dim_200x80.png',
   '/assets/generated/footer-img-4.dim_200x80.png',

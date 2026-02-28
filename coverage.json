@@ -1,33 +1,21 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-27T21:59:23.182Z",
+  "generatedAt": "2026-02-28T04:03:30.323Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 2,
-    "implemented": 2,
+    "total": 1,
+    "implemented": 1,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Fix the footer layout and styling in the rendered document (both in PreviewDialog.tsx and renderDocumentToCanvas.ts). Ensure the footer is properly aligned, has consistent padding/margins, and visually matches the overall document design.",
+        "summary": "Replace the first of the 4 footer images in the document preview and PDF rendering with the uploaded image '20260228_092922_0002.png' (showing 'Yours faithfully, Dhani Finance LTD.' with signature and 'P Harish Reddy, Chief Executive Officer'). Save this image as a static asset at 'frontend/public/assets/generated/footer-image-1.png' and update both PreviewDialog.tsx and renderDocumentToCanvas.ts to use this new image as the first footer image instead of the previous one.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/PreviewDialog.tsx",
-          "frontend/src/lib/pdf/renderDocumentToCanvas.ts"
-        ],
-        "matchedFiles": [
-          "frontend/src/components/PreviewDialog.tsx",
-          "frontend/src/lib/pdf/renderDocumentToCanvas.ts"
-        ]
-      },
-      {
-        "id": "REQ-2",
-        "summary": "Add 4 user-provided images to the footer area in the rendered document. Display the 4 images as static assets (frontend/public/assets/generated/) and render them horizontally in the footer row within both PreviewDialog.tsx and renderDocumentToCanvas.ts.",
-        "status": "implemented",
-        "plannedFiles": [
+          "frontend/public/assets/generated/footer-image-1.png",
           "frontend/src/components/PreviewDialog.tsx",
           "frontend/src/lib/pdf/renderDocumentToCanvas.ts"
         ],
@@ -43,10 +31,6 @@
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/public/assets/generated/footer-img-1.dim_200x80.png",
-    "frontend/public/assets/generated/footer-img-2.dim_200x80.png",
-    "frontend/public/assets/generated/footer-img-3.dim_200x80.png",
-    "frontend/public/assets/generated/footer-img-4.dim_200x80.png",
     "frontend/src/components/PreviewDialog.tsx",
     "frontend/src/lib/pdf/renderDocumentToCanvas.ts",
     "project_state.json",

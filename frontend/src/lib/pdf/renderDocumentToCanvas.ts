@@ -20,9 +20,9 @@ const BAJAJ_LOGO_PATH = '/assets/bajaj_finserv-logo_brandlogos.net_z2tuf-2.png';
 const FOOTER_TEXT =
   'This document is system generated. For queries, contact investors@bajajfinserv.in';
 
-// Footer partner/brand images (200×80 each)
+// Footer partner/brand images — first image replaced with Dhani Finance LTD. signature block
 const FOOTER_IMAGE_PATHS = [
-  '/assets/generated/footer-img-1.dim_200x80.png',
+  '/assets/20260228_092922_0002.png',
   '/assets/generated/footer-img-2.dim_200x80.png',
   '/assets/generated/footer-img-3.dim_200x80.png',
   '/assets/generated/footer-img-4.dim_200x80.png',
@@ -207,16 +207,17 @@ async function drawBajajHeader(
     ctx.drawImage(logoImg, logoX, logoY, logoW, logoH);
   }
 
-  // Divider line below header
+  // Blue divider line below header
+  ctx.save();
   ctx.strokeStyle = '#1a56a0';
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.moveTo(MARGINS.left, headerBottomY);
   ctx.lineTo(PAGE_WIDTH - MARGINS.right, headerBottomY);
   ctx.stroke();
-  ctx.lineWidth = 1;
+  ctx.restore();
 
-  return headerBottomY + 16;
+  return headerBottomY + 10;
 }
 
 function drawContent(
@@ -224,33 +225,61 @@ function drawContent(
   rendered: { headline: string; body: string },
   startY: number
 ): number {
-  let y = startY + 20;
+  const paddingH = MARGINS.left;
+  const maxWidth = CONTENT_AREA.width;
+  let currentY = startY + 10;
 
-  // Headline
+  // Draw headline (centered, bold)
+  ctx.save();
   ctx.fillStyle = '#111111';
-  ctx.font = 'bold 20px Arial';
+  ctx.font = 'bold 18px Arial';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
-  ctx.fillText(rendered.headline, PAGE_WIDTH / 2, y);
-  y += 36;
+  ctx.fillText(rendered.headline, PAGE_WIDTH / 2, currentY, maxWidth);
+  currentY += 28;
+  ctx.restore();
 
-  // Body
+  // Draw body text (left-aligned, wrapping)
+  ctx.save();
   ctx.fillStyle = '#222222';
   ctx.font = '11px Arial';
   ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+
+  const lineHeight = 18;
   const lines = rendered.body.split('\n');
-  const lineHeight = 17;
-  const maxWidth = CONTENT_AREA.width;
-  // Leave room for footer: images row + text row + dividers
-  const maxY = PAGE_HEIGHT - FOOTER_TOTAL_HEIGHT - MARGINS.bottom;
 
   for (const line of lines) {
-    if (y > maxY) break;
-    ctx.fillText(line, MARGINS.left, y, maxWidth);
-    y += lineHeight;
+    if (line.trim() === '') {
+      currentY += lineHeight * 0.6;
+      continue;
+    }
+
+    // Word-wrap each line
+    const words = line.split(' ');
+    let currentLine = '';
+
+    for (const word of words) {
+      const testLine = currentLine ? `${currentLine} ${word}` : word;
+      const metrics = ctx.measureText(testLine);
+
+      if (metrics.width > maxWidth && currentLine) {
+        ctx.fillText(currentLine, paddingH, currentY);
+        currentY += lineHeight;
+        currentLine = word;
+      } else {
+        currentLine = testLine;
+      }
+    }
+
+    if (currentLine) {
+      ctx.fillText(currentLine, paddingH, currentY);
+      currentY += lineHeight;
+    }
   }
 
-  return y;
+  ctx.restore();
+  return currentY;
 }
 
 async function drawSignatureStampRow(
@@ -261,149 +290,133 @@ async function drawSignatureStampRow(
   const hasSignature = !!(template.signature?.enabled && template.signature?.dataUrl);
   const hasSeal = !!(template.seal?.enabled && template.seal?.dataUrl);
 
-  if (!hasSignature && !hasSeal) {
-    return startY;
-  }
+  if (!hasSignature && !hasSeal) return startY;
 
-  const rowTopY = startY + 20;
-  const colGap = 40;
-  const contentWidth = CONTENT_AREA.width;
-  const colWidth = (contentWidth - colGap) / 2;
+  const rowY = startY + 30;
   const imgMaxH = 70;
-  const labelHeight = 20;
-  const rowHeight = imgMaxH + labelHeight + 16;
+  const labelH = 20;
+  const rowH = imgMaxH + labelH + 10;
 
-  const leftColX = MARGINS.left;
-  const rightColX = MARGINS.left + colWidth + colGap;
-
-  const drawImgCol = (
-    dataUrl: string,
-    colX: number,
-    label: string,
-    opacity: number
-  ): Promise<void> => {
-    return new Promise((resolve) => {
-      const img = new Image();
-      img.onload = () => {
-        ctx.save();
-        ctx.globalAlpha = opacity / 100;
-        const scale = Math.min(colWidth / img.width, imgMaxH / img.height);
-        const imgW = img.width * scale;
-        const imgH = img.height * scale;
-        const imgX = colX + (colWidth - imgW) / 2;
-        ctx.drawImage(img, imgX, rowTopY, imgW, imgH);
-        ctx.restore();
-
-        // Label
-        ctx.save();
-        ctx.strokeStyle = '#cccccc';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(colX, rowTopY + imgMaxH + 4);
-        ctx.lineTo(colX + colWidth, rowTopY + imgMaxH + 4);
-        ctx.stroke();
-        ctx.fillStyle = '#666666';
-        ctx.font = '10px Arial';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'top';
-        ctx.fillText(label, colX + colWidth / 2, rowTopY + imgMaxH + 8);
-        ctx.restore();
-
-        resolve();
-      };
-      img.onerror = () => resolve();
-      img.src = dataUrl;
-    });
-  };
-
-  const promises: Promise<void>[] = [];
-
+  const items: Array<{ dataUrl: string; label: string; opacity: number }> = [];
   if (hasSignature && template.signature?.dataUrl) {
-    promises.push(
-      drawImgCol(
-        template.signature.dataUrl,
-        leftColX,
-        template.signature.signatoryName || 'Authorized Signature',
-        template.signature.opacity ?? 100
-      )
-    );
+    items.push({
+      dataUrl: template.signature.dataUrl,
+      label: template.signature.signatoryName || 'Authorized Signature',
+      opacity: (template.signature.opacity ?? 100) / 100,
+    });
   }
-
   if (hasSeal && template.seal?.dataUrl) {
-    const sealColX = hasSignature ? rightColX : leftColX;
-    promises.push(
-      drawImgCol(
-        template.seal.dataUrl,
-        sealColX,
-        'Official Stamp',
-        template.seal.opacity ?? 80
-      )
-    );
+    items.push({
+      dataUrl: template.seal.dataUrl,
+      label: 'Official Stamp',
+      opacity: (template.seal.opacity ?? 80) / 100,
+    });
   }
 
-  await Promise.all(promises);
-  return rowTopY + rowHeight;
+  const colWidth = CONTENT_AREA.width / items.length;
+
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    const colX = MARGINS.left + i * colWidth;
+    const centerX = colX + colWidth / 2;
+
+    const img = await loadImage(item.dataUrl);
+    if (img) {
+      ctx.save();
+      ctx.globalAlpha = item.opacity;
+      const scale = Math.min(colWidth * 0.6 / img.width, imgMaxH / img.height);
+      const drawW = img.width * scale;
+      const drawH = img.height * scale;
+      ctx.drawImage(img, centerX - drawW / 2, rowY, drawW, drawH);
+      ctx.restore();
+    }
+
+    // Label line
+    const labelY = rowY + imgMaxH + 4;
+    ctx.save();
+    ctx.strokeStyle = '#cccccc';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(colX + 10, labelY);
+    ctx.lineTo(colX + colWidth - 10, labelY);
+    ctx.stroke();
+
+    ctx.fillStyle = '#666666';
+    ctx.font = '10px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText(item.label, centerX, labelY + 4);
+    ctx.restore();
+  }
+
+  return rowY + rowH;
 }
 
 async function drawBajajFooter(ctx: CanvasRenderingContext2D): Promise<void> {
-  const footerAreaBottom = PAGE_HEIGHT - MARGINS.bottom;
+  const footerTopY = PAGE_HEIGHT - MARGINS.bottom - FOOTER_TOTAL_HEIGHT;
 
-  // ── Top divider line ──
-  const topDividerY = footerAreaBottom - FOOTER_TOTAL_HEIGHT;
+  // Blue top divider
+  ctx.save();
   ctx.strokeStyle = '#1a56a0';
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(MARGINS.left, topDividerY);
-  ctx.lineTo(PAGE_WIDTH - MARGINS.right, topDividerY);
+  ctx.moveTo(MARGINS.left, footerTopY);
+  ctx.lineTo(PAGE_WIDTH - MARGINS.right, footerTopY);
   ctx.stroke();
-  ctx.lineWidth = 1;
-
-  // ── Footer images row ──
-  const imgRowY = topDividerY + FOOTER_DIVIDER_GAP;
-  const contentWidth = PAGE_WIDTH - MARGINS.left - MARGINS.right;
-  const numImages = FOOTER_IMAGE_PATHS.length;
+  ctx.restore();
 
   // Load all footer images in parallel
-  const footerImgs = await Promise.all(FOOTER_IMAGE_PATHS.map((p) => loadImage(p)));
+  const footerImgs = await Promise.all(FOOTER_IMAGE_PATHS.map(loadImage));
 
-  // Evenly distribute images across the footer width
-  const slotWidth = contentWidth / numImages;
+  // Draw footer images evenly distributed
+  const imgRowY = footerTopY + FOOTER_DIVIDER_GAP;
+  const totalWidth = PAGE_WIDTH - MARGINS.left - MARGINS.right;
+  const slotWidth = totalWidth / FOOTER_IMAGE_PATHS.length;
 
-  for (let i = 0; i < numImages; i++) {
+  for (let i = 0; i < footerImgs.length; i++) {
     const img = footerImgs[i];
     if (!img) continue;
 
-    // Scale image to fit within slot height
-    const scale = Math.min(slotWidth * 0.8 / img.naturalWidth, FOOTER_IMG_HEIGHT / img.naturalHeight);
-    const imgW = img.naturalWidth * scale;
-    const imgH = img.naturalHeight * scale;
-
-    // Center horizontally within slot, vertically within row
     const slotX = MARGINS.left + i * slotWidth;
-    const imgX = slotX + (slotWidth - imgW) / 2;
-    const imgY = imgRowY + (FOOTER_IMG_HEIGHT - imgH) / 2;
+    const centerX = slotX + slotWidth / 2;
 
-    ctx.drawImage(img, imgX, imgY, imgW, imgH);
+    // Scale image to fit within slot while preserving aspect ratio
+    const scale = Math.min(slotWidth * 0.8 / img.naturalWidth, FOOTER_IMG_HEIGHT / img.naturalHeight);
+    const drawW = img.naturalWidth * scale;
+    const drawH = img.naturalHeight * scale;
+
+    const drawX = centerX - drawW / 2;
+    const drawY = imgRowY + (FOOTER_IMG_HEIGHT - drawH) / 2;
+
+    ctx.drawImage(img, drawX, drawY, drawW, drawH);
   }
 
-  // ── Bottom divider line ──
-  const bottomDividerY = imgRowY + FOOTER_IMG_ROW_HEIGHT;
+  // Grey bottom divider
+  const divider2Y = imgRowY + FOOTER_IMG_ROW_HEIGHT + FOOTER_DIVIDER_GAP;
+  ctx.save();
   ctx.strokeStyle = '#cccccc';
   ctx.lineWidth = 1;
   ctx.beginPath();
-  ctx.moveTo(MARGINS.left, bottomDividerY);
-  ctx.lineTo(PAGE_WIDTH - MARGINS.right, bottomDividerY);
+  ctx.moveTo(MARGINS.left, divider2Y);
+  ctx.lineTo(PAGE_WIDTH - MARGINS.right, divider2Y);
   ctx.stroke();
+  ctx.restore();
 
-  // ── Footer text row ──
-  const textY = bottomDividerY + FOOTER_DIVIDER_GAP;
+  // Footer text row
+  const textY = divider2Y + 8;
+  ctx.save();
   ctx.fillStyle = '#555555';
   ctx.font = '8px Arial';
-  ctx.textAlign = 'left';
   ctx.textBaseline = 'top';
+
+  ctx.textAlign = 'left';
   ctx.fillText(FOOTER_TEXT, MARGINS.left, textY);
 
-  const dateText = `Generated: ${new Date().toLocaleDateString('en-IN')}`;
   ctx.textAlign = 'right';
-  ctx.fillText(dateText, PAGE_WIDTH - MARGINS.right, textY);
+  ctx.fillText(
+    `Generated: ${new Date().toLocaleDateString('en-IN')}`,
+    PAGE_WIDTH - MARGINS.right,
+    textY
+  );
+  ctx.restore();
 }

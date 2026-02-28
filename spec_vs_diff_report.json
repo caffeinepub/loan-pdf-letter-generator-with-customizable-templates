@@ -1,13 +1,22 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-27T21:59:23.178Z",
-  "summary": "The diff implements both REQ-1 and REQ-2. PreviewDialog.tsx has been updated with a fixed footer layout including dividers, consistent spacing, and a horizontal row of 4 footer images. renderDocumentToCanvas.ts includes footer layout constants, image loading logic, and a drawBajajFooter function rendering 4 images horizontally. Images are referenced from /assets/generated/ paths. However, the actual image files (footer-img-1 through footer-img-4) do not appear to have been added to frontend/public/assets/generated/ based on the diff summary showing no added files.",
+  "generatedAt": "2026-02-28T04:03:30.321Z",
+  "summary": "The diff updates PreviewDialog.tsx and renderDocumentToCanvas.ts to use a new first footer image path. However, the image is referenced as '/assets/20260228_092922_0002.png' instead of the required path '/assets/generated/footer-image-1.png', and there is no evidence that the image file was saved as 'frontend/public/assets/generated/footer-image-1.png'.",
   "missing_requirements": [
     {
-      "id": "REQ-2",
-      "requirement": "Footer images must be served as static assets from frontend/public/assets/generated/ — the 4 image files (footer-img-1.dim_200x80.png, footer-img-2.dim_200x80.png, footer-img-3.dim_200x80.png, footer-img-4.dim_200x80.png) must be present in that directory.",
-      "reason": "The diff summary shows 'Added: 0' files and lists no new files under frontend/public/assets/generated/. The code references these image paths but the actual PNG files do not appear to have been added to the repository.",
+      "id": "REQ-1",
+      "requirement": "Save the uploaded image as a static asset at 'frontend/public/assets/generated/footer-image-1.png'",
+      "reason": "No new file was added to 'frontend/public/assets/generated/footer-image-1.png'. The diff shows 0 added files, and the image is referenced by its original filename '/assets/20260228_092922_0002.png' rather than '/assets/generated/footer-image-1.png'.",
+      "evidence": [
+        "frontend/src/components/PreviewDialog.tsx",
+        "frontend/src/lib/pdf/renderDocumentToCanvas.ts"
+      ]
+    },
+    {
+      "id": "REQ-1",
+      "requirement": "PreviewDialog.tsx and renderDocumentToCanvas.ts must reference the new image at '/assets/generated/footer-image-1.png'",
+      "reason": "Both files use '/assets/20260228_092922_0002.png' as the first footer image path instead of the required '/assets/generated/footer-image-1.png'.",
       "evidence": [
         "frontend/src/components/PreviewDialog.tsx",
         "frontend/src/lib/pdf/renderDocumentToCanvas.ts"
@@ -15,7 +24,7 @@
     }
   ],
   "hallucinated_features": [],
-  "confidence": 0.78,
+  "confidence": 0.9,
   "changed_files": [
     "frontend-file-summaries.txt",
     "frontend/src/components/PreviewDialog.tsx",

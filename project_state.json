@@ -1,27 +1,18 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "Project involves a web page with a header and footer. User wants to fix the footer and add 4 images to it.",
-  "architectural_notes": [],
-  "known_issues": [
-    "Footer requires fixes and 4 images to be added"
+  "summary": "Project with a footer section containing 4 images that can be updated individually.",
+  "architectural_notes": [
+    "Footer section contains 4 images that are managed individually"
   ],
-  "isFixRequest": true,
-  "imageRequirements": "## Required Images\n- Footer banner image 1 — decorative institutional/financial badge or emblem (footer-img-1.dim_200x80.png)\n- Footer banner image 2 — decorative institutional/financial badge or emblem (footer-img-2.dim_200x80.png)\n- Footer banner image 3 — decorative institutional/financial badge or emblem (footer-img-3.dim_200x80.png)\n- Footer banner image 4 — decorative institutional/financial badge or emblem (footer-img-4.dim_200x80.png)",
+  "known_issues": [],
+  "isFixRequest": false,
   "existing_features": [
     {
-      "id": "feature-fix-the-footer-layout-and-styling-in-the-rendered-document-both-in-previewdialog-tsx-and-renderdocumenttocanvas-ts-ensure-the-footer-is-properly-aligned-has-consistent-padding-margins-and-visually-matches-the-overall-document-design",
-      "title": "Fix the footer layout and styling in the rendered document (both in PreviewDialog.tsx and renderDocumentToCanvas.ts). Ensure the footer is properly aligned, has consistent padding/margins, and visually matches the overall document design.",
+      "id": "feature-replace-the-first-of-the-4-footer-images-in-the-document-preview-and-pdf-rendering-with-the-uploaded-image-20260228-092922-0002-png-showing-yours-faithfully-dhani-finance-ltd-with-signature-and-p-harish-reddy-chief-executive-officer-save-this-image-as-a-static-asset-at-frontend-public-assets-generated-footer-image-1-png-and-update-both-previewdialog-tsx-and-renderdocumenttocanvas-ts-to-use-this-new-image-as-the-first-footer-image-instead-of-the-previous-one",
+      "title": "Replace the first of the 4 footer images in the document preview and PDF rendering with the uploaded image '20260228_092922_0002.png' (showing 'Yours faithfully, Dhani Finance LTD.' with signature and 'P Harish Reddy, Chief Executive Officer'). Save this image as a static asset at 'frontend/public/assets/generated/footer-image-1.png' and update both PreviewDialog.tsx and renderDocumentToCanvas.ts to use this new image as the first footer image instead of the previous one.",
       "reqIds": [
         "REQ-1"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-add-4-user-provided-images-to-the-footer-area-in-the-rendered-document-display-the-4-images-as-static-assets-frontend-public-assets-generated-and-render-them-horizontally-in-the-footer-row-within-both-previewdialog-tsx-and-renderdocumenttocanvas-ts",
-      "title": "Add 4 user-provided images to the footer area in the rendered document. Display the 4 images as static assets (frontend/public/assets/generated/) and render them horizontally in the footer row within both PreviewDialog.tsx and renderDocumentToCanvas.ts.",
-      "reqIds": [
-        "REQ-2"
       ],
       "version": 1
     }
@@ -29,19 +20,13 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Fix footer layout/styling",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-2",
-      "summary": "Add 4 user-provided images to the footer",
+      "summary": "Replace footer images one by one (starting with first image)",
       "reqIds": [],
       "status": "pending"
     }
   ],
   "gameProjectType": "none",
-  "projectName": "Loan Document Generator",
+  "projectName": "Replace first footer image with uploaded signature/branding image",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

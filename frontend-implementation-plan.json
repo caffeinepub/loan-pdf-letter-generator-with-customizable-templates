@@ -1,48 +1,33 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Fix footer layout and add 4 images to footer",
+  "title": "Replace first footer image with uploaded signature/branding image",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Fix the footer layout and styling in the rendered document to ensure proper alignment, consistent padding/margins, and visual coherence with the overall document design",
+      "summary": "Replace the first of the 4 footer images with the uploaded Dhani Finance LTD. signature block image in both preview and PDF rendering",
       "acceptanceCriteria": [
-        "Footer is correctly positioned at the bottom of the document preview",
-        "Footer has consistent spacing and alignment",
-        "Footer styling is visually coherent with the rest of the document"
+        "The uploaded image (Dhani Finance LTD. signature block) is saved as frontend/public/assets/generated/footer-image-1.png",
+        "PreviewDialog.tsx renders the new image as the first footer image",
+        "renderDocumentToCanvas.ts draws the new image as the first footer image in generated PDFs",
+        "The other 3 footer images remain unchanged",
+        "The first footer image visually displays the 'Yours faithfully, Dhani Finance LTD.' signature block with P Harish Reddy CEO details"
       ],
       "file_operations": [
         {
+          "path": "frontend/public/assets/generated/footer-image-1.png",
+          "operation": "create",
+          "description": "Save the uploaded image file '20260228_092922_0002.png' (showing 'Yours faithfully, Dhani Finance LTD.' with signature and 'P Harish Reddy, Chief Executive Officer') as the first footer image asset. This image will replace the existing first footer image in both the preview dialog and PDF rendering."
+        },
+        {
           "path": "frontend/src/components/PreviewDialog.tsx",
           "operation": "modify",
-          "description": "Fix footer layout in the document preview by adjusting the footer container styling for proper alignment, consistent padding/margins, and visual consistency. Ensure the footer flexbox layout properly spaces content and matches the document's overall design theme."
+          "description": "Update the first footer image reference from its current path to '/assets/generated/footer-image-1.png'. Ensure the other three footer images remain unchanged. The component currently renders four hardcoded footer images; modify only the first one to use the new Dhani Finance LTD. signature block image."
         },
         {
           "path": "frontend/src/lib/pdf/renderDocumentToCanvas.ts",
           "operation": "modify",
-          "description": "Fix footer rendering in the canvas-based PDF output by adjusting footer positioning calculations, text alignment, padding values, and spacing to match the corrected PreviewDialog footer layout. Ensure the footer appears at the correct Y position with consistent margins."
-        }
-      ]
-    },
-    {
-      "id": "REQ-2",
-      "summary": "Add 4 user-provided images to the footer area in the rendered document, displaying them horizontally as static assets from frontend/public/assets/generated/",
-      "acceptanceCriteria": [
-        "4 images are displayed in the footer of the document preview",
-        "Images are laid out horizontally and evenly spaced within the footer",
-        "Images are rendered correctly in both the preview dialog and the PDF canvas output",
-        "Images are served from frontend/public/assets/generated/"
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/PreviewDialog.tsx",
-          "operation": "modify",
-          "description": "Add 4 footer images to the document preview by creating a horizontal image row container in the footer section. Reference the generated images using their exact workspace paths: frontend/public/assets/generated/footer-img-1.dim_200x80.png, frontend/public/assets/generated/footer-img-2.dim_200x80.png, frontend/public/assets/generated/footer-img-3.dim_200x80.png, and frontend/public/assets/generated/footer-img-4.dim_200x80.png. Use img elements with src='/assets/generated/footer-img-N.dim_200x80.png' and apply flexbox or grid layout to evenly space them horizontally within the footer."
-        },
-        {
-          "path": "frontend/src/lib/pdf/renderDocumentToCanvas.ts",
-          "operation": "modify",
-          "description": "Add 4 footer images to the canvas PDF rendering by loading the generated images from their workspace paths (frontend/public/assets/generated/footer-img-1.dim_200x80.png through footer-img-4.dim_200x80.png) and drawing them horizontally in the footer area using canvas drawImage(). Calculate X positions to evenly distribute the 4 images (200x80 each) across the footer width, maintaining consistent spacing. Ensure images are loaded before rendering and handle any loading errors gracefully."
+          "description": "Update the first footer image path in the canvas rendering logic from its current location to '/assets/generated/footer-image-1.png'. The function currently draws four footer images onto the canvas; modify only the first image loading/drawing logic to use the new Dhani Finance LTD. signature block. Preserve the rendering of the remaining three footer images exactly as they are."
         }
       ]
     }

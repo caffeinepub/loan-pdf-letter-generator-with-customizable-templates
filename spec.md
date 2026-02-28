@@ -1,10 +1,12 @@
 # Specification
 
 ## Summary
-**Goal:** Fix the document footer layout and add 4 images displayed horizontally in the footer area of the rendered loan document.
+**Goal:** Replace the first footer image with the uploaded signature/branding image showing the Dhani Finance LTD. sign-off block.
 
 **Planned changes:**
-- Fix footer alignment, padding, margins, and styling in both `PreviewDialog.tsx` and `renderDocumentToCanvas.ts` to be visually consistent with the overall document design
-- Add 4 static images served from `frontend/public/assets/generated/` and render them horizontally and evenly spaced in the footer row in both the preview dialog and PDF canvas output
+- Save the uploaded image (`20260228_092922_0002.png`) as a static asset at `frontend/public/assets/generated/footer-image-1.png`
+- Update `PreviewDialog.tsx` to use the new image as the first footer image
+- Update `renderDocumentToCanvas.ts` to draw the new image as the first footer image in generated PDFs
+- Leave the other 3 footer images unchanged
 
-**User-visible outcome:** The document footer is properly aligned and styled, and displays 4 images laid out horizontally — visible in both the preview dialog and the exported PDF.
+**User-visible outcome:** The first footer image in both the document preview and generated PDFs displays the "Yours faithfully, Dhani Finance LTD." signature block with P Harish Reddy (Chief Executive Officer) details.
