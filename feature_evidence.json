@@ -2,12 +2,10 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-build-a-loan-form-ui-that-collects-applicant-details-name-etc-loan-parameters-amount-interest-rate-tenure-processing-charge-bank-account-fields-and-custom-key-value-fields-with-automatic-emi-calculation",
-      "featureTitle": "Build a loan form UI that collects applicant details (name, etc.), loan parameters (amount, interest rate, tenure, processing charge), bank account fields, and custom key-value fields, with automatic EMI calculation.",
+      "featureId": "feature-remove-the-template-designer-ui-entry-point-button-menu-item-tab-or-dialog-trigger-from-the-application-so-that-users-can-no-longer-open-the-templatedesigner-component-do-not-delete-or-modify-any-template-code-template-data-or-the-templatedesigner-component-itself-only-hide-remove-the-ui-control-that-launches-it",
+      "featureTitle": "Remove the Template Designer UI entry point (button, menu item, tab, or dialog trigger) from the application so that users can no longer open the TemplateDesigner component. Do not delete or modify any template code, template data, or the TemplateDesigner component itself — only hide/remove the UI control that launches it.",
       "files": [
-        "frontend/src/components/FormSection.tsx",
-        "frontend/src/lib/validation.ts",
-        "frontend/src/types/form.ts"
+        "frontend/src/App.tsx"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -21,134 +19,7 @@
         "camera@1.0.0"
       ],
       "testIds": [
-        "REQ-2"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-implement-a-template-designer-dialog-that-allows-users-to-view-built-in-templates-and-create-edit-preview-save-and-delete-custom-document-templates-including-background-image-watermark-logo-seal-and-signature-configuration",
-      "featureTitle": "Implement a Template Designer dialog that allows users to view built-in templates and create, edit, preview, save, and delete custom document templates including background image, watermark, logo, seal, and signature configuration.",
-      "files": [
-        "frontend/src/components/TemplateDesigner.tsx",
-        "frontend/src/hooks/useQueries.ts",
-        "frontend/src/hooks/useTemplates.ts",
-        "frontend/src/lib/templates/getTemplate.ts",
-        "frontend/src/types/templates.ts"
-      ],
-      "components": [
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0",
-        "authorization@4.0.0",
-        "blob-storage@4.0.0",
-        "qr-code@1.0.0",
-        "camera@1.0.0"
-      ],
-      "testIds": [
-        "REQ-3"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-implement-document-preview-in-a-modal-previewdialog-that-renders-the-filled-template-on-a-canvas-with-a-two-column-header-body-content-watermark-seal-signature-overlays-and-a-footer-with-images-arranged-in-groups-of-4-and-3-horizontally",
-      "featureTitle": "Implement document preview in a modal (PreviewDialog) that renders the filled template on a canvas with a two-column header, body content, watermark, seal, signature overlays, and a footer with images arranged in groups of 4 and 3 horizontally.",
-      "files": [
-        "frontend/src/components/PreviewDialog.tsx",
-        "frontend/src/components/preview/TemplateOverlay.tsx",
-        "frontend/src/lib/pdf/renderDocumentToCanvas.ts",
-        "frontend/src/lib/templates/renderTemplate.ts"
-      ],
-      "components": [
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0",
-        "authorization@4.0.0",
-        "blob-storage@4.0.0",
-        "qr-code@1.0.0",
-        "camera@1.0.0"
-      ],
-      "testIds": [
-        "REQ-4"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-implement-pdf-generation-and-download-render-the-document-to-a-canvas-convert-to-jpeg-and-assemble-a-valid-pdf-file-that-can-be-downloaded-or-shared-via-the-web-share-api-with-a-fallback-to-direct-download",
-      "featureTitle": "Implement PDF generation and download: render the document to a canvas, convert to JPEG, and assemble a valid PDF file that can be downloaded or shared via the Web Share API with a fallback to direct download.",
-      "files": [
-        "frontend/src/App.tsx",
-        "frontend/src/lib/download.ts",
-        "frontend/src/lib/pdf/generatePdf.ts",
-        "frontend/src/lib/shareUtils.ts"
-      ],
-      "components": [
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0",
-        "authorization@4.0.0",
-        "blob-storage@4.0.0",
-        "qr-code@1.0.0",
-        "camera@1.0.0"
-      ],
-      "testIds": [
-        "REQ-5"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-integrate-internet-identity-authentication-so-users-can-log-in-and-access-their-saved-custom-templates-and-documents-stored-on-the-backend",
-      "featureTitle": "Integrate Internet Identity authentication so users can log in and access their saved custom templates and documents stored on the backend.",
-      "files": [
-        "frontend/src/App.tsx",
-        "frontend/src/components/ProfileSetupModal.tsx",
-        "frontend/src/hooks/useQueries.ts"
-      ],
-      "components": [
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0",
-        "authorization@4.0.0",
-        "blob-storage@4.0.0",
-        "qr-code@1.0.0",
-        "camera@1.0.0"
-      ],
-      "testIds": [
-        "REQ-6"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-apply-a-professional-clean-visual-theme-using-a-warm-amber-orange-color-palette-with-clear-typography-card-based-layout-sections-and-consistent-spacing-that-suits-a-financial-document-application",
-      "featureTitle": "Apply a professional, clean visual theme using a warm amber/orange color palette with clear typography, card-based layout sections, and consistent spacing that suits a financial document application.",
-      "files": [
-        "frontend/src/App.tsx",
-        "frontend/src/components/FormSection.tsx",
-        "frontend/src/components/PreviewDialog.tsx",
-        "frontend/src/components/TemplateDesigner.tsx",
-        "frontend/src/index.css",
-        "frontend/tailwind.config.js"
-      ],
-      "components": [
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0",
-        "authorization@4.0.0",
-        "blob-storage@4.0.0",
-        "qr-code@1.0.0",
-        "camera@1.0.0"
-      ],
-      "testIds": [
-        "REQ-7"
+        "REQ-1"
       ],
       "confidence": "high"
     }

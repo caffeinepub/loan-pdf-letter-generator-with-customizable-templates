@@ -7,50 +7,10 @@
   "isFixRequest": false,
   "existing_features": [
     {
-      "id": "feature-build-a-loan-form-ui-that-collects-applicant-details-name-etc-loan-parameters-amount-interest-rate-tenure-processing-charge-bank-account-fields-and-custom-key-value-fields-with-automatic-emi-calculation",
-      "title": "Build a loan form UI that collects applicant details (name, etc.), loan parameters (amount, interest rate, tenure, processing charge), bank account fields, and custom key-value fields, with automatic EMI calculation.",
+      "id": "feature-remove-the-template-designer-ui-entry-point-button-menu-item-tab-or-dialog-trigger-from-the-application-so-that-users-can-no-longer-open-the-templatedesigner-component-do-not-delete-or-modify-any-template-code-template-data-or-the-templatedesigner-component-itself-only-hide-remove-the-ui-control-that-launches-it",
+      "title": "Remove the Template Designer UI entry point (button, menu item, tab, or dialog trigger) from the application so that users can no longer open the TemplateDesigner component. Do not delete or modify any template code, template data, or the TemplateDesigner component itself — only hide/remove the UI control that launches it.",
       "reqIds": [
-        "REQ-2"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-implement-a-template-designer-dialog-that-allows-users-to-view-built-in-templates-and-create-edit-preview-save-and-delete-custom-document-templates-including-background-image-watermark-logo-seal-and-signature-configuration",
-      "title": "Implement a Template Designer dialog that allows users to view built-in templates and create, edit, preview, save, and delete custom document templates including background image, watermark, logo, seal, and signature configuration.",
-      "reqIds": [
-        "REQ-3"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-implement-document-preview-in-a-modal-previewdialog-that-renders-the-filled-template-on-a-canvas-with-a-two-column-header-body-content-watermark-seal-signature-overlays-and-a-footer-with-images-arranged-in-groups-of-4-and-3-horizontally",
-      "title": "Implement document preview in a modal (PreviewDialog) that renders the filled template on a canvas with a two-column header, body content, watermark, seal, signature overlays, and a footer with images arranged in groups of 4 and 3 horizontally.",
-      "reqIds": [
-        "REQ-4"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-implement-pdf-generation-and-download-render-the-document-to-a-canvas-convert-to-jpeg-and-assemble-a-valid-pdf-file-that-can-be-downloaded-or-shared-via-the-web-share-api-with-a-fallback-to-direct-download",
-      "title": "Implement PDF generation and download: render the document to a canvas, convert to JPEG, and assemble a valid PDF file that can be downloaded or shared via the Web Share API with a fallback to direct download.",
-      "reqIds": [
-        "REQ-5"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-integrate-internet-identity-authentication-so-users-can-log-in-and-access-their-saved-custom-templates-and-documents-stored-on-the-backend",
-      "title": "Integrate Internet Identity authentication so users can log in and access their saved custom templates and documents stored on the backend.",
-      "reqIds": [
-        "REQ-6"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-apply-a-professional-clean-visual-theme-using-a-warm-amber-orange-color-palette-with-clear-typography-card-based-layout-sections-and-consistent-spacing-that-suits-a-financial-document-application",
-      "title": "Apply a professional, clean visual theme using a warm amber/orange color palette with clear typography, card-based layout sections, and consistent spacing that suits a financial document application.",
-      "reqIds": [
-        "REQ-7"
+        "REQ-1"
       ],
       "version": 1
     }
@@ -58,14 +18,12 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Create a Motoko backend actor that manages user profiles, global and custom document templates (CRUD), loan document storage, and loan processing records with role-based access control.",
-      "reqIds": [
-        "REQ-1"
-      ],
+      "summary": "Remove template designer option from UI; keep only fixed templates (no code or template changes, just remove the option)",
+      "reqIds": [],
       "status": "pending"
     }
   ],
-  "projectName": "Loan Document Generator",
+  "projectName": "Remove Template Designer Option from UI",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

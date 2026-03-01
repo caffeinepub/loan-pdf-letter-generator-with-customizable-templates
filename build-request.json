@@ -1,154 +1,39 @@
 {
   "kind": "build_request",
-  "title": "Rebuild Loan Document Generator from scratch",
-  "projectName": "Loan Document Generator",
+  "title": "Remove Template Designer Option from UI",
   "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Create a Motoko backend actor that manages user profiles, global and custom document templates (CRUD), loan document storage, and loan processing records with role-based access control.",
-      "target": "backend",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "Start again"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Actor exposes methods to create, read, update, and delete custom templates",
-        "Actor stores loan document records keyed by user principal",
-        "Role-based access control prevents unauthorized mutations",
-        "Global/built-in templates can be seeded and retrieved by any authenticated user"
-      ]
-    },
-    {
-      "id": "REQ-2",
-      "text": "Build a loan form UI that collects applicant details (name, etc.), loan parameters (amount, interest rate, tenure, processing charge), bank account fields, and custom key-value fields, with automatic EMI calculation.",
+      "text": "Remove the Template Designer UI entry point (button, menu item, tab, or dialog trigger) from the application so that users can no longer open the TemplateDesigner component. Do not delete or modify any template code, template data, or the TemplateDesigner component itself — only hide/remove the UI control that launches it.",
       "target": "frontend",
       "source": {
         "messageIds": [
           "msg-1"
         ],
         "quotes": [
-          "Start again"
+          "I want to remove templete designer option i want only fixed templete which i will modify one by one just remove the option dont change any code or any templete first"
         ]
       },
       "acceptanceCriteria": [
-        "All required fields (name, loan amount, interest rate, year, processing charge) are present and validated",
-        "EMI is auto-calculated and displayed when loan amount, rate, and tenure are filled",
-        "Custom fields can be added and removed dynamically",
-        "Validation errors are surfaced inline before document generation"
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "text": "Implement a Template Designer dialog that allows users to view built-in templates and create, edit, preview, save, and delete custom document templates including background image, watermark, logo, seal, and signature configuration.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "Start again"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Built-in templates for at least three loan document types are preloaded",
-        "Custom templates can be created, edited, and deleted",
-        "Template changes are persisted to the backend via React Query mutations",
-        "A live preview of the template is shown inside the designer dialog"
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "text": "Implement document preview in a modal (PreviewDialog) that renders the filled template on a canvas with a two-column header, body content, watermark, seal, signature overlays, and a footer with images arranged in groups of 4 and 3 horizontally.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "Start again"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Preview modal opens after form submission",
-        "All overlay elements (watermark, seal, signature) are positioned according to the template configuration",
-        "Footer images are displayed in two rows: 4 images then 3 images, sized prominently",
-        "Canvas renders correctly at A4 dimensions (96 DPI)"
-      ]
-    },
-    {
-      "id": "REQ-5",
-      "text": "Implement PDF generation and download: render the document to a canvas, convert to JPEG, and assemble a valid PDF file that can be downloaded or shared via the Web Share API with a fallback to direct download.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "Start again"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Clicking Download triggers a browser file download of a valid PDF",
-        "Clicking Share invokes the Web Share API when available",
-        "If Web Share API is unavailable, the PDF is downloaded instead",
-        "Generated PDF matches the canvas preview fidelity"
-      ]
-    },
-    {
-      "id": "REQ-6",
-      "text": "Integrate Internet Identity authentication so users can log in and access their saved custom templates and documents stored on the backend.",
-      "target": "both",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "Start again"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Login/logout controls are visible in the app header",
-        "Authenticated principal is used for all backend calls",
-        "Custom templates are scoped to the authenticated user",
-        "Unauthenticated users can still use built-in templates and generate documents locally"
-      ]
-    },
-    {
-      "id": "REQ-7",
-      "text": "Apply a professional, clean visual theme using a warm amber/orange color palette with clear typography, card-based layout sections, and consistent spacing that suits a financial document application.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "Start again"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Color tokens use the warm amber/orange OKLCH palette in both light and dark modes",
-        "All primary actions (download, share, generate) use the primary brand color",
-        "Typography is legible and hierarchy is clear across form, preview, and designer views",
-        "Layout is responsive and usable on both desktop and tablet screen sizes"
+        "No button, link, tab, or menu item that opens the Template Designer is visible in the UI.",
+        "The TemplateDesigner component file (TemplateDesigner.tsx) is not modified.",
+        "All existing fixed/built-in templates remain accessible and unchanged.",
+        "No template logic, template data, or backend code is altered.",
+        "The app builds and renders without errors after the change."
       ]
     }
   ],
   "constraints": [
-    "All Motoko logic must remain in a single backend/main.mo actor file",
-    "Do not edit files under frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, or frontend/src/components/ui",
-    "PDF generation must not rely on external PDF libraries — assemble raw PDF syntax directly",
-    "Footer images must be arranged in groups of 4 then 3 horizontally"
+    "Do not modify TemplateDesigner.tsx or any template definition files.",
+    "Do not change any backend code.",
+    "Do not alter any existing template data or template logic."
   ],
   "nonGoals": [
-    "No external database or cloud storage integration",
-    "No real-time features or WebSockets",
-    "No third-party payment or email integrations",
-    "No mobile app or React Native version"
+    "Modifying or deleting existing templates.",
+    "Adding new templates.",
+    "Refactoring or cleaning up unused imports related to TemplateDesigner.",
+    "Any backend changes."
   ],
   "imageRequirements": {
     "required": [],

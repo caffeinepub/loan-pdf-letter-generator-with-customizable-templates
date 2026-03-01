@@ -1,78 +1,23 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-28T07:57:22.477Z",
-  "summary": "The diff implements most of the requested requirements but has several gaps. The Motoko backend actor (REQ-1) is referenced but not shown in the diff, making it unverifiable. The footer image grouping (4 then 3) required by REQ-4 is not evidenced in the canvas rendering code. The Template Designer lacks a visible live preview pane. Backend persistence for templates uses React Query mutations referencing an actor but custom templates are also stored locally via localStorage, and the backend actor source is absent. The amber/orange theme is implemented. PDF generation uses raw PDF syntax as required. Internet Identity integration is present in the header.",
-  "missing_requirements": [
-    {
-      "id": "REQ-1",
-      "requirement": "Create a Motoko backend actor that manages user profiles, global and custom document templates (CRUD), loan document storage, and loan processing records with role-based access control.",
-      "reason": "No backend/main.mo file is present in the diff. The frontend hooks reference actor methods but the actual Motoko actor implementation is not shown. Role-based access control, loan document storage keyed by principal, and loan processing records are not verifiable.",
-      "evidence": [
-        "frontend/src/hooks/useQueries.ts"
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "requirement": "A live preview of the template is shown inside the designer dialog.",
-      "reason": "The TemplateDesigner component is shown but no live preview pane or embedded canvas/image rendering inside the designer dialog is visible. The TemplateEditor sub-component does not appear to render a live document preview.",
-      "evidence": [
-        "frontend/src/components/TemplateDesigner.tsx"
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "requirement": "Footer images are displayed in two rows: 4 images then 3 images, sized prominently.",
-      "reason": "The renderDocumentToCanvas.ts file is truncated and the footer rendering logic is not visible in the diff. No evidence of footer image grouping logic (4 then 3) is present in the shown code sections.",
-      "evidence": [
-        "frontend/src/lib/pdf/renderDocumentToCanvas.ts"
-      ]
-    }
-  ],
+  "generatedAt": "2026-02-28T19:09:30.518Z",
+  "summary": "REQ-1 requires removing the Template Designer UI entry point (button, menu item, tab, or dialog trigger) without modifying TemplateDesigner.tsx or any template files. The diff shows the UI entry point (Advanced Template Designer button and Dialog modal) was removed from App.tsx, which satisfies the core requirement. However, the file-diff summary explicitly states that TemplateDesigner.tsx had 'all header/footer editing sections removed', which constitutes a modification of TemplateDesigner.tsx — a direct violation of the constraint and acceptance criteria.",
+  "missing_requirements": [],
   "hallucinated_features": [
     {
-      "description": "ProfileSetupModal — a modal that prompts authenticated users to set up a name and email profile on first login.",
-      "reason": "The build request does not mention a profile setup onboarding modal as a distinct UI requirement. It is an extra feature not specified in any REQ.",
+      "description": "TemplateDesigner.tsx was modified to remove header/footer editing sections, leaving only watermark, seal, signature, background, and document content sections.",
+      "reason": "The build request explicitly constrains 'Do not modify TemplateDesigner.tsx or any template definition files' and the acceptance criteria states 'The TemplateDesigner component file (TemplateDesigner.tsx) is not modified.' The file-diff summary for TemplateDesigner.tsx clearly describes content changes to the component.",
       "evidence": [
-        "frontend/src/components/ProfileSetupModal.tsx",
-        "frontend/src/App.tsx"
-      ]
-    },
-    {
-      "description": "useLocalStorageState hook for persisting state to localStorage.",
-      "reason": "The build request does not specify a localStorage-based state persistence utility hook as a feature. This is an unrequested implementation addition.",
-      "evidence": [
-        "frontend/src/hooks/useLocalStorageState.ts"
+        "frontend/src/components/TemplateDesigner.tsx",
+        "frontend-file-summaries.txt"
       ]
     }
   ],
-  "confidence": 0.62,
+  "confidence": 0.85,
   "changed_files": [
     "frontend-file-summaries.txt",
     "frontend/src/App.tsx",
-    "frontend/src/components/FormSection.tsx",
-    "frontend/src/components/PreviewDialog.tsx",
-    "frontend/src/components/ProfileSetupModal.tsx",
-    "frontend/src/components/TemplateDesigner.tsx",
-    "frontend/src/components/preview/TemplateOverlay.tsx",
-    "frontend/src/hooks/useLocalStorageState.ts",
-    "frontend/src/hooks/useQueries.ts",
-    "frontend/src/hooks/useTemplates.ts",
-    "frontend/src/index.css",
-    "frontend/src/lib/download.ts",
-    "frontend/src/lib/loan/calculateEmi.ts",
-    "frontend/src/lib/pdf/generatePdf.ts",
-    "frontend/src/lib/pdf/layout.ts",
-    "frontend/src/lib/pdf/renderDocumentToCanvas.ts",
-    "frontend/src/lib/shareUtils.ts",
-    "frontend/src/lib/templateAssets/fileToDataUrl.ts",
-    "frontend/src/lib/templateAssets/positions.ts",
-    "frontend/src/lib/templates/getTemplate.ts",
-    "frontend/src/lib/templates/renderTemplate.ts",
-    "frontend/src/lib/validation.ts",
-    "frontend/src/types/form.ts",
-    "frontend/src/types/templates.ts",
-    "frontend/tailwind.config.js",
     "project_state.json"
   ]
 }

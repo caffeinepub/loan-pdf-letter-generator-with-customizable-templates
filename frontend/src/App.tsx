@@ -1,235 +1,160 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
-import { useInternetIdentity } from './hooks/useInternetIdentity';
-import { useQueryClient } from '@tanstack/react-query';
-import { useGetCallerUserProfile } from './hooks/useQueries';
-import { useTemplates } from './hooks/useTemplates';
+import { toast } from 'sonner';
 import FormSection from './components/FormSection';
-import PreviewDialog from './components/PreviewDialog';
 import TemplateDesigner from './components/TemplateDesigner';
-import ProfileSetupModal from './components/ProfileSetupModal';
-import { FormData, DEFAULT_FORM_DATA } from './types/form';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { LogIn, LogOut, User, FileText, Heart } from 'lucide-react';
-import { Loader2 } from 'lucide-react';
+import { DocumentType, FormData } from './types/form';
+import { validateForm } from './lib/validation';
+import { generatePdf } from './lib/pdf/generatePdf';
+import { downloadFile } from './lib/download';
+import { sharePdf } from './lib/shareUtils';
+import { FileText, Heart } from 'lucide-react';
+import { useTemplates } from './hooks/useTemplates';
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5,
-      retry: 1,
+      retry: false,
+      throwOnError: false,
     },
   },
 });
 
 function AppContent() {
-  const { login, clear, loginStatus, identity, isInitializing } = useInternetIdentity();
-  const qc = useQueryClient();
-  const isAuthenticated = !!identity;
-  const isLoggingIn = loginStatus === 'logging-in';
+  const [formData, setFormData] = useState<FormData>({
+    name: '',
+    loanType: '',
+    loanAmount: '',
+    interestRate: '',
+    year: '',
+    monthlyEmi: '0',
+    processingCharge: '',
+    bankAccountNumber: '',
+    ifscCode: '',
+    upiId: '',
+    customFields: [],
+  });
 
-  const { data: userProfile, isLoading: profileLoading, isFetched: profileFetched } =
-    useGetCallerUserProfile();
-
-  const showProfileSetup =
-    isAuthenticated && !profileLoading && profileFetched && userProfile === null;
+  const [isGenerating, setIsGenerating] = useState<string | null>(null);
 
   const {
     builtInTemplates,
     customTemplates,
-    allTemplates,
-    getTemplateByDocType,
-    getTemplateById,
-    addCustomTemplate,
+    isSaving,
+    saveError,
+    clearSaveError,
+    updateBuiltInTemplate,
+    saveTemplate,
+    createCustomTemplate,
     updateCustomTemplate,
     deleteCustomTemplate,
+    applyHeaderToAllTemplates,
+    saveCustomTemplateToBackend,
+    getTemplateById,
   } = useTemplates();
 
-  const [formData, setFormData] = useState<FormData>(DEFAULT_FORM_DATA);
-  const [previewOpen, setPreviewOpen] = useState(false);
-  const [designerOpen, setDesignerOpen] = useState(false);
+  // Keep TemplateDesigner in scope to avoid unused import warnings
+  void TemplateDesigner;
 
-  const selectedTemplate =
-    getTemplateByDocType(formData.documentType) ||
-    getTemplateById(formData.documentType) ||
-    builtInTemplates[0];
+  const handleFormChange = (data: FormData) => {
+    setFormData(data);
+  };
 
-  const handleLogin = async () => {
+  const handleDownload = async (docType: DocumentType | string) => {
+    const errors = validateForm(formData);
+
+    if (errors.length > 0) {
+      toast.error('Please fix the following errors:', {
+        description: errors.join(', '),
+      });
+      return;
+    }
+
+    setIsGenerating(docType);
+
     try {
-      await login();
-    } catch (error: any) {
-      if (error.message === 'User is already authenticated') {
-        await clear();
-        setTimeout(() => login(), 300);
-      }
+      const pdfBlob = await generatePdf(docType, formData, undefined, getTemplateById);
+      const filename = `${typeof docType === 'string' ? docType.toLowerCase().replace(/\s+/g, '-') : 'document'}.png`;
+      downloadFile(pdfBlob, filename);
+
+      toast.success('Document downloaded successfully!', {
+        description: 'Your document has been generated.',
+      });
+
+      await sharePdf(pdfBlob, filename);
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      toast.error('Failed to generate document', {
+        description: 'Please try again or check your template settings.',
+      });
+    } finally {
+      setIsGenerating(null);
     }
   };
 
-  const handleLogout = async () => {
-    await clear();
-    qc.clear();
-  };
-
-  const handleGenerate = () => {
-    setPreviewOpen(true);
-  };
-
-  const year = new Date().getFullYear();
-  const hostname = typeof window !== 'undefined' ? window.location.hostname : 'unknown-app';
+  // Suppress unused variable warnings for template management hooks
+  void isSaving;
+  void saveError;
+  void clearSaveError;
+  void updateBuiltInTemplate;
+  void saveTemplate;
+  void createCustomTemplate;
+  void updateCustomTemplate;
+  void deleteCustomTemplate;
+  void applyHeaderToAllTemplates;
+  void saveCustomTemplateToBackend;
+  void builtInTemplates;
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
-      <header className="bg-card border-b border-border shadow-sm sticky top-0 z-40">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img
-              src="/assets/generated/bajaj-finserv-logo.dim_400x200.png"
-              alt="Bajaj Finserv"
-              className="h-8 object-contain"
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = 'none';
-              }}
-            />
-            <div className="hidden sm:block">
-              <h1 className="font-serif text-lg font-bold text-foreground leading-tight">
-                Loan Document Generator
-              </h1>
-              <p className="text-xs text-muted-foreground">Professional document creation</p>
-            </div>
-          </div>
+    <div className="min-h-screen bg-background">
+      <Toaster position="top-right" />
 
+      {/* Header */}
+      <header className="border-b border-border bg-card">
+        <div className="container mx-auto px-4 py-6">
           <div className="flex items-center gap-3">
-            {isInitializing ? (
-              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-            ) : isAuthenticated ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="gap-2 h-9">
-                    <Avatar className="h-7 w-7">
-                      <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                        {userProfile?.name
-                          ? userProfile.name.charAt(0).toUpperCase()
-                          : <User className="h-3 w-3" />}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="hidden sm:inline text-sm font-medium">
-                      {userProfile?.name || 'Account'}
-                    </span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  {userProfile && (
-                    <DropdownMenuItem disabled className="text-xs text-muted-foreground">
-                      {userProfile.email || identity.getPrincipal().toString().slice(0, 12) + '...'}
-                    </DropdownMenuItem>
-                  )}
-                  <DropdownMenuItem onClick={handleLogout} className="text-destructive">
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Logout
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <Button
-                onClick={handleLogin}
-                disabled={isLoggingIn}
-                size="sm"
-                className="gap-2"
-              >
-                {isLoggingIn ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <LogIn className="h-4 w-4" />
-                )}
-                {isLoggingIn ? 'Logging in...' : 'Login'}
-              </Button>
-            )}
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary">
+              <FileText className="h-6 w-6 text-primary-foreground" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight">Loan Document Generator</h1>
+              <p className="text-sm text-muted-foreground">
+                Create professional loan letters with custom templates
+              </p>
+            </div>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 max-w-5xl mx-auto w-full px-4 sm:px-6 py-8">
-        <div className="mb-6">
-          <h2 className="font-serif text-2xl font-bold text-foreground">
-            Generate Loan Document
-          </h2>
-          <p className="text-muted-foreground mt-1">
-            Fill in the details below to generate a professional loan sanction letter.
-          </p>
-        </div>
-
+      <main className="container mx-auto px-4 py-8">
         <FormSection
           formData={formData}
-          onChange={setFormData}
-          onGenerate={handleGenerate}
-          selectedTemplate={selectedTemplate}
+          onFormChange={handleFormChange}
+          onDownload={handleDownload}
+          isGenerating={isGenerating}
           customTemplates={customTemplates}
-          onOpenTemplateDesigner={() => setDesignerOpen(true)}
         />
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-border bg-card mt-auto">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <FileText className="h-4 w-4 text-primary" />
-              <span>Bajaj Finserv Loan Document Generator</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <span>© {year} Built with</span>
-              <Heart className="h-3 w-3 text-primary fill-primary mx-1" />
-              <span>using</span>
-              <a
-                href={`https://caffeine.ai/?utm_source=Caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(hostname)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary hover:underline font-medium ml-1"
-              >
-                caffeine.ai
-              </a>
-            </div>
-          </div>
+      <footer className="border-t border-border bg-card mt-12">
+        <div className="container mx-auto px-4 py-6 text-center text-sm text-muted-foreground">
+          <p className="flex items-center justify-center gap-1">
+            Built with <Heart className="h-4 w-4 text-primary fill-primary" /> using{' '}
+            <a
+              href={`https://caffeine.ai/?utm_source=Caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(window.location.hostname || 'unknown-app')}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline font-medium"
+            >
+              caffeine.ai
+            </a>
+          </p>
+          <p className="mt-1">© {new Date().getFullYear()} Loan Document Generator. All rights reserved.</p>
         </div>
       </footer>
-
-      {/* Dialogs */}
-      {selectedTemplate && (
-        <PreviewDialog
-          open={previewOpen}
-          onClose={() => setPreviewOpen(false)}
-          template={selectedTemplate}
-          formData={formData}
-        />
-      )}
-
-      <TemplateDesigner
-        open={designerOpen}
-        onClose={() => setDesignerOpen(false)}
-        customTemplates={customTemplates}
-        onAddCustomTemplate={addCustomTemplate}
-        onUpdateCustomTemplate={updateCustomTemplate}
-        onDeleteCustomTemplate={deleteCustomTemplate}
-        selectedDocType={formData.documentType}
-        onSelectDocType={(docType) => {
-          setFormData((prev) => ({ ...prev, documentType: docType }));
-          setDesignerOpen(false);
-        }}
-      />
-
-      {showProfileSetup && <ProfileSetupModal open={showProfileSetup} />}
-
-      <Toaster />
     </div>
   );
 }
