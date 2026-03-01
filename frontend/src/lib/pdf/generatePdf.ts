@@ -2,6 +2,7 @@ import type { DocumentType } from '../../types/form';
 import type { Template } from '../../types/templates';
 import { getTemplate } from '../templates/getTemplate';
 import { renderDocumentToCanvas } from './renderDocumentToCanvas';
+import { PAGE_WIDTH, PAGE_HEIGHT } from './layout';
 
 const BUILT_IN_DOC_TYPES: DocumentType[] = [
   'Loan Approval Letter',
@@ -165,11 +166,16 @@ export async function generatePdf(
   getTemplateById?: (id: string) => Template | undefined
 ): Promise<Blob> {
   const template = resolveTemplate(docType, templateOverride, getTemplateById);
-  const canvas = await renderDocumentToCanvas(template, formData, docType);
+
+  // Create an offscreen canvas and render the document into it
+  const canvas = document.createElement('canvas');
+  canvas.width = PAGE_WIDTH;
+  canvas.height = PAGE_HEIGHT;
+
+  await renderDocumentToCanvas(canvas, template, formData, docType);
 
   const jpegBytes = await canvasToJpegBytes(canvas);
   const pdfBytes = buildPdfFromJpeg(jpegBytes, canvas.width, canvas.height);
 
-  // Use the backing ArrayBuffer directly to satisfy TypeScript's BlobPart constraint
   return new Blob([pdfBytes.buffer as ArrayBuffer], { type: 'application/pdf' });
 }

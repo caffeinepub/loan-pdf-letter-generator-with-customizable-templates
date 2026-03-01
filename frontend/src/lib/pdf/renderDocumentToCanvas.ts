@@ -1,18 +1,11 @@
 import { Template } from '../../types/templates';
 import { FormData } from '../../types/form';
 import { renderTemplate } from '../templates/renderTemplate';
-import { PAGE_WIDTH, PAGE_HEIGHT, MARGINS, HEADER_HEIGHT } from './layout';
+import { PAGE_WIDTH, PAGE_HEIGHT, MARGINS, HEADER_HEIGHT, FOOTER_HEIGHT } from './layout';
 
-// ── Bajaj Finance Limited header image ────────────────────────────────────────
-const BAJAJ_HEADER_IMAGE_PATH =
-  '/assets/Corporate Office, Off Pune-Ahmednagar Road, Viman Nagar, Pune - 411014 Baja_20260228_134953_0000-2.png';
-
-// ── Bajaj Finance Limited footer image ───────────────────────────────────────
-const BAJAJ_FOOTER_IMAGE_PATH =
-  '/assets/Corporate Office, Off Pune-Ahmednagar Road, Viman Nagar, Pune - 411014 Baja_20260228_134953_0001-1.png';
-
-// ── Bajaj Finance watermark image (FB logo) ───────────────────────────────────
-const BAJAJ_WATERMARK_IMAGE_PATH = '/assets/images (15).jpeg';
+// ── Shared header/footer image paths ─────────────────────────────────────────
+const BAJAJ_HEADER_IMAGE_PATH = '/assets/Header.png';
+const BAJAJ_FOOTER_IMAGE_PATH = '/assets/Footer.png';
 
 async function loadImage(src: string): Promise<HTMLImageElement | null> {
   return new Promise((resolve) => {
@@ -24,80 +17,70 @@ async function loadImage(src: string): Promise<HTMLImageElement | null> {
   });
 }
 
-export async function renderDocumentToCanvas(
-  template: Template,
-  formData: FormData,
-  documentType: string
-): Promise<HTMLCanvasElement> {
-  const canvas = document.createElement('canvas');
-  canvas.width = PAGE_WIDTH;
-  canvas.height = PAGE_HEIGHT;
-  const ctx = canvas.getContext('2d');
-
-  if (!ctx) {
-    throw new Error('Could not get canvas context');
+/**
+ * Draws the shared Bajaj Finance header image at (0, 0) spanning full canvas width.
+ * Returns the Y position immediately below the header.
+ */
+async function renderHeader(ctx: CanvasRenderingContext2D): Promise<number> {
+  const headerImg = await loadImage(BAJAJ_HEADER_IMAGE_PATH);
+  if (headerImg) {
+    const aspectRatio = headerImg.naturalHeight / headerImg.naturalWidth;
+    const renderedHeight = Math.round(PAGE_WIDTH * aspectRatio);
+    ctx.drawImage(headerImg, 0, 0, PAGE_WIDTH, renderedHeight);
+    return renderedHeight;
   }
-
-  // White background
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, PAGE_WIDTH, PAGE_HEIGHT);
-
-  // 1. Background image (if enabled)
-  if (template.background?.enabled && template.background.dataUrl) {
-    await drawBackgroundImage(ctx, {
-      dataUrl: template.background.dataUrl,
-      opacity: template.background.opacity,
-      fit: template.background.fit,
-    });
-  }
-
-  // 2. Watermark text (if enabled)
-  if (template.watermark?.enabled && template.watermark.text) {
-    drawWatermark(ctx, template.watermark);
-  }
-
-  // 3. Bajaj Finance logo watermark image — only for Loan Approval Letter
-  const isLoanApprovalLetter = documentType === 'Loan Approval Letter';
-  if (isLoanApprovalLetter) {
-    await drawBajajLogoWatermark(ctx);
-  }
-
-  // 4. Bajaj Finance Limited header image — drawn at (0, 0) with zero margin/padding
-  let currentY = await drawBajajHeaderImage(ctx);
-
-  // 5. Content
-  const rendered = renderTemplate(template, formData);
-  if (isLoanApprovalLetter) {
-    currentY = drawLoanApprovalContent(ctx, rendered, currentY);
-  } else {
-    currentY = drawContent(ctx, rendered, currentY);
-  }
-
-  // 6. Signature & Stamp row
-  currentY = await drawSignatureStampRow(ctx, template, currentY);
-
-  // 7. Footer image — drawn at the bottom of the page
-  await drawBajajFooterImage(ctx);
-
-  return canvas;
+  return HEADER_HEIGHT;
 }
 
 /**
- * Draws the Bajaj Finance FB logo as a centered watermark with low opacity.
- * Only applied to the Loan Approval Letter document type.
+ * Draws the shared Bajaj Finance footer image at the bottom of the page.
  */
-async function drawBajajLogoWatermark(ctx: CanvasRenderingContext2D): Promise<void> {
-  const watermarkImg = await loadImage(BAJAJ_WATERMARK_IMAGE_PATH);
-  if (!watermarkImg) return;
+async function renderFooter(ctx: CanvasRenderingContext2D): Promise<void> {
+  const footerImg = await loadImage(BAJAJ_FOOTER_IMAGE_PATH);
+  if (!footerImg) return;
+  const aspectRatio = footerImg.naturalHeight / footerImg.naturalWidth;
+  const renderedHeight = Math.round(PAGE_WIDTH * aspectRatio);
+  const footerY = PAGE_HEIGHT - renderedHeight;
+  ctx.drawImage(footerImg, 0, footerY, PAGE_WIDTH, renderedHeight);
+}
 
-  const size = PAGE_WIDTH * 0.4;
-  const x = (PAGE_WIDTH - size) / 2;
-  const y = (PAGE_HEIGHT - size) / 2;
+/**
+ * Draws the watermark image (if configured) or falls back to text watermark.
+ * Renders behind all content.
+ */
+async function renderWatermark(ctx: CanvasRenderingContext2D, template: Template): Promise<void> {
+  const watermark = template.watermark;
+  if (!watermark || !watermark.enabled) return;
 
-  ctx.save();
-  ctx.globalAlpha = 0.15;
-  ctx.drawImage(watermarkImg, x, y, size, size);
-  ctx.restore();
+  // Try image watermark first
+  if (watermark.watermarkImageUrl) {
+    const wmImg = await loadImage(watermark.watermarkImageUrl);
+    if (wmImg) {
+      const wmWidth = PAGE_WIDTH * 0.5;
+      const wmHeight = wmWidth * (wmImg.naturalHeight / wmImg.naturalWidth);
+      const wmX = (PAGE_WIDTH - wmWidth) / 2;
+      const wmY = HEADER_HEIGHT + (PAGE_HEIGHT - HEADER_HEIGHT - FOOTER_HEIGHT - wmHeight) / 2;
+      ctx.save();
+      ctx.globalAlpha = watermark.opacity;
+      ctx.drawImage(wmImg, wmX, wmY, wmWidth, wmHeight);
+      ctx.restore();
+      return;
+    }
+  }
+
+  // Text watermark fallback
+  if (watermark.text) {
+    ctx.save();
+    ctx.globalAlpha = watermark.opacity;
+    ctx.translate(PAGE_WIDTH / 2, PAGE_HEIGHT / 2);
+    ctx.rotate((watermark.rotation * Math.PI) / 180);
+    ctx.font = `bold ${watermark.size}px Arial`;
+    ctx.fillStyle = watermark.color ?? 'rgba(0,0,0,0.1)';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(watermark.text, 0, 0);
+    ctx.restore();
+  }
 }
 
 async function drawBackgroundImage(
@@ -130,66 +113,14 @@ async function drawBackgroundImage(
   });
 }
 
-function drawWatermark(
-  ctx: CanvasRenderingContext2D,
-  watermark: NonNullable<Template['watermark']>
-): void {
-  ctx.save();
-  ctx.globalAlpha = watermark.opacity;
-  ctx.translate(PAGE_WIDTH / 2, PAGE_HEIGHT / 2);
-  ctx.rotate((watermark.rotation * Math.PI) / 180);
-  ctx.font = `bold ${watermark.size}px Arial`;
-  ctx.fillStyle = watermark.color ?? 'rgba(0,0,0,0.1)';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(watermark.text, 0, 0);
-  ctx.restore();
-}
-
-/**
- * Draws the Bajaj Finance Limited header image at canvas position (0, 0)
- * spanning the full canvas width with no margin or padding.
- * Returns the Y position immediately below the header image.
- */
-async function drawBajajHeaderImage(ctx: CanvasRenderingContext2D): Promise<number> {
-  const headerImg = await loadImage(BAJAJ_HEADER_IMAGE_PATH);
-
-  if (headerImg) {
-    const aspectRatio = headerImg.naturalHeight / headerImg.naturalWidth;
-    const renderedHeight = Math.round(PAGE_WIDTH * aspectRatio);
-    ctx.drawImage(headerImg, 0, 0, PAGE_WIDTH, renderedHeight);
-    return renderedHeight;
-  }
-
-  return HEADER_HEIGHT;
-}
-
-/**
- * Draws the footer image at the bottom of the page spanning the full canvas width.
- */
-async function drawBajajFooterImage(ctx: CanvasRenderingContext2D): Promise<void> {
-  const footerImg = await loadImage(BAJAJ_FOOTER_IMAGE_PATH);
-
-  if (!footerImg) return;
-
-  const aspectRatio = footerImg.naturalHeight / footerImg.naturalWidth;
-  const renderedHeight = Math.round(PAGE_WIDTH * aspectRatio);
-  const footerY = PAGE_HEIGHT - renderedHeight;
-
-  ctx.drawImage(footerImg, 0, footerY, PAGE_WIDTH, renderedHeight);
-}
-
 // ── Segment types for rich text rendering ────────────────────────────────────
 interface TextSegment {
   text: string;
   bold?: boolean;
   color?: string;
-  highlight?: string; // background fill color
+  highlight?: string;
 }
 
-/**
- * Measures the total pixel width of an array of segments.
- */
 function measureSegments(
   ctx: CanvasRenderingContext2D,
   segments: TextSegment[],
@@ -203,10 +134,6 @@ function measureSegments(
   return total;
 }
 
-/**
- * Draws an array of text segments starting at (x, y).
- * Returns the x position after the last segment.
- */
 function drawSegments(
   ctx: CanvasRenderingContext2D,
   segments: TextSegment[],
@@ -237,9 +164,6 @@ function drawSegments(
   return curX;
 }
 
-/**
- * Parses a line into text segments, applying bold/highlight to ₹ amounts and % values.
- */
 function parseFinancialLine(line: string): TextSegment[] {
   const segments: TextSegment[] = [];
   const parts = line.split(/(₹[\d,]+(?:\.\d+)?|\d+(?:\.\d+)?%)/g);
@@ -255,9 +179,6 @@ function parseFinancialLine(line: string): TextSegment[] {
   return segments;
 }
 
-/**
- * Word-wraps text and draws it, returning the new Y after all lines.
- */
 function drawWrappedText(
   ctx: CanvasRenderingContext2D,
   text: string,
@@ -298,11 +219,6 @@ function drawWrappedText(
   return currentY;
 }
 
-/**
- * Word-wraps rich financial segments (with highlights) within maxWidth.
- * Splits on word boundaries within plain-text segments, keeping special
- * segments (₹ amounts, % values) atomic. Returns new Y after all lines.
- */
 function drawWrappedSegments(
   ctx: CanvasRenderingContext2D,
   segments: TextSegment[],
@@ -312,7 +228,6 @@ function drawWrappedSegments(
   lineHeight: number,
   baseFontSize: number
 ): number {
-  // Tokenize all segments into atomic word-tokens preserving segment styling
   interface Token {
     text: string;
     bold?: boolean;
@@ -323,10 +238,8 @@ function drawWrappedSegments(
   const tokens: Token[] = [];
   for (const seg of segments) {
     if (seg.bold || seg.highlight) {
-      // Keep special segments atomic (don't split ₹ amounts or % values)
       tokens.push({ text: seg.text, bold: seg.bold, color: seg.color, highlight: seg.highlight });
     } else {
-      // Split plain text on spaces, preserving spaces as separate tokens
       const words = seg.text.split(/(\s+)/);
       for (const w of words) {
         if (w.length > 0) {
@@ -336,7 +249,6 @@ function drawWrappedSegments(
     }
   }
 
-  // Build lines by accumulating tokens until maxWidth is exceeded
   const lines: Token[][] = [];
   let currentLineTokens: Token[] = [];
   let currentLineWidth = 0;
@@ -345,13 +257,11 @@ function drawWrappedSegments(
     ctx.font = token.bold ? `bold ${baseFontSize}px Arial` : `${baseFontSize}px Arial`;
     const tokenWidth = ctx.measureText(token.text).width;
 
-    // Skip leading whitespace on a new line
     if (currentLineTokens.length === 0 && /^\s+$/.test(token.text)) {
       continue;
     }
 
     if (currentLineWidth + tokenWidth > maxWidth && currentLineTokens.length > 0) {
-      // Trim trailing whitespace tokens from current line
       while (currentLineTokens.length > 0 && /^\s+$/.test(currentLineTokens[currentLineTokens.length - 1].text)) {
         currentLineTokens.pop();
       }
@@ -364,7 +274,6 @@ function drawWrappedSegments(
     }
   }
 
-  // Push last line
   if (currentLineTokens.length > 0) {
     while (currentLineTokens.length > 0 && /^\s+$/.test(currentLineTokens[currentLineTokens.length - 1].text)) {
       currentLineTokens.pop();
@@ -374,7 +283,6 @@ function drawWrappedSegments(
     }
   }
 
-  // Draw each line
   ctx.save();
   ctx.textBaseline = 'top';
   let currentY = y;
@@ -387,10 +295,6 @@ function drawWrappedSegments(
   return currentY;
 }
 
-/**
- * Draws a label + highlighted value on one line.
- * Returns new Y after the line.
- */
 function drawLabelHighlightLine(
   ctx: CanvasRenderingContext2D,
   label: string,
@@ -410,7 +314,6 @@ function drawLabelHighlightLine(
   const labelW = ctx.measureText(label).width;
   ctx.fillText(label, x, y);
 
-  // Highlight background for value
   ctx.font = `bold ${baseFontSize}px Arial`;
   const valW = ctx.measureText(value).width;
   ctx.fillStyle = valueHighlight;
@@ -423,10 +326,7 @@ function drawLabelHighlightLine(
 }
 
 /**
- * Draws the Loan Approval Letter body with bold/highlighted formatting.
- * Handles the new template structure: Application Number, Loan Number, Subject,
- * greeting, approval paragraph, EMI details, Processing & Verification section,
- * refundable notice, Bank Account Details section, bullet list, closing.
+ * Draws the Loan Approval Letter body with rich formatting.
  */
 function drawLoanApprovalContent(
   ctx: CanvasRenderingContext2D,
@@ -440,75 +340,60 @@ function drawLoanApprovalContent(
   const lineHeight = 18;
   const baseFontSize = 11;
 
-  // ── Title ──────────────────────────────────────────────────────────────────
+  // Title
   ctx.save();
   ctx.fillStyle = '#111111';
   ctx.font = 'bold 18px Arial';
   ctx.textAlign = 'left';
   ctx.textBaseline = 'top';
-  // Center the title within the content area
   const titleWidth = ctx.measureText(rendered.headline).width;
   const titleX = leftX + Math.max(0, (contentWidth - titleWidth) / 2);
-  // Clamp to content area if title is wider than content
   const clampedTitleX = Math.max(leftX, titleX);
   ctx.fillText(rendered.headline, clampedTitleX, currentY, contentWidth);
   ctx.restore();
   currentY += 30;
 
-  // ── Body lines ─────────────────────────────────────────────────────────────
   ctx.textAlign = 'left';
   ctx.textBaseline = 'top';
 
   const lines = rendered.body.split('\n');
 
   for (const line of lines) {
-    // Empty line → small spacer
     if (line.trim() === '') {
       currentY += lineHeight * 0.4;
       continue;
     }
 
-    // ── Application Number line ───────────────────────────────────────────────
     if (line.startsWith('Application Number:')) {
       const label = 'Application Number:';
       const value = line.slice(label.length);
-      currentY = drawLabelHighlightLine(
-        ctx, label, value, leftX, currentY, baseFontSize, lineHeight,
-        '#111111', '#fef08a', '#b45309'
-      );
+      currentY = drawLabelHighlightLine(ctx, label, value, leftX, currentY, baseFontSize, lineHeight, '#111111', '#fef08a', '#b45309');
       continue;
     }
 
-    // ── Loan Number line ──────────────────────────────────────────────────────
     if (line.startsWith('Loan Number:')) {
       const label = 'Loan Number:';
       const value = line.slice(label.length);
-      currentY = drawLabelHighlightLine(
-        ctx, label, value, leftX, currentY, baseFontSize, lineHeight,
-        '#111111', '#fef08a', '#b45309'
-      );
+      currentY = drawLabelHighlightLine(ctx, label, value, leftX, currentY, baseFontSize, lineHeight, '#111111', '#fef08a', '#b45309');
       continue;
     }
 
-    // ── Subject line ──────────────────────────────────────────────────────────
     if (line.startsWith('Subject:')) {
-      currentY = drawWrappedText(
-        ctx, line, leftX, currentY,
-        contentWidth, lineHeight,
-        `bold ${baseFontSize}px Arial`, '#111111'
-      );
+      currentY = drawWrappedText(ctx, line, leftX, currentY, contentWidth, lineHeight, `bold ${baseFontSize}px Arial`, '#111111');
       continue;
     }
 
-    // ── "Processing & Verification" section heading ───────────────────────────
-    if (line.trim() === 'Processing & Verification') {
+    if (line.trim() === 'Processing & Verification' || line.trim() === 'Bank Account Details' ||
+        line.trim() === 'Sanction Details' || line.trim() === 'Financial Summary' ||
+        line.trim() === 'Disbursement Details' || line.trim() === 'Repayment Schedule' ||
+        line.trim() === 'Terms & Conditions' || line.trim() === 'Applicant Details' ||
+        line.trim() === 'Important Information') {
       currentY += 4;
       ctx.save();
       ctx.font = 'bold 12px Arial';
       ctx.fillStyle = '#1d4ed8';
       ctx.textBaseline = 'top';
       ctx.fillText(line, leftX, currentY);
-      // Underline
       const textW = ctx.measureText(line).width;
       ctx.strokeStyle = '#bfdbfe';
       ctx.lineWidth = 1;
@@ -521,32 +406,9 @@ function drawLoanApprovalContent(
       continue;
     }
 
-    // ── "Bank Account Details" section heading ────────────────────────────────
-    if (line.trim() === 'Bank Account Details') {
-      currentY += 4;
-      ctx.save();
-      ctx.font = 'bold 12px Arial';
-      ctx.fillStyle = '#1d4ed8';
-      ctx.textBaseline = 'top';
-      ctx.fillText(line, leftX, currentY);
-      // Underline
-      const textW = ctx.measureText(line).width;
-      ctx.strokeStyle = '#bfdbfe';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(leftX, currentY + 14);
-      ctx.lineTo(leftX + textW, currentY + 14);
-      ctx.stroke();
-      ctx.restore();
-      currentY += lineHeight + 4;
-      continue;
-    }
-
-    // ── Refundable notice (starts with colon) ─────────────────────────────────
     if (line.startsWith(':The processing charge is fully refundable')) {
       const noticeText = line.slice(1).trim();
       const boxPad = 6;
-      // Estimate height needed for wrapped text
       ctx.save();
       ctx.font = `bold ${baseFontSize}px Arial`;
       const words = noticeText.split(' ');
@@ -562,204 +424,209 @@ function drawLoanApprovalContent(
         }
       }
       const boxHeight = lineCount * lineHeight + boxPad * 2;
-
-      // Green highlight background — constrained to content area
       ctx.fillStyle = '#d1fae5';
       ctx.fillRect(leftX, currentY - boxPad, contentWidth, boxHeight);
-      // Green border
       ctx.strokeStyle = '#6ee7b7';
       ctx.lineWidth = 1;
       ctx.strokeRect(leftX, currentY - boxPad, contentWidth, boxHeight);
       ctx.restore();
-
-      // Draw wrapped text inside box
-      currentY = drawWrappedText(
-        ctx, noticeText, leftX + boxPad, currentY,
-        contentWidth - boxPad * 2, lineHeight,
-        `bold ${baseFontSize}px Arial`, '#065f46'
-      );
-      currentY += boxPad + 4;
+      currentY = drawWrappedText(ctx, noticeText, leftX + boxPad, currentY, contentWidth - boxPad * 2, lineHeight, `bold ${baseFontSize}px Arial`, '#065f46');
+      currentY += boxPad;
       continue;
     }
 
-    // ── Bank Account Number ───────────────────────────────────────────────────
-    if (line.startsWith('Bank Account Number:')) {
-      const label = 'Bank Account Number:';
-      const value = line.slice(label.length);
-      currentY = drawLabelHighlightLine(
-        ctx, label, value, leftX, currentY, baseFontSize, lineHeight
-      );
+    if (line.startsWith('Bank Account Number:') || line.startsWith('IFSC Code:') || line.startsWith('UPI ID:') || line.startsWith('UPI Reference:')) {
+      const colonIdx = line.indexOf(':');
+      const label = line.slice(0, colonIdx + 1);
+      const value = line.slice(colonIdx + 1);
+      currentY = drawLabelHighlightLine(ctx, label, value, leftX, currentY, baseFontSize, lineHeight, '#111111', '#fef08a', '#b45309');
       continue;
     }
 
-    // ── IFSC Code ─────────────────────────────────────────────────────────────
-    if (line.startsWith('IFSC Code:')) {
-      const label = 'IFSC Code:';
-      const value = line.slice(label.length);
-      currentY = drawLabelHighlightLine(
-        ctx, label, value, leftX, currentY, baseFontSize, lineHeight
-      );
-      continue;
-    }
-
-    // ── UPI ID ────────────────────────────────────────────────────────────────
-    if (line.startsWith('UPI ID:')) {
-      const label = 'UPI ID:';
-      const value = line.slice(label.length);
-      currentY = drawLabelHighlightLine(
-        ctx, label, value, leftX, currentY, baseFontSize, lineHeight
-      );
-      continue;
-    }
-
-    // ── Bullet point lines ────────────────────────────────────────────────────
     if (line.startsWith('•')) {
       const bulletText = line.slice(1).trim();
-      const bulletIndent = 14;
       ctx.save();
       ctx.font = `bold ${baseFontSize}px Arial`;
       ctx.fillStyle = '#1d4ed8';
       ctx.textBaseline = 'top';
       ctx.fillText('•', leftX, currentY);
       ctx.restore();
-      currentY = drawWrappedText(
-        ctx, bulletText, leftX + bulletIndent, currentY,
-        contentWidth - bulletIndent, lineHeight,
-        `${baseFontSize}px Arial`, '#222222'
-      );
+      const bulletIndent = leftX + 14;
+      currentY = drawWrappedText(ctx, bulletText, bulletIndent, currentY, contentWidth - 14, lineHeight, `${baseFontSize}px Arial`, '#333333');
       continue;
     }
 
-    // ── Lines with ₹ amounts or % values — rich financial rendering ───────────
     if (line.includes('₹') || line.includes('%')) {
       const segments = parseFinancialLine(line);
-      ctx.save();
-      ctx.textBaseline = 'top';
-      // Check if segments fit on one line; if not, use word-wrap
       const totalWidth = measureSegments(ctx, segments, baseFontSize);
       if (totalWidth <= contentWidth) {
+        ctx.save();
+        ctx.textBaseline = 'top';
         drawSegments(ctx, segments, leftX, currentY, baseFontSize);
+        ctx.restore();
         currentY += lineHeight;
       } else {
-        currentY = drawWrappedSegments(
-          ctx, segments, leftX, currentY,
-          contentWidth, lineHeight, baseFontSize
-        );
+        currentY = drawWrappedSegments(ctx, segments, leftX, currentY, contentWidth, lineHeight, baseFontSize);
       }
-      ctx.restore();
       continue;
     }
 
-    // ── Default: plain text with word-wrap ────────────────────────────────────
-    currentY = drawWrappedText(
-      ctx, line, leftX, currentY,
-      contentWidth, lineHeight,
-      `${baseFontSize}px Arial`, '#222222'
-    );
+    currentY = drawWrappedText(ctx, line, leftX, currentY, contentWidth, lineHeight, `${baseFontSize}px Arial`, '#333333');
   }
 
   return currentY;
 }
 
+/**
+ * Generic content renderer for non-Approval-Letter templates.
+ */
 function drawContent(
   ctx: CanvasRenderingContext2D,
   rendered: { headline: string; body: string },
   startY: number
 ): number {
   const leftX = MARGINS.left;
-  const contentWidth = PAGE_WIDTH - MARGINS.left - MARGINS.right;
+  const rightX = PAGE_WIDTH - MARGINS.right;
+  const contentWidth = rightX - leftX;
   let currentY = startY + 20;
+  const lineHeight = 18;
+  const baseFontSize = 11;
 
   // Title
   ctx.save();
   ctx.fillStyle = '#111111';
-  ctx.font = 'bold 18px Arial';
+  ctx.font = 'bold 16px Arial';
   ctx.textAlign = 'left';
   ctx.textBaseline = 'top';
   const titleWidth = ctx.measureText(rendered.headline).width;
   const titleX = leftX + Math.max(0, (contentWidth - titleWidth) / 2);
   ctx.fillText(rendered.headline, Math.max(leftX, titleX), currentY, contentWidth);
   ctx.restore();
-  currentY += 30;
+  currentY += 28;
 
-  // Body text
   const lines = rendered.body.split('\n');
+
   for (const line of lines) {
     if (line.trim() === '') {
-      currentY += 7;
+      currentY += lineHeight * 0.4;
       continue;
     }
-    currentY = drawWrappedText(
-      ctx, line, leftX, currentY,
-      contentWidth, 18,
-      '11px Arial', '#222222'
-    );
+
+    // Section headings (all caps or known headings)
+    if (
+      (line.trim() === line.trim().toUpperCase() && line.trim().length > 3 && !/[₹%\d]/.test(line.trim())) ||
+      line.trim() === 'Sanction Details' || line.trim() === 'Financial Summary' ||
+      line.trim() === 'Disbursement Details' || line.trim() === 'Repayment Schedule' ||
+      line.trim() === 'Terms & Conditions' || line.trim() === 'Applicant Details' ||
+      line.trim() === 'Important Information' || line.trim() === 'Bank Account Details'
+    ) {
+      currentY += 4;
+      ctx.save();
+      ctx.font = 'bold 12px Arial';
+      ctx.fillStyle = '#1d4ed8';
+      ctx.textBaseline = 'top';
+      ctx.fillText(line, leftX, currentY);
+      const textW = ctx.measureText(line).width;
+      ctx.strokeStyle = '#bfdbfe';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(leftX, currentY + 14);
+      ctx.lineTo(leftX + textW, currentY + 14);
+      ctx.stroke();
+      ctx.restore();
+      currentY += lineHeight + 4;
+      continue;
+    }
+
+    if (line.startsWith('•') || line.startsWith('-')) {
+      const bulletText = line.slice(1).trim();
+      ctx.save();
+      ctx.font = `bold ${baseFontSize}px Arial`;
+      ctx.fillStyle = '#1d4ed8';
+      ctx.textBaseline = 'top';
+      ctx.fillText('•', leftX, currentY);
+      ctx.restore();
+      currentY = drawWrappedText(ctx, bulletText, leftX + 14, currentY, contentWidth - 14, lineHeight, `${baseFontSize}px Arial`, '#333333');
+      continue;
+    }
+
+    if (line.includes('₹') || line.includes('%')) {
+      const segments = parseFinancialLine(line);
+      const totalWidth = measureSegments(ctx, segments, baseFontSize);
+      if (totalWidth <= contentWidth) {
+        ctx.save();
+        ctx.textBaseline = 'top';
+        drawSegments(ctx, segments, leftX, currentY, baseFontSize);
+        ctx.restore();
+        currentY += lineHeight;
+      } else {
+        currentY = drawWrappedSegments(ctx, segments, leftX, currentY, contentWidth, lineHeight, baseFontSize);
+      }
+      continue;
+    }
+
+    // Label:value lines
+    if (line.includes(':') && !line.startsWith('•') && !line.startsWith('-')) {
+      const colonIdx = line.indexOf(':');
+      const label = line.slice(0, colonIdx + 1);
+      const value = line.slice(colonIdx + 1);
+      if (value.trim().length > 0 && label.length < 40) {
+        currentY = drawLabelHighlightLine(ctx, label, value, leftX, currentY, baseFontSize, lineHeight, '#111111', '#fef08a', '#b45309');
+        continue;
+      }
+    }
+
+    currentY = drawWrappedText(ctx, line, leftX, currentY, contentWidth, lineHeight, `${baseFontSize}px Arial`, '#333333');
   }
 
   return currentY;
 }
 
-async function drawSignatureStampRow(
-  ctx: CanvasRenderingContext2D,
+/**
+ * Main export: renders a complete document to a canvas element.
+ * Accepts the original (template, formData, documentType) signature.
+ */
+export async function renderDocumentToCanvas(
+  canvas: HTMLCanvasElement,
   template: Template,
-  startY: number
-): Promise<number> {
-  const hasSignature = !!(template.signature?.enabled && template.signature?.dataUrl);
-  const hasSeal = !!(template.seal?.enabled && template.seal?.dataUrl);
+  formData: FormData,
+  documentType: string
+): Promise<void> {
+  canvas.width = PAGE_WIDTH;
+  canvas.height = PAGE_HEIGHT;
 
-  if (!hasSignature && !hasSeal) return startY;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
 
-  let currentY = startY + 30;
-  const leftX = MARGINS.left;
-  let colX = leftX;
+  // White background
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, PAGE_WIDTH, PAGE_HEIGHT);
 
-  if (hasSignature && template.signature?.dataUrl) {
-    const sigImg = await loadImage(template.signature.dataUrl);
-    if (sigImg) {
-      const maxH = 70;
-      const maxW = 160;
-      const scale = Math.min(maxW / sigImg.width, maxH / sigImg.height);
-      const w = sigImg.width * scale;
-      const h = sigImg.height * scale;
-      const opacity = (template.signature.opacity ?? 100) / 100;
-      ctx.save();
-      ctx.globalAlpha = opacity;
-      ctx.drawImage(sigImg, colX, currentY, w, h);
-      ctx.restore();
-
-      ctx.save();
-      ctx.font = '10px Arial';
-      ctx.fillStyle = '#555555';
-      ctx.textBaseline = 'top';
-      ctx.fillText(template.signature.signatoryName || 'Authorized Signature', colX, currentY + h + 4);
-      ctx.restore();
-
-      colX += w + 40;
-    }
+  // Background image (if enabled)
+  if (template.background?.enabled && template.background.dataUrl) {
+    await drawBackgroundImage(ctx, {
+      dataUrl: template.background.dataUrl,
+      opacity: template.background.opacity,
+      fit: template.background.fit,
+    });
   }
 
-  if (hasSeal && template.seal?.dataUrl) {
-    const sealImg = await loadImage(template.seal.dataUrl);
-    if (sealImg) {
-      const maxH = 70;
-      const maxW = 100;
-      const scale = Math.min(maxW / sealImg.width, maxH / sealImg.height);
-      const w = sealImg.width * scale;
-      const h = sealImg.height * scale;
-      const opacity = (template.seal.opacity ?? 80) / 100;
-      ctx.save();
-      ctx.globalAlpha = opacity;
-      ctx.drawImage(sealImg, colX, currentY, w, h);
-      ctx.restore();
+  // Watermark (behind content)
+  await renderWatermark(ctx, template);
 
-      ctx.save();
-      ctx.font = '10px Arial';
-      ctx.fillStyle = '#555555';
-      ctx.textBaseline = 'top';
-      ctx.fillText('Official Stamp', colX, currentY + h + 4);
-      ctx.restore();
-    }
+  // Header
+  const headerBottom = await renderHeader(ctx);
+
+  // Footer
+  await renderFooter(ctx);
+
+  // Render content
+  const rendered = renderTemplate(template, formData);
+  const contentStartY = headerBottom + 10;
+
+  if (documentType === 'Loan Approval Letter') {
+    drawLoanApprovalContent(ctx, rendered, contentStartY);
+  } else {
+    drawContent(ctx, rendered, contentStartY);
   }
-
-  return currentY + 90;
 }

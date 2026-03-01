@@ -21,6 +21,8 @@ export interface WatermarkSettings {
   rotation: number;
   position: PositionPreset;
   color?: string;
+  /** Optional URL/path to a background watermark image rendered behind text */
+  watermarkImageUrl?: string;
 }
 
 export interface ImageElementSettings {

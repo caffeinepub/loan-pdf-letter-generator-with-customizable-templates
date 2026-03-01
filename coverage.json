@@ -1,24 +1,39 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-28T19:09:30.521Z",
+  "generatedAt": "2026-03-01T05:11:55.486Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 1,
-    "implemented": 1,
+    "total": 2,
+    "implemented": 2,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Remove the Template Designer UI entry point (button, menu item, tab, or dialog trigger) from the application so that users can no longer open the TemplateDesigner component. Do not delete or modify any template code, template data, or the TemplateDesigner component itself — only hide/remove the UI control that launches it.",
+        "summary": "Add a new built-in document template named 'TDS Deduction Intimation' to the template library in `frontend/src/lib/templates/getTemplate.ts`. The template body must contain the following exact text with dynamic placeholders preserved:\n\n---\nApplication Number: APLOAN74962926\nLoan Number: PLOAN6926946926\nSubject: TDS Deduction Intimation\n\nDear {{name}},\n\nGreetings from the Loan Department. This is to formally inform you that, in accordance with applicable taxation guidelines, TDS-related formalities have been initiated in connection with your {{loanType}} loan under Application Number APLOAN74962926 and Loan Number PLOAN6926946926.\n\nAs per our records, the sanctioned loan amount for your application is ₹{{loanAmount}}. All statutory deductions and reporting requirements are being processed in line with prevailing financial and tax regulations. You are advised to retain this letter for your records and future reference.\n\nPlease note that any processing charge of ₹{{processingCharge}} paid towards documentation, verification, or file handling will be accounted for as per the company's financial policies and applicable tax provisions. Where eligible, the same will be adjusted or refunded in accordance with the approved terms and compliance requirements.\n\nOur team is committed to maintaining full transparency throughout the loan lifecycle. Should you require any clarification regarding TDS treatment or related documentation, please feel free to contact our support team.\n\nWarm regards,\nLoan Department\n---\n\nThe placeholders {{name}}, {{loanType}}, {{loanAmount}}, and {{processingCharge}} must be substituted by the `renderTemplate` utility at render time. The fixed strings APLOAN74962926 and PLOAN6926946926 remain as literal text.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/App.tsx"
+          "frontend/src/lib/templates/getTemplate.ts",
+          "frontend/src/types/form.ts"
         ],
         "matchedFiles": [
-          "frontend/src/App.tsx"
+          "frontend/src/lib/templates/getTemplate.ts",
+          "frontend/src/types/form.ts"
+        ]
+      },
+      {
+        "id": "REQ-2",
+        "summary": "Ensure the new 'TDS Deduction Intimation' template is included in the `getTemplate` / template normalization functions and is returned alongside existing built-in templates when templates are fetched or listed. The template's `DocumentType` (or equivalent identifier) must be consistent with the naming conventions used by other built-in templates in the codebase.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/lib/templates/getTemplate.ts",
+          "frontend/src/components/FormSection.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/lib/templates/getTemplate.ts",
+          "frontend/src/components/FormSection.tsx"
         ]
       }
     ]
@@ -28,7 +43,9 @@
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/App.tsx",
+    "frontend/src/components/FormSection.tsx",
+    "frontend/src/lib/templates/getTemplate.ts",
+    "frontend/src/types/form.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

@@ -2,10 +2,11 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-remove-the-template-designer-ui-entry-point-button-menu-item-tab-or-dialog-trigger-from-the-application-so-that-users-can-no-longer-open-the-templatedesigner-component-do-not-delete-or-modify-any-template-code-template-data-or-the-templatedesigner-component-itself-only-hide-remove-the-ui-control-that-launches-it",
-      "featureTitle": "Remove the Template Designer UI entry point (button, menu item, tab, or dialog trigger) from the application so that users can no longer open the TemplateDesigner component. Do not delete or modify any template code, template data, or the TemplateDesigner component itself — only hide/remove the UI control that launches it.",
+      "featureId": "feature-add-a-new-built-in-document-template-named-tds-deduction-intimation-to-the-template-library-in-frontend-src-lib-templates-gettemplate-ts-the-template-body-must-contain-the-following-exact-text-with-dynamic-placeholders-preserved-application-number-aploan74962926-loan-number-ploan6926946926-subject-tds-deduction-intimation-dear-name-greetings-from-the-loan-department-this-is-to-formally-inform-you-that-in-accordance-with-applicable-taxation-guidelines-tds-related-formalities-have-been-initiated-in-connection-with-your-loantype-loan-under-application-number-aploan74962926-and-loan-number-ploan6926946926-as-per-our-records-the-sanctioned-loan-amount-for-your-application-is-loanamount-all-statutory-deductions-and-reporting-requirements-are-being-processed-in-line-with-prevailing-financial-and-tax-regulations-you-are-advised-to-retain-this-letter-for-your-records-and-future-reference-please-note-that-any-processing-charge-of-processingcharge-paid-towards-documentation-verification-or-file-handling-will-be-accounted-for-as-per-the-company-s-financial-policies-and-applicable-tax-provisions-where-eligible-the-same-will-be-adjusted-or-refunded-in-accordance-with-the-approved-terms-and-compliance-requirements-our-team-is-committed-to-maintaining-full-transparency-throughout-the-loan-lifecycle-should-you-require-any-clarification-regarding-tds-treatment-or-related-documentation-please-feel-free-to-contact-our-support-team-warm-regards-loan-department-the-placeholders-name-loantype-loanamount-and-processingcharge-must-be-substituted-by-the-rendertemplate-utility-at-render-time-the-fixed-strings-aploan74962926-and-ploan6926946926-remain-as-literal-text",
+      "featureTitle": "Add a new built-in document template named 'TDS Deduction Intimation' to the template library in `frontend/src/lib/templates/getTemplate.ts`. The template body must contain the following exact text with dynamic placeholders preserved:\n\n---\nApplication Number: APLOAN74962926\nLoan Number: PLOAN6926946926\nSubject: TDS Deduction Intimation\n\nDear {{name}},\n\nGreetings from the Loan Department. This is to formally inform you that, in accordance with applicable taxation guidelines, TDS-related formalities have been initiated in connection with your {{loanType}} loan under Application Number APLOAN74962926 and Loan Number PLOAN6926946926.\n\nAs per our records, the sanctioned loan amount for your application is ₹{{loanAmount}}. All statutory deductions and reporting requirements are being processed in line with prevailing financial and tax regulations. You are advised to retain this letter for your records and future reference.\n\nPlease note that any processing charge of ₹{{processingCharge}} paid towards documentation, verification, or file handling will be accounted for as per the company's financial policies and applicable tax provisions. Where eligible, the same will be adjusted or refunded in accordance with the approved terms and compliance requirements.\n\nOur team is committed to maintaining full transparency throughout the loan lifecycle. Should you require any clarification regarding TDS treatment or related documentation, please feel free to contact our support team.\n\nWarm regards,\nLoan Department\n---\n\nThe placeholders {{name}}, {{loanType}}, {{loanAmount}}, and {{processingCharge}} must be substituted by the `renderTemplate` utility at render time. The fixed strings APLOAN74962926 and PLOAN6926946926 remain as literal text.",
       "files": [
-        "frontend/src/App.tsx"
+        "frontend/src/lib/templates/getTemplate.ts",
+        "frontend/src/types/form.ts"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -20,6 +21,29 @@
       ],
       "testIds": [
         "REQ-1"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-ensure-the-new-tds-deduction-intimation-template-is-included-in-the-gettemplate-template-normalization-functions-and-is-returned-alongside-existing-built-in-templates-when-templates-are-fetched-or-listed-the-template-s-documenttype-or-equivalent-identifier-must-be-consistent-with-the-naming-conventions-used-by-other-built-in-templates-in-the-codebase",
+      "featureTitle": "Ensure the new 'TDS Deduction Intimation' template is included in the `getTemplate` / template normalization functions and is returned alongside existing built-in templates when templates are fetched or listed. The template's `DocumentType` (or equivalent identifier) must be consistent with the naming conventions used by other built-in templates in the codebase.",
+      "files": [
+        "frontend/src/components/FormSection.tsx",
+        "frontend/src/lib/templates/getTemplate.ts"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "qr-code@1.0.0",
+        "camera@1.0.0"
+      ],
+      "testIds": [
+        "REQ-2"
       ],
       "confidence": "high"
     }

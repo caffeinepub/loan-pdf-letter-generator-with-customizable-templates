@@ -1,10 +1,10 @@
 # Specification
 
 ## Summary
-**Goal:** Remove the Template Designer option from the UI so users can no longer open it, without touching any underlying code or templates.
+**Goal:** Add a new built-in "TDS Deduction Intimation" letter template to the Loan Document Generator's template library.
 
 **Planned changes:**
-- Remove the button, menu item, tab, or dialog trigger that opens the TemplateDesigner component from the UI
-- Leave the TemplateDesigner component, all template data, and template logic completely untouched
+- Add a new template named "TDS Deduction Intimation" to `frontend/src/lib/templates/getTemplate.ts` with the specified letter body, including fixed literal values (APLOAN74962926, PLOAN6926946926) and dynamic placeholders (`{{name}}`, `{{loanType}}`, `{{loanAmount}}`, `{{processingCharge}}`)
+- Register the new template's document type identifier consistently with existing naming conventions so it appears in all template listing and selection locations (template selector dropdown, TemplateDesigner, etc.)
 
-**User-visible outcome:** Users will no longer see or be able to access the Template Designer from the UI. All existing fixed templates remain available and unchanged.
+**User-visible outcome:** Users can select "TDS Deduction Intimation" from the template selector, preview the populated letter with their form values substituted, and generate/download it as a PDF via the existing document generation flow.

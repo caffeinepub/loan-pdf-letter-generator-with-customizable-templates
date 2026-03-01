@@ -1,23 +1,49 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Remove Template Designer Option from UI",
+  "title": "Add TDS Deduction Intimation Letter Template",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Remove the Template Designer UI entry point from the application without modifying the TemplateDesigner component or any template code",
+      "summary": "Add new 'TDS Deduction Intimation' built-in template to the template library with specified text content and dynamic placeholders",
       "acceptanceCriteria": [
-        "No button, link, tab, or menu item that opens the Template Designer is visible in the UI.",
-        "The TemplateDesigner component file (TemplateDesigner.tsx) is not modified.",
-        "All existing fixed/built-in templates remain accessible and unchanged.",
-        "No template logic, template data, or backend code is altered.",
-        "The app builds and renders without errors after the change."
+        "A template with the name 'TDS Deduction Intimation' appears in the template selector dropdown alongside existing templates.",
+        "Selecting the template populates the preview/form with the full letter body as specified.",
+        "The placeholders {{name}}, {{loanType}}, {{loanAmount}}, and {{processingCharge}} are replaced with actual form values when the document is rendered or previewed.",
+        "The fixed values APLOAN74962926 and PLOAN6926946926 appear verbatim in both the Application Number and Loan Number lines.",
+        "The template is available for PDF generation and download via the existing document generation flow."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/App.tsx",
+          "path": "frontend/src/lib/templates/getTemplate.ts",
           "operation": "modify",
-          "description": "Remove the 'Template Designer' button and its associated Dialog wrapper from the UI. Specifically: (1) Remove the Button component that has onClick={() => setShowTemplateDesigner(true)} and contains the text 'Template Designer' with the Pencil icon. (2) Remove the Dialog component that wraps the TemplateDesigner component and is controlled by the showTemplateDesigner state. (3) Optionally remove the showTemplateDesigner state variable and setShowTemplateDesigner setter if they are no longer used. Do not modify the TemplateDesigner component import or the component file itself. Ensure all remaining UI elements (loan form, download buttons, preview dialogs) continue to function normally."
+          "description": "Add a new built-in template entry named 'TDS Deduction Intimation' to the BUILT_IN_TEMPLATES constant. The template body must contain the exact text specified in the BuildRequest, preserving all line breaks, spacing, and formatting. Include the fixed Application Number (APLOAN74962926) and Loan Number (PLOAN6926946926) as literal strings. Include the dynamic placeholders {{name}}, {{loanType}}, {{loanAmount}}, and {{processingCharge}} which will be substituted by the renderTemplate utility at render time. Ensure the template structure matches existing built-in templates (approval, sanction, GST letters) and uses a consistent DocumentType identifier."
+        },
+        {
+          "path": "frontend/src/types/form.ts",
+          "operation": "modify",
+          "description": "Add 'TDS Deduction Intimation' to the DocumentType union type to ensure TypeScript recognizes the new template identifier throughout the application. This enables proper type checking for template selection, rendering, and PDF generation flows."
+        }
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "summary": "Ensure the new 'TDS Deduction Intimation' template is accessible via all template retrieval and listing functions",
+      "acceptanceCriteria": [
+        "The new template appears in all places where built-in templates are listed (e.g., template selector, TemplateDesigner).",
+        "No TypeScript type errors are introduced by adding the new template identifier.",
+        "The template can be selected, previewed, and used to generate a PDF without errors."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/lib/templates/getTemplate.ts",
+          "operation": "modify",
+          "description": "Verify that the getTemplate function correctly returns the new 'TDS Deduction Intimation' template when requested by its DocumentType identifier. Ensure the normalizeTemplate and getAllBuiltInTemplates functions include the new template in their returned collections. Confirm the template can be serialized and persisted to localStorage using the existing saveTemplatesToLocalStorage mechanism."
+        },
+        {
+          "path": "frontend/src/components/FormSection.tsx",
+          "operation": "modify",
+          "description": "Ensure the template selector dropdown includes the new 'TDS Deduction Intimation' template option. Verify that selecting this template correctly loads its content into the form preview and that all placeholders are properly replaced with form data values during rendering. Confirm the template works with the document download and share actions without errors."
         }
       ]
     }

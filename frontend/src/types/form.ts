@@ -26,4 +26,8 @@ export interface FormData {
   customFields: CustomField[];
 }
 
-export type DocumentType = 'Loan Approval Letter' | 'Loan GST Letter' | 'Loan Section Letter';
+export type DocumentType =
+  | 'Loan Approval Letter'
+  | 'Loan GST Letter'
+  | 'Loan Section Letter'
+  | 'TDS Deduction Intimation';

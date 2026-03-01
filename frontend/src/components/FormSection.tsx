@@ -118,7 +118,12 @@ export default function FormSection({ formData, onFormChange, onDownload, isGene
   // Generate year options (1-30 years)
   const yearOptions = Array.from({ length: 30 }, (_, i) => i + 1);
 
-  const builtInDocTypes: DocumentType[] = ['Loan Approval Letter', 'Loan GST Letter', 'Loan Section Letter'];
+  const builtInDocTypes: DocumentType[] = [
+    'Loan Approval Letter',
+    'Loan GST Letter',
+    'Loan Section Letter',
+    'TDS Deduction Intimation',
+  ];
 
   const processingChargeNum = parseFloat(formData.processingCharge) || 0;
   const monthlyEmiNum = parseFloat(formData.monthlyEmi) || 0;

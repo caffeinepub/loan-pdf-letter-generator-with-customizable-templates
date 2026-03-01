@@ -12,16 +12,9 @@ import { FormData } from '../types/form';
 import { renderTemplate } from '../lib/templates/renderTemplate';
 import TemplateOverlay from './preview/TemplateOverlay';
 
-// ── Header image path ─────────────────────────────────────────────────────────
-const BAJAJ_HEADER_IMAGE =
-  '/assets/Corporate Office, Off Pune-Ahmednagar Road, Viman Nagar, Pune - 411014 Baja_20260228_134953_0000-2.png';
-
-// ── Footer image path ─────────────────────────────────────────────────────────
-const BAJAJ_FOOTER_IMAGE =
-  '/assets/Corporate Office, Off Pune-Ahmednagar Road, Viman Nagar, Pune - 411014 Baja_20260228_134953_0001-1.png';
-
-// ── Bajaj Finance watermark image (FB logo) ───────────────────────────────────
-const BAJAJ_WATERMARK_IMAGE = '/assets/images (15).jpeg';
+// ── Shared header/footer image paths ─────────────────────────────────────────
+const BAJAJ_HEADER_IMAGE = '/assets/Header.png';
+const BAJAJ_FOOTER_IMAGE = '/assets/Footer.png';
 
 interface PreviewDialogProps {
   open: boolean;
@@ -89,10 +82,43 @@ function renderLabelValueLine(
 }
 
 /**
- * Renders the body text of the Loan Approval Letter with bold and highlighted
- * formatting for key financial values, bank details, and the refundable notice.
+ * Renders a section heading with blue color and underline.
  */
-function renderLoanApprovalBody(body: string): React.ReactNode {
+function renderSectionHeading(idx: number, text: string): React.ReactNode {
+  return (
+    <div
+      key={idx}
+      style={{
+        fontWeight: 'bold',
+        fontSize: '12px',
+        color: '#1d4ed8',
+        marginTop: '12px',
+        marginBottom: '4px',
+        borderBottom: '1px solid #bfdbfe',
+        paddingBottom: '2px',
+      }}
+    >
+      {text}
+    </div>
+  );
+}
+
+const SECTION_HEADINGS = new Set([
+  'Processing & Verification',
+  'Bank Account Details',
+  'Sanction Details',
+  'Financial Summary',
+  'Disbursement Details',
+  'Repayment Schedule',
+  'Terms & Conditions',
+  'Applicant Details',
+  'Important Information',
+]);
+
+/**
+ * Renders the body text with rich formatting for financial documents.
+ */
+function renderDocumentBody(body: string): React.ReactNode {
   const lines = body.split('\n');
 
   return (
@@ -119,12 +145,14 @@ function renderLoanApprovalBody(body: string): React.ReactNode {
           );
         }
 
-        // ── Loan Number line ──────────────────────────────────────────────────
-        if (line.startsWith('Loan Number:')) {
-          const value = line.slice('Loan Number:'.length);
+        // ── Loan Number / Sanction Reference / Reference Number ───────────────
+        if (line.startsWith('Loan Number:') || line.startsWith('Sanction Reference:') || line.startsWith('Reference Number:')) {
+          const colonIdx = line.indexOf(':');
+          const label = line.slice(0, colonIdx + 1);
+          const value = line.slice(colonIdx + 1);
           return (
             <div key={idx} style={{ marginBottom: '2px', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
-              <strong>Loan Number:</strong>
+              <strong>{label}</strong>
               <mark style={{ ...HIGHLIGHT_STYLE, color: '#b45309' }}>{value}</mark>
             </div>
           );
@@ -149,44 +177,9 @@ function renderLoanApprovalBody(body: string): React.ReactNode {
           );
         }
 
-        // ── "Processing & Verification" section heading ───────────────────────
-        if (line.trim() === 'Processing & Verification') {
-          return (
-            <div
-              key={idx}
-              style={{
-                fontWeight: 'bold',
-                fontSize: '12px',
-                color: '#1d4ed8',
-                marginTop: '12px',
-                marginBottom: '4px',
-                borderBottom: '1px solid #bfdbfe',
-                paddingBottom: '2px',
-              }}
-            >
-              {line}
-            </div>
-          );
-        }
-
-        // ── "Bank Account Details" section heading ────────────────────────────
-        if (line.trim() === 'Bank Account Details') {
-          return (
-            <div
-              key={idx}
-              style={{
-                fontWeight: 'bold',
-                fontSize: '12px',
-                color: '#1d4ed8',
-                marginTop: '12px',
-                marginBottom: '4px',
-                borderBottom: '1px solid #bfdbfe',
-                paddingBottom: '2px',
-              }}
-            >
-              {line}
-            </div>
-          );
+        // ── Section headings ──────────────────────────────────────────────────
+        if (SECTION_HEADINGS.has(line.trim())) {
+          return renderSectionHeading(idx, line);
         }
 
         // ── Refundable notice line (starts with colon) ────────────────────────
@@ -213,79 +206,65 @@ function renderLoanApprovalBody(body: string): React.ReactNode {
           );
         }
 
-        // ── Bank Account Number line ──────────────────────────────────────────
-        if (line.startsWith('Bank Account Number:')) {
-          const value = line.slice('Bank Account Number:'.length);
-          return renderLabelValueLine(idx, 'Bank Account Number:', value);
+        // ── Bank Account Number / IFSC / UPI lines ────────────────────────────
+        if (
+          line.startsWith('Bank Account Number:') ||
+          line.startsWith('IFSC Code:') ||
+          line.startsWith('UPI ID:') ||
+          line.startsWith('UPI Reference:')
+        ) {
+          const colonIdx = line.indexOf(':');
+          const label = line.slice(0, colonIdx + 1);
+          const value = line.slice(colonIdx + 1);
+          return renderLabelValueLine(idx, label, value, '#111111');
         }
 
-        // ── IFSC Code line ────────────────────────────────────────────────────
-        if (line.startsWith('IFSC Code:')) {
-          const value = line.slice('IFSC Code:'.length);
-          return renderLabelValueLine(idx, 'IFSC Code:', value);
-        }
-
-        // ── UPI ID line ───────────────────────────────────────────────────────
-        if (line.startsWith('UPI ID:')) {
-          const value = line.slice('UPI ID:'.length);
-          return renderLabelValueLine(idx, 'UPI ID:', value);
-        }
-
-        // ── Bullet point lines ────────────────────────────────────────────────
-        if (line.startsWith('•')) {
+        // ── Bullet points ─────────────────────────────────────────────────────
+        if (line.startsWith('•') || line.startsWith('-')) {
           return (
             <div
               key={idx}
               style={{
                 display: 'flex',
                 gap: '6px',
-                marginBottom: '3px',
-                paddingLeft: '8px',
-                wordBreak: 'break-word',
-                overflowWrap: 'break-word',
-              }}
-            >
-              <span style={{ color: '#1d4ed8', fontWeight: 'bold', flexShrink: 0 }}>•</span>
-              <span style={{ flex: 1, minWidth: 0 }}>{line.slice(1).trim()}</span>
-            </div>
-          );
-        }
-
-        // ── Lines with ₹ amounts or % values ─────────────────────────────────
-        if (line.includes('₹') || line.includes('%')) {
-          return (
-            <div
-              key={idx}
-              style={{
-                marginTop: '4px',
                 marginBottom: '2px',
                 wordBreak: 'break-word',
                 overflowWrap: 'break-word',
               }}
             >
+              <span style={{ color: '#1d4ed8', fontWeight: 'bold', flexShrink: 0 }}>•</span>
+              <span>{line.slice(1).trim()}</span>
+            </div>
+          );
+        }
+
+        // ── Financial lines (₹ or %) ──────────────────────────────────────────
+        if (line.includes('₹') || line.includes('%')) {
+          return (
+            <div key={idx} style={{ marginBottom: '2px', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
               {renderFinancialLine(line)}
             </div>
           );
         }
 
-        // ── "Dear {{name}}" line — highlight the name ─────────────────────────
-        if (line.startsWith('Dear ') && line.endsWith(',')) {
-          const name = line.slice(5, -1);
-          return (
-            <div key={idx} style={{ marginTop: '8px', marginBottom: '4px' }}>
-              Dear <mark style={HIGHLIGHT_STYLE}>{name}</mark>,
-            </div>
-          );
+        // ── Label:value lines ─────────────────────────────────────────────────
+        if (line.includes(':') && !line.startsWith('Dear') && !line.startsWith('This') && !line.startsWith('We ') && !line.startsWith('Please') && !line.startsWith('For ') && !line.startsWith('After') && !line.startsWith('Kindly') && !line.startsWith('If ') && !line.startsWith('Warm') && !line.startsWith('Best') && !line.startsWith('Authorized') && !line.startsWith('Credit') && !line.startsWith('Bajaj') && !line.startsWith('Corporate')) {
+          const colonIdx = line.indexOf(':');
+          const label = line.slice(0, colonIdx + 1);
+          const value = line.slice(colonIdx + 1);
+          if (value.trim().length > 0 && label.length < 40 && !label.includes(' ') || (label.split(' ').length <= 4 && value.trim().length > 0 && label.length < 40)) {
+            return renderLabelValueLine(idx, label, value);
+          }
         }
 
-        // ── Empty lines → spacer ──────────────────────────────────────────────
+        // ── Empty lines ───────────────────────────────────────────────────────
         if (line.trim() === '') {
           return <div key={idx} style={{ height: '6px' }} />;
         }
 
-        // ── Default line ──────────────────────────────────────────────────────
+        // ── Default paragraph ─────────────────────────────────────────────────
         return (
-          <div key={idx} style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>
+          <div key={idx} style={{ marginBottom: '2px', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
             {line}
           </div>
         );
@@ -303,181 +282,79 @@ export default function PreviewDialog({
 }: PreviewDialogProps) {
   const rendered = renderTemplate(template, formData);
 
-  const hasSignature = !!(template.signature?.enabled && template.signature?.dataUrl);
-  const hasSeal = !!(template.seal?.enabled && template.seal?.dataUrl);
-  const showSignatureRow = hasSignature || hasSeal;
-
-  const isLoanApprovalLetter = documentType === 'Loan Approval Letter';
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl w-full">
-        <DialogHeader>
-          <DialogTitle>Preview: {documentType}</DialogTitle>
+      <DialogContent className="max-w-3xl w-full p-0 overflow-hidden">
+        <DialogHeader className="px-6 pt-5 pb-2">
+          <DialogTitle>Document Preview</DialogTitle>
           <DialogDescription>
-            This is how your document will appear with the current form data
+            Preview of <strong>{documentType}</strong> — scroll to see the full document.
           </DialogDescription>
         </DialogHeader>
-        <ScrollArea className="h-[600px] rounded-lg border border-border bg-white">
+
+        <ScrollArea className="h-[80vh] w-full">
+          {/* A4-like document container */}
           <div
-            className="relative"
             style={{
-              fontFamily: 'Arial, sans-serif',
               width: '100%',
-              boxSizing: 'border-box',
-              overflowX: 'hidden',
+              maxWidth: '794px',
+              margin: '0 auto',
+              backgroundColor: '#ffffff',
+              boxShadow: '0 2px 16px rgba(0,0,0,0.12)',
+              position: 'relative',
+              fontFamily: 'Arial, sans-serif',
             }}
           >
-            {/* Overlay elements (background, watermark text, seal, signature) */}
-            <TemplateOverlay template={template} />
-
-            {/* ── BAJAJ FINANCE FB LOGO WATERMARK — only for Loan Approval Letter ── */}
-            {isLoanApprovalLetter && (
-              <div
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  pointerEvents: 'none',
-                  zIndex: 1,
-                }}
-              >
-                <img
-                  src={BAJAJ_WATERMARK_IMAGE}
-                  alt=""
-                  style={{
-                    width: '40%',
-                    opacity: 0.15,
-                    userSelect: 'none',
-                  }}
-                />
-              </div>
-            )}
-
-            {/* ── BAJAJ FINANCE LIMITED HEADER IMAGE — zero margin/padding ── */}
+            {/* Header image */}
             <img
               src={BAJAJ_HEADER_IMAGE}
               alt="Bajaj Finance Limited Header"
               style={{
-                display: 'block',
                 width: '100%',
-                margin: 0,
-                padding: 0,
-                border: 'none',
-                position: 'relative',
-                zIndex: 2,
+                display: 'block',
+                objectFit: 'fill',
               }}
             />
 
-            {/* ── DOCUMENT CONTENT ── */}
+            {/* Watermark overlay */}
+            <TemplateOverlay template={template} />
+
+            {/* Document body */}
             <div
               style={{
-                padding: '20px 40px',
-                zIndex: 2,
+                padding: '16px 60px',
+                minHeight: '500px',
                 position: 'relative',
-                boxSizing: 'border-box',
-                width: '100%',
-                overflowX: 'hidden',
+                zIndex: 1,
               }}
             >
-              {/* Document Title */}
+              {/* Document title */}
               <h2
                 style={{
                   fontSize: '18px',
                   fontWeight: 'bold',
                   color: '#111111',
                   textAlign: 'center',
-                  marginBottom: '20px',
-                  wordBreak: 'break-word',
-                  overflowWrap: 'break-word',
+                  marginBottom: '16px',
+                  marginTop: '8px',
                 }}
               >
                 {rendered.headline}
               </h2>
 
-              {/* Document Body — rich HTML for Loan Approval Letter, plain for others */}
-              {isLoanApprovalLetter ? (
-                renderLoanApprovalBody(rendered.body)
-              ) : (
-                <div
-                  style={{
-                    fontSize: '11px',
-                    color: '#222222',
-                    lineHeight: 1.7,
-                    whiteSpace: 'pre-wrap',
-                    wordBreak: 'break-word',
-                    overflowWrap: 'break-word',
-                  }}
-                >
-                  {rendered.body}
-                </div>
-              )}
-
-              {/* Signature / Stamp Row */}
-              {showSignatureRow && (
-                <div
-                  style={{
-                    display: 'flex',
-                    gap: '40px',
-                    marginTop: '40px',
-                    alignItems: 'flex-end',
-                  }}
-                >
-                  {hasSignature && template.signature?.dataUrl && (
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                      <img
-                        src={template.signature.dataUrl}
-                        alt="Signature"
-                        style={{
-                          maxHeight: '70px',
-                          maxWidth: '160px',
-                          objectFit: 'contain',
-                          opacity: (template.signature.opacity ?? 100) / 100,
-                        }}
-                      />
-                      <span style={{ fontSize: '10px', color: '#555555', marginTop: '4px' }}>
-                        {template.signature.signatoryName || 'Authorized Signature'}
-                      </span>
-                    </div>
-                  )}
-                  {hasSeal && template.seal?.dataUrl && (
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                      <img
-                        src={template.seal.dataUrl}
-                        alt="Official Stamp"
-                        style={{
-                          maxHeight: '70px',
-                          maxWidth: '100px',
-                          objectFit: 'contain',
-                          opacity: (template.seal.opacity ?? 80) / 100,
-                        }}
-                      />
-                      <span style={{ fontSize: '10px', color: '#555555', marginTop: '4px' }}>
-                        Official Stamp
-                      </span>
-                    </div>
-                  )}
-                </div>
-              )}
+              {/* Document body content */}
+              {renderDocumentBody(rendered.body)}
             </div>
 
-            {/* ── BAJAJ FINANCE LIMITED FOOTER IMAGE ── */}
+            {/* Footer image */}
             <img
               src={BAJAJ_FOOTER_IMAGE}
               alt="Bajaj Finance Limited Footer"
               style={{
-                display: 'block',
                 width: '100%',
-                margin: 0,
-                padding: 0,
-                border: 'none',
-                position: 'relative',
-                zIndex: 2,
+                display: 'block',
+                objectFit: 'fill',
+                marginTop: '16px',
               }}
             />
           </div>

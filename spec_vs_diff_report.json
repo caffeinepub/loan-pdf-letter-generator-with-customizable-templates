@@ -1,23 +1,16 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-28T19:09:30.518Z",
-  "summary": "REQ-1 requires removing the Template Designer UI entry point (button, menu item, tab, or dialog trigger) without modifying TemplateDesigner.tsx or any template files. The diff shows the UI entry point (Advanced Template Designer button and Dialog modal) was removed from App.tsx, which satisfies the core requirement. However, the file-diff summary explicitly states that TemplateDesigner.tsx had 'all header/footer editing sections removed', which constitutes a modification of TemplateDesigner.tsx — a direct violation of the constraint and acceptance criteria.",
+  "generatedAt": "2026-03-01T05:11:55.481Z",
+  "summary": "Both REQ-1 and REQ-2 appear to be implemented in the diff. The new 'TDS Deduction Intimation' template is added to getTemplate.ts with the correct body text, fixed literal values APLOAN74962926 and PLOAN6926946926, and the required placeholders. The DocumentType union in form.ts is updated, and the template appears in the builtInDocTypes array in FormSection.tsx. No significant missing requirements or hallucinated features are detected.",
   "missing_requirements": [],
-  "hallucinated_features": [
-    {
-      "description": "TemplateDesigner.tsx was modified to remove header/footer editing sections, leaving only watermark, seal, signature, background, and document content sections.",
-      "reason": "The build request explicitly constrains 'Do not modify TemplateDesigner.tsx or any template definition files' and the acceptance criteria states 'The TemplateDesigner component file (TemplateDesigner.tsx) is not modified.' The file-diff summary for TemplateDesigner.tsx clearly describes content changes to the component.",
-      "evidence": [
-        "frontend/src/components/TemplateDesigner.tsx",
-        "frontend-file-summaries.txt"
-      ]
-    }
-  ],
-  "confidence": 0.85,
+  "hallucinated_features": [],
+  "confidence": 0.92,
   "changed_files": [
     "frontend-file-summaries.txt",
-    "frontend/src/App.tsx",
+    "frontend/src/components/FormSection.tsx",
+    "frontend/src/lib/templates/getTemplate.ts",
+    "frontend/src/types/form.ts",
     "project_state.json"
   ]
 }

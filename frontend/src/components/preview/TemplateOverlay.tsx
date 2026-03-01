@@ -22,8 +22,26 @@ export default function TemplateOverlay({ template }: TemplateOverlayProps) {
         />
       )}
 
-      {/* Advanced Watermark */}
-      {template.watermark?.enabled && template.watermark?.text && (
+      {/* Watermark image (if configured) */}
+      {template.watermark?.enabled && template.watermark?.watermarkImageUrl && (
+        <div
+          className="pointer-events-none absolute inset-0 flex items-center justify-center select-none"
+          style={{ zIndex: 1 }}
+        >
+          <img
+            src={template.watermark.watermarkImageUrl}
+            alt=""
+            style={{
+              width: '50%',
+              opacity: template.watermark.opacity,
+              userSelect: 'none',
+            }}
+          />
+        </div>
+      )}
+
+      {/* Text Watermark (only if no image watermark) */}
+      {template.watermark?.enabled && template.watermark?.text && !template.watermark?.watermarkImageUrl && (
         <div
           className="pointer-events-none absolute select-none whitespace-nowrap font-bold"
           style={{
