@@ -28,6 +28,6 @@ export interface FormData {
 
 export type DocumentType =
   | 'Loan Approval Letter'
-  | 'Loan GST Letter'
   | 'Loan Section Letter'
-  | 'TDS Deduction Intimation';
+  | 'TDS Deduction Intimation'
+  | 'GST Letter';

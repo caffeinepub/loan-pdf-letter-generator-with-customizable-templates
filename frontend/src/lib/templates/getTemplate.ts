@@ -3,9 +3,9 @@ import { Template, CustomTemplate } from '../../types/templates';
 
 const BUILT_IN_DOC_TYPES: DocumentType[] = [
   'Loan Approval Letter',
-  'Loan GST Letter',
   'Loan Section Letter',
   'TDS Deduction Intimation',
+  'GST Letter',
 ];
 
 const APPROVAL_LETTER_BODY = `Application Number: BP874562193045
@@ -49,57 +49,6 @@ If you have any questions or require assistance, please feel free to contact our
 
 Warm regards,
 Loan Department`;
-
-const SANCTION_LETTER_BODY = `Application Reference: BP874562193045
-Sanction Reference: SL{{loanAmount}}{{year}}
-Subject: Formal Loan Sanction Communication
-
-Dear {{name}},
-
-This is to formally communicate the sanction of your loan application by Bajaj Finance Limited. Please read the following terms and conditions carefully before accepting this sanction.
-
-Sanction Details
-
-Applicant Name: {{name}}
-Loan Category: {{loanType}} Loan
-Sanctioned Amount: ₹{{loanAmount}}
-Annual Interest Rate: {{interestRate}}% per annum (Reducing Balance)
-Repayment Tenure: {{year}} years
-Monthly Installment (EMI): ₹{{monthlyEmi}}
-
-Financial Summary
-
-Processing Fee: ₹{{processingCharge}} (Non-refundable)
-Disbursement Amount: ₹{{loanAmount}} (after deduction of applicable charges)
-
-Disbursement Details
-
-Mode of Disbursement: Direct Bank Transfer (NEFT/RTGS)
-Bank Account Number: {{bankAccountNumber}}
-IFSC Code: {{ifscCode}}
-UPI Reference: {{upiId}}
-
-Repayment Schedule
-
-• First EMI due date: 30 days from disbursement date
-• EMI Amount: ₹{{monthlyEmi}} per month
-• Auto-debit mandate will be registered on your bank account
-• Ensure sufficient balance on EMI due dates to avoid penalties
-
-Terms & Conditions
-
-• This sanction is valid for 30 days from the date of this letter.
-• The sanctioned amount and terms are subject to change based on final verification.
-• Any misrepresentation of facts will result in immediate cancellation of this sanction.
-• The borrower must maintain a clean credit record throughout the loan tenure.
-• Bajaj Finance Limited reserves the right to recall the loan in case of default.
-
-Please sign and return the acceptance copy of this letter along with the required documents to proceed with disbursement.
-
-Authorized by,
-Credit Department
-Bajaj Finance Limited
-Corporate Office, Off Pune-Ahmednagar Road, Viman Nagar, Pune - 411014`;
 
 const LOAN_SECTION_LETTER_BODY = `Reference Number: LAG562198743026
 Subject: Loan Section Reference Letter
@@ -155,6 +104,23 @@ Our team is committed to maintaining full transparency throughout the loan lifec
 Warm regards,
 Loan Department`;
 
+const GST_LETTER_BODY = `Application Number: APLOAN74962926
+Loan Number: PLOAN6926946926
+Subject: GST Compliance Confirmation
+
+Dear {{name}},
+
+Greetings from the Loan Department. We would like to inform you that GST-related compliance activities concerning your {{loanType}} loan application (Application No. APLOAN74962926, Loan No. PLOAN6926946926) are currently under process as per applicable regulatory guidelines.
+
+Based on the documents submitted by you, the sanctioned loan amount stands at ₹{{loanAmount}}. All applicable statutory charges and compliance requirements are being handled in accordance with prevailing GST norms and internal financial policies. This communication is issued for your official record and reference.
+
+Kindly note that any GST charge of ₹{{processingCharge}} collected towards documentation, verification, or administrative formalities is governed strictly by company policy and applicable tax regulations. Wherever eligible, adjustments or refunds will be processed subject to successful verification and completion of required formalities.
+
+We remain committed to ensuring a transparent and smooth experience for you. In case any additional documentation is required, our representative may contact you.
+
+Warm regards,
+Loan Department`;
+
 const DEFAULT_TEMPLATES: Record<DocumentType, Template> = {
   'Loan Approval Letter': {
     id: 'Loan Approval Letter',
@@ -166,32 +132,6 @@ const DEFAULT_TEMPLATES: Record<DocumentType, Template> = {
     businessName: '',
     businessAddress: '',
     watermarkText: 'APPROVED',
-    footerText: 'This is a computer-generated document and does not require a signature.',
-    logoSize: 'medium',
-    background: { enabled: false, dataUrl: null, opacity: 0.1, fit: 'cover' },
-    watermark: {
-      enabled: true,
-      text: 'BAJAJ FINANCE',
-      opacity: 0.08,
-      size: 72,
-      rotation: -45,
-      position: 'center',
-      color: '#cccccc',
-      watermarkImageUrl: '/assets/generated/etds-watermark.dim_600x300.png',
-    },
-    seal: { enabled: false, dataUrl: null, size: 100, position: 'bottom-left', opacity: 80 },
-    signature: { enabled: false, dataUrl: null, size: 120, position: 'bottom-right', opacity: 100, signatoryName: '', signatoryTitle: '' },
-  },
-  'Loan GST Letter': {
-    id: 'Loan GST Letter',
-    name: 'Loan GST Letter',
-    headline: 'Loan Sanction Letter',
-    body: SANCTION_LETTER_BODY,
-    logoDataUrl: null,
-    headerColor: '#1a365d',
-    businessName: '',
-    businessAddress: '',
-    watermarkText: 'SANCTIONED',
     footerText: 'This is a computer-generated document and does not require a signature.',
     logoSize: 'medium',
     background: { enabled: false, dataUrl: null, opacity: 0.1, fit: 'cover' },
@@ -260,6 +200,32 @@ const DEFAULT_TEMPLATES: Record<DocumentType, Template> = {
     seal: { enabled: false, dataUrl: null, size: 100, position: 'bottom-left', opacity: 80 },
     signature: { enabled: false, dataUrl: null, size: 120, position: 'bottom-right', opacity: 100, signatoryName: '', signatoryTitle: '' },
   },
+  'GST Letter': {
+    id: 'GST Letter',
+    name: 'GST Letter',
+    headline: 'GST Letter',
+    body: GST_LETTER_BODY,
+    logoDataUrl: null,
+    headerColor: '#1a365d',
+    businessName: '',
+    businessAddress: '',
+    watermarkText: 'GST COMPLIANCE',
+    footerText: 'This is a computer-generated document and does not require a signature.',
+    logoSize: 'medium',
+    background: { enabled: false, dataUrl: null, opacity: 0.1, fit: 'cover' },
+    watermark: {
+      enabled: true,
+      text: 'GST',
+      opacity: 0.18,
+      size: 72,
+      rotation: -45,
+      position: 'center',
+      color: '#cccccc',
+      watermarkImageUrl: '/assets/generated/gst-watermark.dim_400x400.png',
+    },
+    seal: { enabled: false, dataUrl: null, size: 100, position: 'bottom-left', opacity: 80 },
+    signature: { enabled: false, dataUrl: null, size: 120, position: 'bottom-right', opacity: 100, signatoryName: '', signatoryTitle: '' },
+  },
 };
 
 const STORAGE_KEY_PREFIX = 'loan_template_';
@@ -286,7 +252,7 @@ export function getDefaultSanctionLetterTemplate(): Template {
 }
 
 export function getDefaultDisbursementTemplate(): Template {
-  return normalizeTemplate({ ...DEFAULT_TEMPLATES['Loan GST Letter'] });
+  return normalizeTemplate({ ...DEFAULT_TEMPLATES['Loan Section Letter'] });
 }
 
 export function getDefaultNocTemplate(): Template {

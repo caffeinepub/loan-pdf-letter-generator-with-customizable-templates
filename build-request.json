@@ -1,60 +1,61 @@
 {
   "kind": "build_request",
-  "title": "Add TDS Deduction Intimation Letter Template",
+  "title": "Remove Loan GST and Add GST Watermark Image",
   "projectName": "Loan Document Generator",
   "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Add a new built-in document template named 'TDS Deduction Intimation' to the template library in `frontend/src/lib/templates/getTemplate.ts`. The template body must contain the following exact text with dynamic placeholders preserved:\n\n---\nApplication Number: APLOAN74962926\nLoan Number: PLOAN6926946926\nSubject: TDS Deduction Intimation\n\nDear {{name}},\n\nGreetings from the Loan Department. This is to formally inform you that, in accordance with applicable taxation guidelines, TDS-related formalities have been initiated in connection with your {{loanType}} loan under Application Number APLOAN74962926 and Loan Number PLOAN6926946926.\n\nAs per our records, the sanctioned loan amount for your application is ₹{{loanAmount}}. All statutory deductions and reporting requirements are being processed in line with prevailing financial and tax regulations. You are advised to retain this letter for your records and future reference.\n\nPlease note that any processing charge of ₹{{processingCharge}} paid towards documentation, verification, or file handling will be accounted for as per the company's financial policies and applicable tax provisions. Where eligible, the same will be adjusted or refunded in accordance with the approved terms and compliance requirements.\n\nOur team is committed to maintaining full transparency throughout the loan lifecycle. Should you require any clarification regarding TDS treatment or related documentation, please feel free to contact our support team.\n\nWarm regards,\nLoan Department\n---\n\nThe placeholders {{name}}, {{loanType}}, {{loanAmount}}, and {{processingCharge}} must be substituted by the `renderTemplate` utility at render time. The fixed strings APLOAN74962926 and PLOAN6926946926 remain as literal text.",
-      "target": "frontend",
+      "text": "Remove the Loan GST document type from the application. This includes removing it from the DocumentType enum, the form's document type selector, any built-in template definitions for GST Letter in getTemplate.ts, and all related rendering/generation logic so it no longer appears as an option anywhere in the UI.",
+      "target": "both",
       "source": {
         "messageIds": [
-          "msg-recent"
+          "msg-4"
         ],
         "quotes": [
-          "Create new templete with text contain",
-          "Application Number: APLOAN74962926",
-          "Loan Number: PLOAN6926946926",
-          "Subject: TDS Deduction Intimation"
+          "Remove loan gst"
         ]
       },
       "acceptanceCriteria": [
-        "A template with the name 'TDS Deduction Intimation' appears in the template selector dropdown alongside existing templates.",
-        "Selecting the template populates the preview/form with the full letter body as specified.",
-        "The placeholders {{name}}, {{loanType}}, {{loanAmount}}, and {{processingCharge}} are replaced with actual form values when the document is rendered or previewed.",
-        "The fixed values APLOAN74962926 and PLOAN6926946926 appear verbatim in both the Application Number and Loan Number lines.",
-        "The template is available for PDF generation and download via the existing document generation flow."
+        "The GST Letter option no longer appears in the document type dropdown or selector in the form UI",
+        "The DocumentType enum no longer includes a GST Letter entry",
+        "No GST Letter template body or default Template config remains in getTemplate.ts",
+        "Generating or downloading a GST Letter document is no longer possible"
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Ensure the new 'TDS Deduction Intimation' template is included in the `getTemplate` / template normalization functions and is returned alongside existing built-in templates when templates are fetched or listed. The template's `DocumentType` (or equivalent identifier) must be consistent with the naming conventions used by other built-in templates in the codebase.",
+      "text": "Add the uploaded GST watermark image (Goods and Services Tax / Ashoka Pillar emblem) as a static asset at frontend/public/assets/generated/gst-watermark.png and use it as the default watermark image on the GST Letter document template. The watermark should be rendered centered on the document with reduced opacity so it does not obscure the text content.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-recent"
+          "msg-4"
+        ],
+        "quotes": [
+          "Add watermark image on gst letter use attached image"
         ]
       },
       "acceptanceCriteria": [
-        "The new template appears in all places where built-in templates are listed (e.g., template selector, TemplateDesigner).",
-        "No TypeScript type errors are introduced by adding the new template identifier.",
-        "The template can be selected, previewed, and used to generate a PDF without errors."
+        "The GST emblem image is saved as a static asset at frontend/public/assets/generated/gst-watermark.png",
+        "The watermark is rendered centered on the GST Letter document canvas with reduced opacity (e.g., 0.15–0.25)",
+        "The watermark does not obscure the body text of the GST Letter",
+        "The watermark is visible in both the preview dialog and the generated/downloaded PDF"
       ]
     }
   ],
   "constraints": [
-    "The fixed Application Number (APLOAN74962926) and Loan Number (PLOAN6926946926) must remain as literal text in the template body — they are not placeholders.",
-    "Do not modify any files listed under frontend.immutablePaths.",
-    "Do not alter existing templates or their content."
+    "Do not modify any files listed under frontend.immutablePaths",
+    "Use the exact uploaded image (Goods and Services Tax / Ashoka Pillar emblem) as the watermark — do not substitute a different image"
   ],
   "nonGoals": [
-    "Adding a new backend data model or persisting the template in the Motoko actor (built-in templates are frontend-only).",
-    "Modifying the renderTemplate utility logic.",
-    "Changing the PDF rendering or canvas layout."
+    "Adding new document types beyond what already exists",
+    "Redesigning the overall UI layout or color theme",
+    "Modifying watermark behavior for non-GST document types"
   ],
   "imageRequirements": {
-    "required": [],
+    "required": [
+      "Goods and Services Tax Ashoka Pillar emblem logo with tricolor (saffron, white, green) decorative wings and 'Goods and Services Tax' text label, square format (gst-watermark.dim_400x400.png)"
+    ],
     "edits": []
   }
 }

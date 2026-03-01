@@ -97,74 +97,63 @@ export default function FormSection({ formData, onFormChange, onDownload, isGene
     setSharingDoc(docType);
     try {
       const pdfBlob = await generatePdf(docType, formData);
-      const filename = `${typeof docType === 'string' ? docType.toLowerCase().replace(/\s+/g, '-') : 'document'}.png`;
-      downloadFile(pdfBlob, filename);
+      const filename = `${typeof docType === 'string' ? docType.replace(/\s+/g, '_') : docType}.pdf`;
       const shared = await sharePdf(pdfBlob, filename);
       if (!shared) {
-        toast.success('Document downloaded!', {
-          description: 'Sharing not supported on this device — file downloaded instead.',
-        });
+        // Fallback to download if sharing not supported
+        downloadFile(pdfBlob, filename);
+        toast.success('PDF downloaded (sharing not supported on this device)');
+      } else {
+        toast.success('PDF shared successfully');
       }
     } catch (error) {
-      console.error('Share error:', error);
-      toast.error('Failed to share document', {
-        description: 'Please try again.',
-      });
+      toast.error('Failed to share PDF');
     } finally {
       setSharingDoc(null);
     }
   };
 
-  // Generate year options (1-30 years)
-  const yearOptions = Array.from({ length: 30 }, (_, i) => i + 1);
-
   const builtInDocTypes: DocumentType[] = [
     'Loan Approval Letter',
-    'Loan GST Letter',
     'Loan Section Letter',
     'TDS Deduction Intimation',
+    'GST Letter',
   ];
 
-  const processingChargeNum = parseFloat(formData.processingCharge) || 0;
-  const monthlyEmiNum = parseFloat(formData.monthlyEmi) || 0;
+  const emiValue = parseFloat(formData.monthlyEmi) || 0;
 
   return (
     <div className="space-y-6">
-      {/* Applicant Details */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Applicant Details</CardTitle>
-          <CardDescription>Enter the loan applicant information</CardDescription>
+      {/* Loan Details Card */}
+      <Card className="border-border/60 shadow-sm">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-lg font-semibold flex items-center gap-2">
+            <Landmark className="h-5 w-5 text-primary" />
+            Loan Details
+          </CardTitle>
+          <CardDescription>Enter the applicant and loan information</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Full Name *</Label>
+          {/* Applicant Name */}
+          <div className="space-y-1.5">
+            <Label htmlFor="name">Applicant Name</Label>
             <Input
               id="name"
-              placeholder="John Doe"
+              placeholder="Enter full name"
               value={formData.name}
               onChange={(e) => onFormChange({ ...formData, name: e.target.value })}
             />
           </div>
-        </CardContent>
-      </Card>
 
-      {/* Loan Details */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Loan Details</CardTitle>
-          <CardDescription>Enter loan type, amount, interest rate, and tenure</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
           {/* Loan Type */}
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <Label htmlFor="loanType">Loan Type</Label>
             <Select
               value={formData.loanType}
               onValueChange={(value) => onFormChange({ ...formData, loanType: value as LoanType })}
             >
               <SelectTrigger id="loanType">
-                <SelectValue placeholder="Select Loan Type" />
+                <SelectValue placeholder="Select loan type" />
               </SelectTrigger>
               <SelectContent>
                 {LOAN_TYPES.map((type) => (
@@ -177,136 +166,101 @@ export default function FormSection({ formData, onFormChange, onDownload, isGene
           </div>
 
           {/* Loan Amount */}
-          <div className="space-y-2">
-            <Label htmlFor="loanAmount">Loan Amount (₹) *</Label>
-            <Input
-              id="loanAmount"
-              type="number"
-              placeholder="500000"
-              value={formData.loanAmount}
-              onChange={(e) => onFormChange({ ...formData, loanAmount: e.target.value })}
-              onWheel={(e) => e.currentTarget.blur()}
-              min="0"
-              step="1000"
-            />
+          <div className="space-y-1.5">
+            <Label htmlFor="loanAmount">Loan Amount (₹)</Label>
+            <div className="relative">
+              <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="loanAmount"
+                type="number"
+                placeholder="0"
+                className="pl-9"
+                value={formData.loanAmount}
+                onChange={(e) => onFormChange({ ...formData, loanAmount: e.target.value })}
+              />
+            </div>
           </div>
 
-          {/* Interest Rate */}
-          <div className="space-y-2">
-            <Label htmlFor="interestRate">Interest Rate (% per annum) *</Label>
-            <Input
-              id="interestRate"
-              type="number"
-              placeholder="8.5"
-              value={formData.interestRate}
-              onChange={(e) => onFormChange({ ...formData, interestRate: e.target.value })}
-              onWheel={(e) => e.currentTarget.blur()}
-              min="0"
-              step="0.1"
-            />
+          {/* Interest Rate & Tenure */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="interestRate">Interest Rate (%)</Label>
+              <Input
+                id="interestRate"
+                type="number"
+                placeholder="0.00"
+                value={formData.interestRate}
+                onChange={(e) => onFormChange({ ...formData, interestRate: e.target.value })}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="year">Tenure (Years)</Label>
+              <Input
+                id="year"
+                type="number"
+                placeholder="0"
+                value={formData.year}
+                onChange={(e) => onFormChange({ ...formData, year: e.target.value })}
+              />
+            </div>
           </div>
 
-          {/* Loan Tenure */}
-          <div className="space-y-2">
-            <Label htmlFor="year">Loan Tenure (Years) *</Label>
-            <Select
-              value={formData.year}
-              onValueChange={(value) => onFormChange({ ...formData, year: value })}
-            >
-              <SelectTrigger id="year">
-                <SelectValue placeholder="Select tenure" />
-              </SelectTrigger>
-              <SelectContent
-                position="popper"
-                className="max-h-60 overflow-y-auto"
-                onWheel={(e) => e.stopPropagation()}
-              >
-                {yearOptions.map((year) => (
-                  <SelectItem key={year} value={year.toString()}>
-                    {year} {year === 1 ? 'Year' : 'Years'}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {/* EMI Display */}
+          {emiValue > 0 && (
+            <div className="rounded-lg bg-primary/5 border border-primary/20 p-3">
+              <p className="text-xs text-muted-foreground mb-0.5">Estimated Monthly EMI</p>
+              <p className="text-xl font-bold text-primary">{formatCurrency(emiValue)}</p>
+            </div>
+          )}
 
-          {/* Monthly EMI (read-only) */}
-          <div className="space-y-2">
-            <Label htmlFor="monthlyEmi">Monthly EMI (₹)</Label>
-            <Input
-              id="monthlyEmi"
-              value={monthlyEmiNum > 0 ? formatCurrency(monthlyEmiNum) : '₹0.00'}
-              readOnly
-              disabled
-              className="bg-muted"
-            />
-            <p className="text-xs text-muted-foreground">
-              Automatically calculated based on loan amount, interest rate, and tenure
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Processing Charge */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <IndianRupee className="h-5 w-5 text-primary" />
-            Processing Charge
-          </CardTitle>
-          <CardDescription>Enter the one-time processing fee charged for this loan</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
+          {/* Processing Charge */}
+          <div className="space-y-1.5">
             <Label htmlFor="processingCharge">Processing Charge (₹)</Label>
-            <Input
-              id="processingCharge"
-              type="number"
-              placeholder="e.g. 5000"
-              value={formData.processingCharge}
-              onChange={(e) => onFormChange({ ...formData, processingCharge: e.target.value })}
-              onWheel={(e) => e.currentTarget.blur()}
-              min="0"
-            />
+            <div className="relative">
+              <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="processingCharge"
+                type="number"
+                placeholder="0"
+                className="pl-9"
+                value={formData.processingCharge}
+                onChange={(e) => onFormChange({ ...formData, processingCharge: e.target.value })}
+              />
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Bank Account Details */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Landmark className="h-5 w-5 text-primary" />
-            Bank Account Details
-          </CardTitle>
-          <CardDescription>Enter the bank account details for loan disbursement</CardDescription>
+      {/* Bank Details Card */}
+      <Card className="border-border/60 shadow-sm">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-lg font-semibold">Bank Details</CardTitle>
+          <CardDescription>Payment and disbursement information</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <Label htmlFor="bankAccountNumber">Bank Account Number</Label>
             <Input
               id="bankAccountNumber"
-              placeholder="e.g. 1234567890"
+              placeholder="Enter account number"
               value={formData.bankAccountNumber}
               onChange={(e) => onFormChange({ ...formData, bankAccountNumber: e.target.value })}
             />
           </div>
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <Label htmlFor="ifscCode">IFSC Code</Label>
             <Input
               id="ifscCode"
-              placeholder="e.g. SBIN0001234"
+              placeholder="Enter IFSC code"
               value={formData.ifscCode}
-              onChange={(e) =>
-                onFormChange({ ...formData, ifscCode: e.target.value.toUpperCase() })
-              }
+              onChange={(e) => onFormChange({ ...formData, ifscCode: e.target.value })}
             />
           </div>
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <Label htmlFor="upiId">UPI ID</Label>
             <Input
               id="upiId"
-              placeholder="e.g. name@upi"
+              placeholder="Enter UPI ID"
               value={formData.upiId}
               onChange={(e) => onFormChange({ ...formData, upiId: e.target.value })}
             />
@@ -314,57 +268,59 @@ export default function FormSection({ formData, onFormChange, onDownload, isGene
         </CardContent>
       </Card>
 
-      {/* Custom Fields */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Custom Fields</CardTitle>
-          <CardDescription>Add additional fields to include in your documents</CardDescription>
+      {/* Custom Fields Card */}
+      <Card className="border-border/60 shadow-sm">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-lg font-semibold">Custom Fields</CardTitle>
+          <CardDescription>Add additional information to your documents</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {formData.customFields.map((field) => (
-            <div key={field.id} className="flex items-center gap-2">
-              <Input
-                placeholder="Label"
-                value={field.label}
-                onChange={(e) => handleUpdateCustomField(field.id, e.target.value, field.value)}
-                className="flex-1"
-              />
-              <Input
-                placeholder="Value"
-                value={field.value}
-                onChange={(e) => handleUpdateCustomField(field.id, field.label, e.target.value)}
-                className="flex-1"
-              />
+            <div key={field.id} className="flex gap-2 items-start">
+              <div className="flex-1 grid grid-cols-2 gap-2">
+                <Input
+                  placeholder="Label"
+                  value={field.label}
+                  onChange={(e) => handleUpdateCustomField(field.id, e.target.value, field.value)}
+                />
+                <Input
+                  placeholder="Value"
+                  value={field.value}
+                  onChange={(e) => handleUpdateCustomField(field.id, field.label, e.target.value)}
+                />
+              </div>
               <Button
                 variant="ghost"
                 size="icon"
+                className="h-9 w-9 shrink-0 text-muted-foreground hover:text-destructive"
                 onClick={() => handleRemoveCustomField(field.id)}
-                className="text-destructive shrink-0"
               >
                 <X className="h-4 w-4" />
               </Button>
             </div>
           ))}
 
-          <div className="flex items-center gap-2">
-            <Input
-              placeholder="Field Label"
-              value={newFieldLabel}
-              onChange={(e) => setNewFieldLabel(e.target.value)}
-              className="flex-1"
-            />
-            <Input
-              placeholder="Field Value"
-              value={newFieldValue}
-              onChange={(e) => setNewFieldValue(e.target.value)}
-              className="flex-1"
-            />
+          <div className="flex gap-2 items-start">
+            <div className="flex-1 grid grid-cols-2 gap-2">
+              <Input
+                placeholder="Field label"
+                value={newFieldLabel}
+                onChange={(e) => setNewFieldLabel(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleAddCustomField()}
+              />
+              <Input
+                placeholder="Field value"
+                value={newFieldValue}
+                onChange={(e) => setNewFieldValue(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleAddCustomField()}
+              />
+            </div>
             <Button
               variant="outline"
               size="icon"
+              className="h-9 w-9 shrink-0"
               onClick={handleAddCustomField}
               disabled={!newFieldLabel.trim() || !newFieldValue.trim()}
-              className="shrink-0"
             >
               <Plus className="h-4 w-4" />
             </Button>
@@ -372,80 +328,78 @@ export default function FormSection({ formData, onFormChange, onDownload, isGene
         </CardContent>
       </Card>
 
-      {/* Document Generation */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Generate Documents</CardTitle>
-          <CardDescription>Download your loan documents as PNG images</CardDescription>
+      {/* Generate Documents Card */}
+      <Card className="border-border/60 shadow-sm">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-lg font-semibold">Generate Documents</CardTitle>
+          <CardDescription>Download loan documents as PDF</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Built-in document types */}
-          <div className="space-y-2">
-            {builtInDocTypes.map((docType) => (
-              <div key={docType} className="flex items-center gap-2">
-                <Button
-                  className="flex-1 justify-start gap-2"
-                  variant="outline"
-                  onClick={() => onDownload(docType)}
-                  disabled={isGenerating === docType}
-                >
-                  {isGenerating === docType ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Download className="h-4 w-4" />
-                  )}
-                  {docType}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleShare(docType)}
-                  disabled={sharingDoc === docType}
-                  title="Share document"
-                >
-                  {sharingDoc === docType ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Share2 className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
-            ))}
-          </div>
+        <CardContent className="space-y-3">
+          {builtInDocTypes.map((docType) => (
+            <div key={docType} className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                className="flex-1 justify-start gap-2 h-10"
+                onClick={() => onDownload(docType)}
+                disabled={isGenerating === docType || sharingDoc === docType}
+              >
+                {isGenerating === docType ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Download className="h-4 w-4" />
+                )}
+                <span className="truncate">{docType}</span>
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-10 w-10 shrink-0"
+                onClick={() => handleShare(docType)}
+                disabled={isGenerating === docType || sharingDoc === docType}
+                title={`Share ${docType}`}
+              >
+                {sharingDoc === docType ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Share2 className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+          ))}
 
-          {/* Custom templates */}
           {customTemplates.length > 0 && (
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-muted-foreground">Custom Templates</p>
-              {customTemplates.map((t) => {
-                const id = (t as { id?: string }).id ?? t.name ?? 'custom';
-                const label = (t as { name?: string }).name ?? t.headline ?? 'Custom Template';
+            <>
+              <div className="pt-2 pb-1">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Custom Templates</p>
+              </div>
+              {customTemplates.map((template, index) => {
+                const templateId = template.id ?? template.name ?? `custom-${index}`;
+                const templateName = template.name ?? template.id ?? 'Unnamed Template';
                 return (
-                  <div key={id} className="flex items-center gap-2">
+                  <div key={templateId} className="flex items-center gap-2">
                     <Button
-                      className="flex-1 justify-start gap-2"
                       variant="outline"
-                      onClick={() => onDownload(id)}
-                      disabled={isGenerating === id}
+                      className="flex-1 justify-start gap-2 h-10"
+                      onClick={() => onDownload(templateId)}
+                      disabled={isGenerating === templateId || sharingDoc === templateId}
                     >
-                      {isGenerating === id ? (
+                      {isGenerating === templateId ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
                       ) : (
                         <Download className="h-4 w-4" />
                       )}
-                      <Badge variant="secondary" className="text-xs mr-1">
-                        Custom
-                      </Badge>
-                      {label}
+                      <Badge variant="secondary" className="text-xs mr-1">Custom</Badge>
+                      <span className="truncate">{templateName}</span>
                     </Button>
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => handleShare(id)}
-                      disabled={sharingDoc === id}
-                      title="Share document"
+                      className="h-10 w-10 shrink-0"
+                      onClick={() => handleShare(templateId)}
+                      disabled={isGenerating === templateId || sharingDoc === templateId}
+                      title={`Share ${templateName}`}
                     >
-                      {sharingDoc === id ? (
+                      {sharingDoc === templateId ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
                       ) : (
                         <Share2 className="h-4 w-4" />
@@ -454,7 +408,7 @@ export default function FormSection({ formData, onFormChange, onDownload, isGene
                   </div>
                 );
               })}
-            </div>
+            </>
           )}
         </CardContent>
       </Card>

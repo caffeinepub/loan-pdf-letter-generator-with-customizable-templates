@@ -1,24 +1,23 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "A document/letter templating project for a Loan Department. Users can create templates with dynamic placeholders (e.g., {{name}}, {{loanType}}, {{loanAmount}}, {{processingCharge}}) for official loan-related communications such as TDS Deduction Intimation letters.",
-  "architectural_notes": [
-    "Templates use double-curly-brace placeholders (e.g., {{name}}, {{loanType}}, {{loanAmount}}, {{processingCharge}}) for dynamic content substitution."
-  ],
+  "summary": "Project involves GST letter templates with watermark image support. User is removing loan GST and adding a watermark image to the GST letter.",
+  "architectural_notes": [],
   "known_issues": [],
   "isFixRequest": false,
+  "imageRequirements": "## Required Images\n- Goods and Services Tax Ashoka Pillar emblem logo with tricolor (saffron, white, green) decorative wings and 'Goods and Services Tax' text label, square format (gst-watermark.dim_400x400.png)",
   "existing_features": [
     {
-      "id": "feature-add-a-new-built-in-document-template-named-tds-deduction-intimation-to-the-template-library-in-frontend-src-lib-templates-gettemplate-ts-the-template-body-must-contain-the-following-exact-text-with-dynamic-placeholders-preserved-application-number-aploan74962926-loan-number-ploan6926946926-subject-tds-deduction-intimation-dear-name-greetings-from-the-loan-department-this-is-to-formally-inform-you-that-in-accordance-with-applicable-taxation-guidelines-tds-related-formalities-have-been-initiated-in-connection-with-your-loantype-loan-under-application-number-aploan74962926-and-loan-number-ploan6926946926-as-per-our-records-the-sanctioned-loan-amount-for-your-application-is-loanamount-all-statutory-deductions-and-reporting-requirements-are-being-processed-in-line-with-prevailing-financial-and-tax-regulations-you-are-advised-to-retain-this-letter-for-your-records-and-future-reference-please-note-that-any-processing-charge-of-processingcharge-paid-towards-documentation-verification-or-file-handling-will-be-accounted-for-as-per-the-company-s-financial-policies-and-applicable-tax-provisions-where-eligible-the-same-will-be-adjusted-or-refunded-in-accordance-with-the-approved-terms-and-compliance-requirements-our-team-is-committed-to-maintaining-full-transparency-throughout-the-loan-lifecycle-should-you-require-any-clarification-regarding-tds-treatment-or-related-documentation-please-feel-free-to-contact-our-support-team-warm-regards-loan-department-the-placeholders-name-loantype-loanamount-and-processingcharge-must-be-substituted-by-the-rendertemplate-utility-at-render-time-the-fixed-strings-aploan74962926-and-ploan6926946926-remain-as-literal-text",
-      "title": "Add a new built-in document template named 'TDS Deduction Intimation' to the template library in `frontend/src/lib/templates/getTemplate.ts`. The template body must contain the following exact text with dynamic placeholders preserved:\n\n---\nApplication Number: APLOAN74962926\nLoan Number: PLOAN6926946926\nSubject: TDS Deduction Intimation\n\nDear {{name}},\n\nGreetings from the Loan Department. This is to formally inform you that, in accordance with applicable taxation guidelines, TDS-related formalities have been initiated in connection with your {{loanType}} loan under Application Number APLOAN74962926 and Loan Number PLOAN6926946926.\n\nAs per our records, the sanctioned loan amount for your application is ₹{{loanAmount}}. All statutory deductions and reporting requirements are being processed in line with prevailing financial and tax regulations. You are advised to retain this letter for your records and future reference.\n\nPlease note that any processing charge of ₹{{processingCharge}} paid towards documentation, verification, or file handling will be accounted for as per the company's financial policies and applicable tax provisions. Where eligible, the same will be adjusted or refunded in accordance with the approved terms and compliance requirements.\n\nOur team is committed to maintaining full transparency throughout the loan lifecycle. Should you require any clarification regarding TDS treatment or related documentation, please feel free to contact our support team.\n\nWarm regards,\nLoan Department\n---\n\nThe placeholders {{name}}, {{loanType}}, {{loanAmount}}, and {{processingCharge}} must be substituted by the `renderTemplate` utility at render time. The fixed strings APLOAN74962926 and PLOAN6926946926 remain as literal text.",
+      "id": "feature-remove-the-loan-gst-document-type-from-the-application-this-includes-removing-it-from-the-documenttype-enum-the-form-s-document-type-selector-any-built-in-template-definitions-for-gst-letter-in-gettemplate-ts-and-all-related-rendering-generation-logic-so-it-no-longer-appears-as-an-option-anywhere-in-the-ui",
+      "title": "Remove the Loan GST document type from the application. This includes removing it from the DocumentType enum, the form's document type selector, any built-in template definitions for GST Letter in getTemplate.ts, and all related rendering/generation logic so it no longer appears as an option anywhere in the UI.",
       "reqIds": [
         "REQ-1"
       ],
       "version": 1
     },
     {
-      "id": "feature-ensure-the-new-tds-deduction-intimation-template-is-included-in-the-gettemplate-template-normalization-functions-and-is-returned-alongside-existing-built-in-templates-when-templates-are-fetched-or-listed-the-template-s-documenttype-or-equivalent-identifier-must-be-consistent-with-the-naming-conventions-used-by-other-built-in-templates-in-the-codebase",
-      "title": "Ensure the new 'TDS Deduction Intimation' template is included in the `getTemplate` / template normalization functions and is returned alongside existing built-in templates when templates are fetched or listed. The template's `DocumentType` (or equivalent identifier) must be consistent with the naming conventions used by other built-in templates in the codebase.",
+      "id": "feature-add-the-uploaded-gst-watermark-image-goods-and-services-tax-ashoka-pillar-emblem-as-a-static-asset-at-frontend-public-assets-generated-gst-watermark-png-and-use-it-as-the-default-watermark-image-on-the-gst-letter-document-template-the-watermark-should-be-rendered-centered-on-the-document-with-reduced-opacity-so-it-does-not-obscure-the-text-content",
+      "title": "Add the uploaded GST watermark image (Goods and Services Tax / Ashoka Pillar emblem) as a static asset at frontend/public/assets/generated/gst-watermark.png and use it as the default watermark image on the GST Letter document template. The watermark should be rendered centered on the document with reduced opacity so it does not obscure the text content.",
       "reqIds": [
         "REQ-2"
       ],
@@ -28,13 +27,19 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Create new TDS Deduction Intimation letter template with placeholders: {{name}}, {{loanType}}, {{loanAmount}}, {{processingCharge}}, and fixed values for Application Number (APLOAN74962926) and Loan Number (PLOAN6926946926)",
+      "summary": "Remove loan GST template/section",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-2",
+      "summary": "Add watermark image on GST letter using attached image",
       "reqIds": [],
       "status": "pending"
     }
   ],
   "gameProjectType": "none",
-  "projectName": "Loan Department Letter Templates",
+  "projectName": "Loan Document Generator",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

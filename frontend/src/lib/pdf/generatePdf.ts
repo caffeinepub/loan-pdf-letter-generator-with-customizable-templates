@@ -6,8 +6,9 @@ import { PAGE_WIDTH, PAGE_HEIGHT } from './layout';
 
 const BUILT_IN_DOC_TYPES: DocumentType[] = [
   'Loan Approval Letter',
-  'Loan GST Letter',
   'Loan Section Letter',
+  'TDS Deduction Intimation',
+  'GST Letter',
 ];
 
 /**

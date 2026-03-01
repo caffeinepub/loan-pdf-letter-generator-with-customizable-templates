@@ -74,7 +74,12 @@ export default function TemplateDesigner({
   const [previewOpen, setPreviewOpen] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
-  const builtInDocTypes: DocumentType[] = ['Loan Approval Letter', 'Loan GST Letter', 'Loan Section Letter'];
+  const builtInDocTypes: DocumentType[] = [
+    'Loan Approval Letter',
+    'Loan Section Letter',
+    'TDS Deduction Intimation',
+    'GST Letter',
+  ];
 
   const activeBuiltIn = builtInTemplates[selectedDocType];
   const activeCustom = customTemplates.find((t) => t.id === selectedCustomId) ?? null;
@@ -474,47 +479,132 @@ export default function TemplateDesigner({
                 </Card>
               </AccordionContent>
             </AccordionItem>
+
+            {/* Header / Branding */}
+            <AccordionItem value="branding">
+              <AccordionTrigger>
+                <div className="flex items-center gap-2">
+                  <ImageIcon className="h-4 w-4" />
+                  Branding
+                </div>
+              </AccordionTrigger>
+              <AccordionContent>
+                <Card>
+                  <CardContent className="pt-4 space-y-4">
+                    <div className="space-y-2">
+                      <Label>Business Name</Label>
+                      <Input
+                        value={activeTemplate.businessName ?? ''}
+                        onChange={(e) => {
+                          if (activeTab === 'builtIn') {
+                            onUpdateBuiltInTemplate(selectedDocType, { businessName: e.target.value });
+                          } else if (activeCustom) {
+                            onUpdateCustomTemplate(activeCustom.id, { businessName: e.target.value });
+                          }
+                        }}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Business Address</Label>
+                      <Input
+                        value={activeTemplate.businessAddress ?? ''}
+                        onChange={(e) => {
+                          if (activeTab === 'builtIn') {
+                            onUpdateBuiltInTemplate(selectedDocType, { businessAddress: e.target.value });
+                          } else if (activeCustom) {
+                            onUpdateCustomTemplate(activeCustom.id, { businessAddress: e.target.value });
+                          }
+                        }}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Upload Logo</Label>
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleFileUpload('logoDataUrl', file);
+                        }}
+                      />
+                      {activeTemplate.logoDataUrl && (
+                        <img
+                          src={activeTemplate.logoDataUrl}
+                          alt="Logo preview"
+                          className="h-12 object-contain border rounded"
+                        />
+                      )}
+                    </div>
+                    {activeTab === 'builtIn' && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          onApplyHeaderToAll(
+                            activeTemplate.businessName ?? '',
+                            activeTemplate.businessAddress ?? '',
+                            activeTemplate.logoDataUrl ?? null
+                          )
+                        }
+                      >
+                        Apply to All Templates
+                      </Button>
+                    )}
+                  </CardContent>
+                </Card>
+              </AccordionContent>
+            </AccordionItem>
           </Accordion>
 
           {/* Action Buttons */}
           <div className="flex gap-2 flex-wrap pt-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPreviewOpen(true)}
-            >
-              Preview
-            </Button>
-
             {activeTab === 'builtIn' && (
               <Button
                 size="sm"
                 onClick={() => onSaveBuiltInTemplate(selectedDocType)}
+                disabled={isSaving}
               >
-                <Save className="h-4 w-4 mr-1" />
+                {isSaving ? (
+                  <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4 mr-1" />
+                )}
                 Save Template
               </Button>
             )}
 
             {activeTab === 'custom' && activeCustom && (
               <>
+                <Button
+                  size="sm"
+                  onClick={() => onSaveBuiltInTemplate(selectedDocType)}
+                  disabled={isSaving}
+                >
+                  {isSaving ? (
+                    <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4 mr-1" />
+                  )}
+                  Save Local
+                </Button>
                 {onSaveCustomTemplateToBackend && (
                   <Button
                     size="sm"
+                    variant="outline"
                     onClick={handleSaveToBackend}
                     disabled={isSaving}
                   >
                     {isSaving ? (
                       <Loader2 className="h-4 w-4 mr-1 animate-spin" />
                     ) : (
-                      <CheckCircle className="h-4 w-4 mr-1" />
+                      <Globe className="h-4 w-4 mr-1" />
                     )}
                     Save to Cloud
                   </Button>
                 )}
                 <Button
-                  variant="destructive"
                   size="sm"
+                  variant="destructive"
                   onClick={() => setDeleteConfirmId(activeCustom.id)}
                 >
                   <Trash2 className="h-4 w-4 mr-1" />
@@ -524,36 +614,24 @@ export default function TemplateDesigner({
             )}
 
             <Button
-              variant="outline"
               size="sm"
-              onClick={() => {
-                const success = onApplyHeaderToAll(
-                  activeTemplate.businessName,
-                  activeTemplate.businessAddress,
-                  activeTemplate.logoDataUrl
-                );
-                if (success) {
-                  toast.success('Header applied to all templates!');
-                } else {
-                  toast.error('Failed to apply header.');
-                }
-              }}
+              variant="outline"
+              onClick={() => setPreviewOpen(true)}
             >
-              <Globe className="h-4 w-4 mr-1" />
-              Apply to All
+              Preview
             </Button>
           </div>
         </div>
       </ScrollArea>
 
-      {/* Preview Dialog */}
+      {/* Preview Dialog — uses correct prop name: documentType */}
       {previewOpen && activeTemplate && (
         <PreviewDialog
           open={previewOpen}
           onOpenChange={setPreviewOpen}
           template={activeTemplate}
           formData={formData}
-          documentType={activeTab === 'builtIn' ? selectedDocType : (activeCustom?.name ?? 'Custom Template')}
+          documentType={activeTab === 'builtIn' ? selectedDocType : (activeCustom?.name ?? 'Custom')}
         />
       )}
 
@@ -576,7 +654,6 @@ export default function TemplateDesigner({
                   setSelectedCustomId(null);
                 }
               }}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Delete
             </AlertDialogAction>

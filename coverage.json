@@ -1,7 +1,7 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-03-01T05:11:55.486Z",
+  "generatedAt": "2026-03-01T08:03:49.844Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
@@ -12,38 +12,44 @@
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Add a new built-in document template named 'TDS Deduction Intimation' to the template library in `frontend/src/lib/templates/getTemplate.ts`. The template body must contain the following exact text with dynamic placeholders preserved:\n\n---\nApplication Number: APLOAN74962926\nLoan Number: PLOAN6926946926\nSubject: TDS Deduction Intimation\n\nDear {{name}},\n\nGreetings from the Loan Department. This is to formally inform you that, in accordance with applicable taxation guidelines, TDS-related formalities have been initiated in connection with your {{loanType}} loan under Application Number APLOAN74962926 and Loan Number PLOAN6926946926.\n\nAs per our records, the sanctioned loan amount for your application is ₹{{loanAmount}}. All statutory deductions and reporting requirements are being processed in line with prevailing financial and tax regulations. You are advised to retain this letter for your records and future reference.\n\nPlease note that any processing charge of ₹{{processingCharge}} paid towards documentation, verification, or file handling will be accounted for as per the company's financial policies and applicable tax provisions. Where eligible, the same will be adjusted or refunded in accordance with the approved terms and compliance requirements.\n\nOur team is committed to maintaining full transparency throughout the loan lifecycle. Should you require any clarification regarding TDS treatment or related documentation, please feel free to contact our support team.\n\nWarm regards,\nLoan Department\n---\n\nThe placeholders {{name}}, {{loanType}}, {{loanAmount}}, and {{processingCharge}} must be substituted by the `renderTemplate` utility at render time. The fixed strings APLOAN74962926 and PLOAN6926946926 remain as literal text.",
+        "summary": "Remove the Loan GST document type from the application. This includes removing it from the DocumentType enum, the form's document type selector, any built-in template definitions for GST Letter in getTemplate.ts, and all related rendering/generation logic so it no longer appears as an option anywhere in the UI.",
         "status": "implemented",
         "plannedFiles": [
+          "frontend/src/types/form.ts",
           "frontend/src/lib/templates/getTemplate.ts",
-          "frontend/src/types/form.ts"
+          "frontend/src/components/FormSection.tsx"
         ],
         "matchedFiles": [
+          "frontend/src/types/form.ts",
           "frontend/src/lib/templates/getTemplate.ts",
-          "frontend/src/types/form.ts"
+          "frontend/src/components/FormSection.tsx"
         ]
       },
       {
         "id": "REQ-2",
-        "summary": "Ensure the new 'TDS Deduction Intimation' template is included in the `getTemplate` / template normalization functions and is returned alongside existing built-in templates when templates are fetched or listed. The template's `DocumentType` (or equivalent identifier) must be consistent with the naming conventions used by other built-in templates in the codebase.",
+        "summary": "Add the uploaded GST watermark image (Goods and Services Tax / Ashoka Pillar emblem) as a static asset at frontend/public/assets/generated/gst-watermark.png and use it as the default watermark image on the GST Letter document template. The watermark should be rendered centered on the document with reduced opacity so it does not obscure the text content.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/lib/templates/getTemplate.ts",
-          "frontend/src/components/FormSection.tsx"
+          "frontend/public/assets/generated/gst-watermark.dim_400x400.png",
+          "frontend/src/lib/pdf/renderDocumentToCanvas.ts",
+          "frontend/src/components/preview/TemplateOverlay.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/lib/templates/getTemplate.ts",
-          "frontend/src/components/FormSection.tsx"
+          "frontend/public/assets/generated/gst-watermark.dim_400x400.png"
         ]
       }
     ]
   },
   "changedFiles": [
+    "backend/main.mo",
     "build-request.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
+    "frontend/public/assets/generated/gst-watermark.dim_400x400.png",
     "frontend/src/components/FormSection.tsx",
+    "frontend/src/components/TemplateDesigner.tsx",
+    "frontend/src/lib/pdf/generatePdf.ts",
     "frontend/src/lib/templates/getTemplate.ts",
     "frontend/src/types/form.ts",
     "project_state.json",

@@ -1,14 +1,38 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-03-01T05:11:55.481Z",
-  "summary": "Both REQ-1 and REQ-2 appear to be implemented in the diff. The new 'TDS Deduction Intimation' template is added to getTemplate.ts with the correct body text, fixed literal values APLOAN74962926 and PLOAN6926946926, and the required placeholders. The DocumentType union in form.ts is updated, and the template appears in the builtInDocTypes array in FormSection.tsx. No significant missing requirements or hallucinated features are detected.",
-  "missing_requirements": [],
-  "hallucinated_features": [],
-  "confidence": 0.92,
+  "generatedAt": "2026-03-01T08:03:49.841Z",
+  "summary": "The diff implements partial removal of 'Loan GST Letter' (a variant distinct from 'GST Letter') from the DocumentType enum, FormSection, generatePdf, and getTemplate.ts. It also references a GST watermark image URL in getTemplate.ts. However, 'GST Letter' remains in the DocumentType enum, TemplateDesigner builtInDocTypes, and generatePdf BUILT_IN_DOC_TYPES. The actual static asset file (gst-watermark.png) was never added to the repository (no files were added in the diff). The watermark image URL referenced in getTemplate.ts points to '/assets/generated/gst-watermark.dim_400x400.png' rather than the required path '/assets/generated/gst-watermark.png', and the actual image file is not present in the diff.",
+  "missing_requirements": [
+    {
+      "id": "REQ-2",
+      "requirement": "Add the uploaded GST watermark image as a static asset at frontend/public/assets/generated/gst-watermark.png",
+      "reason": "No files were added in the diff. The ADDED FILES section shows 'none', meaning the actual image file was never committed to the repository. The path referenced in getTemplate.ts also uses 'gst-watermark.dim_400x400.png' rather than 'gst-watermark.png'.",
+      "evidence": [
+        "frontend/src/lib/templates/getTemplate.ts",
+        "frontend-file-summaries.txt"
+      ]
+    }
+  ],
+  "hallucinated_features": [
+    {
+      "description": "Partial removal targeting 'Loan GST Letter' instead of 'GST Letter' — 'GST Letter' still remains in form.ts, TemplateDesigner, and generatePdf as a valid document type",
+      "reason": "The build request asks to remove the Loan GST document type (GST Letter) entirely, but the DocumentType union in form.ts still includes 'GST Letter', and TemplateDesigner.tsx and generatePdf.ts still list 'GST Letter' as a built-in type. Only a 'Loan GST Letter' variant was removed, which was not the entry described in the requirements.",
+      "evidence": [
+        "frontend/src/types/form.ts",
+        "frontend/src/components/TemplateDesigner.tsx",
+        "frontend/src/lib/pdf/generatePdf.ts",
+        "frontend/src/components/FormSection.tsx"
+      ]
+    }
+  ],
+  "confidence": 0.72,
   "changed_files": [
+    "backend/main.mo",
     "frontend-file-summaries.txt",
     "frontend/src/components/FormSection.tsx",
+    "frontend/src/components/TemplateDesigner.tsx",
+    "frontend/src/lib/pdf/generatePdf.ts",
     "frontend/src/lib/templates/getTemplate.ts",
     "frontend/src/types/form.ts",
     "project_state.json"
