@@ -3,7 +3,6 @@ import { Template, CustomTemplate } from '../../types/templates';
 
 const BUILT_IN_DOC_TYPES: DocumentType[] = [
   'Loan Approval Letter',
-  'Loan Section Letter',
   'TDS Deduction Intimation',
   'GST Letter',
 ];
@@ -50,43 +49,6 @@ If you have any questions or require assistance, please feel free to contact our
 Warm regards,
 Loan Department`;
 
-const LOAN_SECTION_LETTER_BODY = `Reference Number: LAG562198743026
-Subject: Loan Section Reference Letter
-
-Dear {{name}},
-
-This letter is issued under the relevant loan section for your reference and records.
-
-Applicant Details
-
-Name: {{name}}
-Loan Type: {{loanType}}
-Loan Amount: ₹{{loanAmount}}
-Interest Rate: {{interestRate}}% per annum
-Tenure: {{year}} years
-Monthly EMI: ₹{{monthlyEmi}}
-Processing Charge: ₹{{processingCharge}}
-
-Bank Account Details
-
-Bank Account Number: {{bankAccountNumber}}
-IFSC Code: {{ifscCode}}
-UPI ID: {{upiId}}
-
-Important Information
-
-• This letter is issued for reference purposes only.
-• Please retain this letter for your records throughout the loan tenure.
-• For any queries regarding your loan account, contact our customer care.
-• All terms and conditions of the loan agreement remain applicable.
-• This document is computer-generated and does not require a physical signature.
-
-For any assistance, please contact our support team or visit your nearest Bajaj Finance branch.
-
-Best regards,
-Loan Department
-Bajaj Finance Limited`;
-
 const TDS_DEDUCTION_INTIMATION_BODY = `Application Number: APLOAN74962926
 Loan Number: PLOAN6926946926
 Subject: TDS Deduction Intimation
@@ -132,32 +94,6 @@ const DEFAULT_TEMPLATES: Record<DocumentType, Template> = {
     businessName: '',
     businessAddress: '',
     watermarkText: 'APPROVED',
-    footerText: 'This is a computer-generated document and does not require a signature.',
-    logoSize: 'medium',
-    background: { enabled: false, dataUrl: null, opacity: 0.1, fit: 'cover' },
-    watermark: {
-      enabled: true,
-      text: 'BAJAJ FINANCE',
-      opacity: 0.08,
-      size: 72,
-      rotation: -45,
-      position: 'center',
-      color: '#cccccc',
-      watermarkImageUrl: '/assets/generated/etds-watermark.dim_600x300.png',
-    },
-    seal: { enabled: false, dataUrl: null, size: 100, position: 'bottom-left', opacity: 80 },
-    signature: { enabled: false, dataUrl: null, size: 120, position: 'bottom-right', opacity: 100, signatoryName: '', signatoryTitle: '' },
-  },
-  'Loan Section Letter': {
-    id: 'Loan Section Letter',
-    name: 'Loan Section Letter',
-    headline: 'Loan Section Letter',
-    body: LOAN_SECTION_LETTER_BODY,
-    logoDataUrl: null,
-    headerColor: '#1a365d',
-    businessName: '',
-    businessAddress: '',
-    watermarkText: 'SECTION LETTER',
     footerText: 'This is a computer-generated document and does not require a signature.',
     logoSize: 'medium',
     background: { enabled: false, dataUrl: null, opacity: 0.1, fit: 'cover' },
@@ -252,11 +188,11 @@ export function getDefaultSanctionLetterTemplate(): Template {
 }
 
 export function getDefaultDisbursementTemplate(): Template {
-  return normalizeTemplate({ ...DEFAULT_TEMPLATES['Loan Section Letter'] });
+  return normalizeTemplate({ ...DEFAULT_TEMPLATES['Loan Approval Letter'] });
 }
 
 export function getDefaultNocTemplate(): Template {
-  return normalizeTemplate({ ...DEFAULT_TEMPLATES['Loan Section Letter'] });
+  return normalizeTemplate({ ...DEFAULT_TEMPLATES['Loan Approval Letter'] });
 }
 
 export function saveTemplate(docType: DocumentType, template: Template): void {

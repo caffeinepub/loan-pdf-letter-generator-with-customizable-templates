@@ -40,6 +40,7 @@ actor {
     signatureLayout : { #stacked; #sideBySide };
     footerLayout : { #centered; #twoColumn };
   };
+
   type GlobalMasterTemplate = {
     adminId : Text;
     businessName : Text;
@@ -51,21 +52,25 @@ actor {
     signature : ?Storage.ExternalBlob;
     layout : LayoutSettings;
   };
+
   type DocumentContent = {
     title : Text;
     body : Text;
     adminId : Text;
   };
+
   public type UserProfile = {
     name : Text;
     email : ?Text;
   };
+
   type Document = {
     adminId : Text;
     documentType : Text;
     content : DocumentContent;
     template : GlobalMasterTemplate;
   };
+
   public type TemplateResult = {
     #success;
     #alreadyExists;
@@ -73,6 +78,7 @@ actor {
     #unauthorizedField;
     #unexpectedError : Text;
   };
+
   let templatesMap = Map.empty<Text, GlobalMasterTemplate>();
   let documentContentsMap = Map.empty<Text, Map.Map<Text, DocumentContent>>();
   let documentsMap = Map.empty<Text, Map.Map<Text, Document>>();

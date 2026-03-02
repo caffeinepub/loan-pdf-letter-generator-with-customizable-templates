@@ -1,59 +1,32 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Remove Loan GST and Add GST Watermark Image",
+  "title": "Remove Loan Section Letter Document Type from Frontend",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Remove the Loan GST document type from the application so it no longer appears as an option in the UI or generation logic",
+      "summary": "Remove the 'Loan Section Letter' document type from the frontend, including the type definition, built-in template, and UI selector",
       "acceptanceCriteria": [
-        "The GST Letter option no longer appears in the document type dropdown or selector in the form UI",
-        "The DocumentType enum no longer includes a GST Letter entry",
-        "No GST Letter template body or default Template config remains in getTemplate.ts",
-        "Generating or downloading a GST Letter document is no longer possible"
+        "'Loan Section Letter' no longer appears in the document type dropdown/selector in FormSection",
+        "The built-in template definition for Loan Section Letter is removed from frontend/src/lib/templates/getTemplate.ts",
+        "The LoanType or DocumentType enum/union in frontend/src/types/form.ts no longer includes the Loan Section Letter entry",
+        "No runtime errors occur when the application loads or when other document types are selected"
       ],
       "file_operations": [
         {
           "path": "frontend/src/types/form.ts",
           "operation": "modify",
-          "description": "Remove the 'gstLetter' entry from the DocumentType union type so it is no longer a valid document type in the application type system"
+          "description": "Remove the 'Loan Section Letter' entry from the LoanType or DocumentType type definition. If it's defined as a union type, remove the literal string 'Loan Section Letter'. If it's an enum, remove the corresponding enum member. Ensure no other document types are affected."
         },
         {
           "path": "frontend/src/lib/templates/getTemplate.ts",
           "operation": "modify",
-          "description": "Remove the 'gstLetter' case from the built-in document template definitions, including the default template body and Template configuration for GST Letter, so the application no longer provides a built-in GST Letter template"
+          "description": "Remove the built-in template definition for 'Loan Section Letter' from the DOCUMENT_TEMPLATES object or similar data structure. Remove any associated template body text, headline, or default Template object for this document type. Verify that other loan types (home, education, personal, business, vehicle) and their templates remain intact."
         },
         {
           "path": "frontend/src/components/FormSection.tsx",
           "operation": "modify",
-          "description": "Remove 'GST Letter' from the document type selector dropdown options so users can no longer select it as a document type in the form UI"
-        }
-      ]
-    },
-    {
-      "id": "REQ-2",
-      "summary": "Add the uploaded GST watermark image as a static asset and render it centered with reduced opacity on the GST Letter document template",
-      "acceptanceCriteria": [
-        "The GST emblem image is saved as a static asset at frontend/public/assets/generated/gst-watermark.png",
-        "The watermark is rendered centered on the GST Letter document canvas with reduced opacity (e.g., 0.15–0.25)",
-        "The watermark does not obscure the body text of the GST Letter",
-        "The watermark is visible in both the preview dialog and the generated/downloaded PDF"
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/public/assets/generated/gst-watermark.dim_400x400.png",
-          "operation": "create",
-          "description": "Save the uploaded Goods and Services Tax Ashoka Pillar emblem image as a static asset at this exact path. Use the provided image file (images (16).jpeg) which shows the GST emblem with tricolor decorative wings and 'Goods and Services Tax' text label in square format"
-        },
-        {
-          "path": "frontend/src/lib/pdf/renderDocumentToCanvas.ts",
-          "operation": "modify",
-          "description": "Update the document rendering logic to load and render the GST watermark image from frontend/public/assets/generated/gst-watermark.dim_400x400.png as a centered background element on the GST Letter document canvas. Set the watermark opacity to approximately 0.15–0.25 (use globalAlpha or equivalent) so it is visible but does not obscure the document text. Ensure the watermark is drawn before the text content is rendered so text appears on top of the watermark"
-        },
-        {
-          "path": "frontend/src/components/preview/TemplateOverlay.tsx",
-          "operation": "modify",
-          "description": "Update the template overlay rendering to include the GST watermark image for GST Letter documents. Load the watermark from frontend/public/assets/generated/gst-watermark.dim_400x400.png and render it centered with reduced opacity (matching the PDF rendering opacity) so the preview dialog accurately reflects the final document appearance"
+          "description": "Remove 'Loan Section Letter' from the document type selector/dropdown UI component. This may involve removing an option from a select element, radio group, or similar control. Ensure the component still renders correctly with the remaining document types and that no references to 'Loan Section Letter' remain in labels, placeholders, or error messages."
         }
       ]
     }

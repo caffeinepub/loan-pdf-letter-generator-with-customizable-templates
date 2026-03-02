@@ -1,61 +1,56 @@
 {
   "kind": "build_request",
-  "title": "Remove Loan GST and Add GST Watermark Image",
-  "projectName": "Loan Document Generator",
+  "title": "Remove Loan Section Letter document type",
   "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Remove the Loan GST document type from the application. This includes removing it from the DocumentType enum, the form's document type selector, any built-in template definitions for GST Letter in getTemplate.ts, and all related rendering/generation logic so it no longer appears as an option anywhere in the UI.",
-      "target": "both",
+      "text": "Remove the 'Loan Section Letter' document type from the list of available document types in the frontend. It should no longer appear as an option in the document type selector in FormSection, and its built-in template definition should be removed from getTemplate.ts.",
+      "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-4"
+          "msg-recent"
         ],
         "quotes": [
-          "Remove loan gst"
+          "Remove loan section letter"
         ]
       },
       "acceptanceCriteria": [
-        "The GST Letter option no longer appears in the document type dropdown or selector in the form UI",
-        "The DocumentType enum no longer includes a GST Letter entry",
-        "No GST Letter template body or default Template config remains in getTemplate.ts",
-        "Generating or downloading a GST Letter document is no longer possible"
+        "'Loan Section Letter' no longer appears in the document type dropdown/selector in FormSection",
+        "The built-in template definition for Loan Section Letter is removed from frontend/src/lib/templates/getTemplate.ts",
+        "The LoanType or DocumentType enum/union in frontend/src/types/form.ts no longer includes the Loan Section Letter entry",
+        "No runtime errors occur when the application loads or when other document types are selected"
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Add the uploaded GST watermark image (Goods and Services Tax / Ashoka Pillar emblem) as a static asset at frontend/public/assets/generated/gst-watermark.png and use it as the default watermark image on the GST Letter document template. The watermark should be rendered centered on the document with reduced opacity so it does not obscure the text content.",
-      "target": "frontend",
+      "text": "Remove the 'Loan Section Letter' loan type from the backend's LoanType definition in backend/main.mo to keep the data model consistent with the frontend changes.",
+      "target": "backend",
       "source": {
         "messageIds": [
-          "msg-4"
+          "msg-recent"
         ],
         "quotes": [
-          "Add watermark image on gst letter use attached image"
+          "Remove loan section letter"
         ]
       },
       "acceptanceCriteria": [
-        "The GST emblem image is saved as a static asset at frontend/public/assets/generated/gst-watermark.png",
-        "The watermark is rendered centered on the GST Letter document canvas with reduced opacity (e.g., 0.15–0.25)",
-        "The watermark does not obscure the body text of the GST Letter",
-        "The watermark is visible in both the preview dialog and the generated/downloaded PDF"
+        "The LoanType variant in backend/main.mo no longer includes a Loan Section Letter case",
+        "Existing CRUD functions compile and operate correctly without the removed type"
       ]
     }
   ],
   "constraints": [
-    "Do not modify any files listed under frontend.immutablePaths",
-    "Use the exact uploaded image (Goods and Services Tax / Ashoka Pillar emblem) as the watermark — do not substitute a different image"
+    "Do not remove or modify any other document types (e.g., GST Letter or other remaining loan types)",
+    "Do not edit files under frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, or frontend/src/components/ui"
   ],
   "nonGoals": [
-    "Adding new document types beyond what already exists",
-    "Redesigning the overall UI layout or color theme",
-    "Modifying watermark behavior for non-GST document types"
+    "Adding any new document types",
+    "Modifying the watermark or template designer functionality",
+    "Changes to authentication or identity logic"
   ],
   "imageRequirements": {
-    "required": [
-      "Goods and Services Tax Ashoka Pillar emblem logo with tricolor (saffron, white, green) decorative wings and 'Goods and Services Tax' text label, square format (gst-watermark.dim_400x400.png)"
-    ],
+    "required": [],
     "edits": []
   }
 }

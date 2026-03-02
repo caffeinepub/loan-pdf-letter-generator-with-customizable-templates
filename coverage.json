@@ -1,18 +1,18 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-03-01T08:03:49.844Z",
+  "generatedAt": "2026-03-01T09:28:17.932Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
     "total": 2,
-    "implemented": 2,
+    "implemented": 1,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Remove the Loan GST document type from the application. This includes removing it from the DocumentType enum, the form's document type selector, any built-in template definitions for GST Letter in getTemplate.ts, and all related rendering/generation logic so it no longer appears as an option anywhere in the UI.",
+        "summary": "Remove the 'Loan Section Letter' document type from the list of available document types in the frontend. It should no longer appear as an option in the document type selector in FormSection, and its built-in template definition should be removed from getTemplate.ts.",
         "status": "implemented",
         "plannedFiles": [
           "frontend/src/types/form.ts",
@@ -27,16 +27,10 @@
       },
       {
         "id": "REQ-2",
-        "summary": "Add the uploaded GST watermark image (Goods and Services Tax / Ashoka Pillar emblem) as a static asset at frontend/public/assets/generated/gst-watermark.png and use it as the default watermark image on the GST Letter document template. The watermark should be rendered centered on the document with reduced opacity so it does not obscure the text content.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/public/assets/generated/gst-watermark.dim_400x400.png",
-          "frontend/src/lib/pdf/renderDocumentToCanvas.ts",
-          "frontend/src/components/preview/TemplateOverlay.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/public/assets/generated/gst-watermark.dim_400x400.png"
-        ]
+        "summary": "Remove the 'Loan Section Letter' loan type from the backend's LoanType definition in backend/main.mo to keep the data model consistent with the frontend changes.",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
       }
     ]
   },
@@ -46,7 +40,6 @@
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/public/assets/generated/gst-watermark.dim_400x400.png",
     "frontend/src/components/FormSection.tsx",
     "frontend/src/components/TemplateDesigner.tsx",
     "frontend/src/lib/pdf/generatePdf.ts",

@@ -76,7 +76,6 @@ export default function TemplateDesigner({
 
   const builtInDocTypes: DocumentType[] = [
     'Loan Approval Letter',
-    'Loan Section Letter',
     'TDS Deduction Intimation',
     'GST Letter',
   ];
@@ -480,7 +479,7 @@ export default function TemplateDesigner({
               </AccordionContent>
             </AccordionItem>
 
-            {/* Header / Branding */}
+            {/* Branding */}
             <AccordionItem value="branding">
               <AccordionTrigger>
                 <div className="flex items-center gap-2">
@@ -535,21 +534,22 @@ export default function TemplateDesigner({
                         />
                       )}
                     </div>
-                    {activeTab === 'builtIn' && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() =>
-                          onApplyHeaderToAll(
-                            activeTemplate.businessName ?? '',
-                            activeTemplate.businessAddress ?? '',
-                            activeTemplate.logoDataUrl ?? null
-                          )
-                        }
-                      >
-                        Apply to All Templates
-                      </Button>
-                    )}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => {
+                        onApplyHeaderToAll(
+                          activeTemplate.businessName ?? '',
+                          activeTemplate.businessAddress ?? '',
+                          activeTemplate.logoDataUrl ?? null
+                        );
+                        toast.success('Branding applied to all templates');
+                      }}
+                    >
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      Apply to All Templates
+                    </Button>
                   </CardContent>
                 </Card>
               </AccordionContent>
@@ -557,83 +557,71 @@ export default function TemplateDesigner({
           </Accordion>
 
           {/* Action Buttons */}
-          <div className="flex gap-2 flex-wrap pt-2">
-            {activeTab === 'builtIn' && (
-              <Button
-                size="sm"
-                onClick={() => onSaveBuiltInTemplate(selectedDocType)}
-                disabled={isSaving}
-              >
-                {isSaving ? (
-                  <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                ) : (
-                  <Save className="h-4 w-4 mr-1" />
-                )}
-                Save Template
-              </Button>
-            )}
-
-            {activeTab === 'custom' && activeCustom && (
-              <>
-                <Button
-                  size="sm"
-                  onClick={() => onSaveBuiltInTemplate(selectedDocType)}
-                  disabled={isSaving}
-                >
-                  {isSaving ? (
-                    <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                  ) : (
-                    <Save className="h-4 w-4 mr-1" />
-                  )}
-                  Save Local
-                </Button>
-                {onSaveCustomTemplateToBackend && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={handleSaveToBackend}
-                    disabled={isSaving}
-                  >
-                    {isSaving ? (
-                      <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                    ) : (
-                      <Globe className="h-4 w-4 mr-1" />
-                    )}
-                    Save to Cloud
-                  </Button>
-                )}
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  onClick={() => setDeleteConfirmId(activeCustom.id)}
-                >
-                  <Trash2 className="h-4 w-4 mr-1" />
-                  Delete
-                </Button>
-              </>
-            )}
-
+          <div className="flex gap-2 pt-2">
             <Button
-              size="sm"
               variant="outline"
+              size="sm"
+              className="flex-1"
               onClick={() => setPreviewOpen(true)}
             >
               Preview
             </Button>
+
+            {activeTab === 'builtIn' ? (
+              <Button
+                size="sm"
+                className="flex-1"
+                onClick={() => onSaveBuiltInTemplate(selectedDocType)}
+                disabled={isSaving}
+              >
+                {isSaving ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4 mr-2" />
+                )}
+                Save
+              </Button>
+            ) : (
+              activeCustom && (
+                <div className="flex gap-2 flex-1">
+                  {onSaveCustomTemplateToBackend && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1"
+                      onClick={handleSaveToBackend}
+                      disabled={isSaving}
+                    >
+                      {isSaving ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Globe className="h-4 w-4 mr-2" />
+                      )}
+                      Save to Cloud
+                    </Button>
+                  )}
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => setDeleteConfirmId(activeCustom.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              )
+            )}
           </div>
         </div>
       </ScrollArea>
 
-      {/* Preview Dialog — uses correct prop name: documentType */}
-      {previewOpen && activeTemplate && (
-        <PreviewDialog
-          open={previewOpen}
-          onOpenChange={setPreviewOpen}
-          template={activeTemplate}
-          formData={formData}
-          documentType={activeTab === 'builtIn' ? selectedDocType : (activeCustom?.name ?? 'Custom')}
-        />
-      )}
+      {/* Preview Dialog */}
+      <PreviewDialog
+        open={previewOpen}
+        onOpenChange={setPreviewOpen}
+        template={activeTemplate}
+        formData={formData}
+        documentType={activeTab === 'builtIn' ? selectedDocType : (activeCustom?.name ?? '')}
+      />
 
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteConfirmId} onOpenChange={(open) => !open && setDeleteConfirmId(null)}>
@@ -654,6 +642,7 @@ export default function TemplateDesigner({
                   setSelectedCustomId(null);
                 }
               }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Delete
             </AlertDialogAction>

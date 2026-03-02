@@ -115,7 +115,6 @@ export default function FormSection({ formData, onFormChange, onDownload, isGene
 
   const builtInDocTypes: DocumentType[] = [
     'Loan Approval Letter',
-    'Loan Section Letter',
     'TDS Deduction Intimation',
     'GST Letter',
   ];

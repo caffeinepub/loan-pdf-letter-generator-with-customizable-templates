@@ -2,8 +2,8 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-remove-the-loan-gst-document-type-from-the-application-this-includes-removing-it-from-the-documenttype-enum-the-form-s-document-type-selector-any-built-in-template-definitions-for-gst-letter-in-gettemplate-ts-and-all-related-rendering-generation-logic-so-it-no-longer-appears-as-an-option-anywhere-in-the-ui",
-      "featureTitle": "Remove the Loan GST document type from the application. This includes removing it from the DocumentType enum, the form's document type selector, any built-in template definitions for GST Letter in getTemplate.ts, and all related rendering/generation logic so it no longer appears as an option anywhere in the UI.",
+      "featureId": "feature-remove-the-loan-section-letter-document-type-from-the-list-of-available-document-types-in-the-frontend-it-should-no-longer-appear-as-an-option-in-the-document-type-selector-in-formsection-and-its-built-in-template-definition-should-be-removed-from-gettemplate-ts",
+      "featureTitle": "Remove the 'Loan Section Letter' document type from the list of available document types in the frontend. It should no longer appear as an option in the document type selector in FormSection, and its built-in template definition should be removed from getTemplate.ts.",
       "files": [
         "frontend/src/components/FormSection.tsx",
         "frontend/src/lib/templates/getTemplate.ts",
@@ -22,26 +22,6 @@
       ],
       "testIds": [
         "REQ-1"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-add-the-uploaded-gst-watermark-image-goods-and-services-tax-ashoka-pillar-emblem-as-a-static-asset-at-frontend-public-assets-generated-gst-watermark-png-and-use-it-as-the-default-watermark-image-on-the-gst-letter-document-template-the-watermark-should-be-rendered-centered-on-the-document-with-reduced-opacity-so-it-does-not-obscure-the-text-content",
-      "featureTitle": "Add the uploaded GST watermark image (Goods and Services Tax / Ashoka Pillar emblem) as a static asset at frontend/public/assets/generated/gst-watermark.png and use it as the default watermark image on the GST Letter document template. The watermark should be rendered centered on the document with reduced opacity so it does not obscure the text content.",
-      "files": [],
-      "components": [
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0",
-        "authorization@4.0.0",
-        "blob-storage@4.0.0",
-        "qr-code@1.0.0",
-        "camera@1.0.0"
-      ],
-      "testIds": [
-        "REQ-2"
       ],
       "confidence": "high"
     }
